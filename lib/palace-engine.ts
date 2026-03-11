@@ -163,9 +163,6 @@ export function canPlayCard(card: Card, pile: Card[]): boolean {
   if (rank === "2" || rank === "10" || rank === "3") return true;
   const top = getEffectiveTopCard(pile);
   if (!top) return true;
-  if (top.rank === "7") {
-    return RANK_VALUES[rank] <= 7;
-  }
   return RANK_VALUES[rank] >= RANK_VALUES[top.rank];
 }
 

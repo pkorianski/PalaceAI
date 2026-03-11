@@ -46,7 +46,7 @@ const RULES: RuleSection[] = [
     title: "Special Cards",
     icon: "flash-outline",
     content:
-      "2 — Reset: Can be played on anything. The next player can play any card.\n\n3 — Transparent: Invisible card, the effective top card is what's beneath it.\n\n7 — Reverse: The next card played must be 7 or lower.\n\n10 — Burn: Played on anything. The pile is immediately removed from play. Play again!",
+      "2 — Reset: Can be played on anything. The next player can play any card.\n\n3 — Transparent: Invisible card, the effective top card is what's beneath it.\n\n10 — Burn: Played on anything. The pile is immediately removed from play. Play again!",
   },
   {
     title: "4 of a Kind = Burn",
@@ -118,14 +118,14 @@ export default function RulesScreen() {
         <View style={styles.cardValuesSection}>
           <Text style={styles.sectionTitle}>Card Values</Text>
           <View style={styles.cardValuesGrid}>
-            {["2★", "3", "4", "5", "6", "7▼", "8", "9", "10🔥", "J", "Q", "K", "A"].map((r) => (
+            {["2★", "3", "4", "5", "6", "7", "8", "9", "10🔥", "J", "Q", "K", "A"].map((r) => (
               <View key={r} style={styles.cardValueChip}>
                 <Text style={styles.cardValueText}>{r}</Text>
               </View>
             ))}
           </View>
           <Text style={styles.cardValuesNote}>
-            ★ = Reset • 🔥 = Burn • ▼ = Play low or equal
+            ★ = Reset (play anything next) • 🔥 = Burn pile
           </Text>
         </View>
 
