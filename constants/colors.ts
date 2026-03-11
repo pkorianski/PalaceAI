@@ -1,12 +1,32 @@
-// template
-const tintColorLight = "#2f95dc";
+const Colors = {
+  background: "#0d2b1a",
+  surface: "#0f3320",
+  surfaceElevated: "#163d26",
+  cardBackground: "#FEFDF8",
+  cardBorder: "#E8E4D8",
+  felt: "#145229",
+  feltDark: "#0f3d1e",
+  feltLight: "#1a6634",
+  gold: "#D4AF37",
+  goldLight: "#F0D060",
+  goldDark: "#B8962E",
+  red: "#C0392B",
+  black: "#1A1A1A",
+  white: "#FEFDF8",
+  textPrimary: "#FEFDF8",
+  textSecondary: "rgba(254, 253, 248, 0.65)",
+  textMuted: "rgba(254, 253, 248, 0.35)",
+  accent: "#D4AF37",
+  accentGreen: "#2ECC71",
+  error: "#E74C3C",
+  overlay: "rgba(0, 0, 0, 0.6)",
+  tint: "#D4AF37",
+  tabIconDefault: "rgba(254, 253, 248, 0.35)",
+  tabIconSelected: "#D4AF37",
+};
 
 export default {
-  light: {
-    text: "#000",
-    background: "#fff",
-    tint: tintColorLight,
-    tabIconDefault: "#ccc",
-    tabIconSelected: tintColorLight,
-  },
+  light: Colors,
+  dark: Colors,
+  ...Colors,
 };
