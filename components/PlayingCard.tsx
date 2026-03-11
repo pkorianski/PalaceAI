@@ -6,7 +6,7 @@ import {
   Pressable,
   Platform,
 } from "react-native";
-import type { Card, Rank, Suit } from "@/lib/palace-engine";
+import type { Card, Suit } from "@/lib/palace-engine";
 
 interface PlayingCardProps {
   card?: Card;
@@ -21,23 +21,15 @@ interface PlayingCardProps {
 
 function getSuitSymbol(suit: Suit): string {
   switch (suit) {
-    case "hearts":
-      return "♥";
-    case "diamonds":
-      return "♦";
-    case "clubs":
-      return "♣";
-    case "spades":
-      return "♠";
+    case "hearts": return "♥";
+    case "diamonds": return "♦";
+    case "clubs": return "♣";
+    case "spades": return "♠";
   }
 }
 
 function isRed(suit: Suit): boolean {
   return suit === "hearts" || suit === "diamonds";
-}
-
-function displayRank(rank: Rank): string {
-  return rank;
 }
 
 export function PlayingCard({
@@ -50,10 +42,8 @@ export function PlayingCard({
   disabled = false,
   style,
 }: PlayingCardProps) {
-  const cardW = micro ? 30 : small ? 46 : 68;
-  const cardH = micro ? 42 : small ? 64 : 96;
-  const rankSize = micro ? 9 : small ? 12 : 18;
-  const suitSize = micro ? 8 : small ? 10 : 14;
+  const cardW = micro ? 28 : small ? 44 : 66;
+  const cardH = micro ? 40 : small ? 62 : 92;
 
   if (!card || faceDown) {
     return (
@@ -65,20 +55,17 @@ export function PlayingCard({
           {
             width: cardW,
             height: cardH,
+            opacity: pressed && !disabled ? 0.85 : 1,
             transform: [{ scale: pressed && !disabled ? 0.95 : 1 }],
           },
           styles.faceDown,
           style,
         ]}
       >
-        <View style={styles.faceDownPattern}>
-          {Array.from({ length: 4 }).map((_, i) => (
-            <View key={i} style={styles.patternRow}>
-              {Array.from({ length: 3 }).map((_, j) => (
-                <Text key={j} style={[styles.patternCard, { fontSize: micro ? 6 : small ? 8 : 11 }]}>♦</Text>
-              ))}
-            </View>
-          ))}
+        <View style={styles.faceDownInner}>
+          {!micro && (
+            <Text style={[styles.faceDownSymbol, small && { fontSize: 14 }]}>♦</Text>
+          )}
         </View>
       </Pressable>
     );
@@ -86,8 +73,12 @@ export function PlayingCard({
 
   const red = isRed(card.suit);
   const suitSymbol = getSuitSymbol(card.suit);
-  const rank = displayRank(card.rank);
+  const rank = card.rank;
   const color = red ? "#C0392B" : "#1A1A1A";
+
+  const rankFontSize = micro ? 8 : small ? 11 : 16;
+  const suitFontSize = micro ? 7 : small ? 9 : 12;
+  const centerFontSize = micro ? 0 : small ? 16 : 26;
 
   return (
     <Pressable
@@ -107,30 +98,64 @@ export function PlayingCard({
         style,
       ]}
     >
-      <View style={[styles.cardInner, { borderColor: selected ? "#D4AF37" : "#E8E4D8" }]}>
-        <View style={styles.cornerTL}>
-          <Text style={[styles.rankText, { fontSize: rankSize, color }]}>{rank}</Text>
-          <Text style={[styles.suitSmall, { fontSize: suitSize, color }]}>{suitSymbol}</Text>
+      <View style={[styles.cardInner, selected && styles.selectedCardInner]}>
+        <View style={[styles.corner, styles.cornerTL]}>
+          <Text
+            style={[styles.rankText, { fontSize: rankFontSize, color }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            {rank}
+          </Text>
+          <Text style={[styles.suitCorner, { fontSize: suitFontSize, color }]}>
+            {suitSymbol}
+          </Text>
         </View>
-        {!small && !micro && (
-          <Text style={[styles.centerSuit, { color, fontSize: 28 }]}>{suitSymbol}</Text>
+
+        {centerFontSize > 0 && (
+          <Text style={[styles.centerSuit, { color, fontSize: centerFontSize }]}>
+            {suitSymbol}
+          </Text>
         )}
-        {small && !micro && (
-          <Text style={[styles.centerSuit, { color, fontSize: 16 }]}>{suitSymbol}</Text>
-        )}
-        <View style={styles.cornerBR}>
-          <Text style={[styles.rankText, { fontSize: rankSize, color, transform: [{ rotate: "180deg" }] }]}>{rank}</Text>
-          <Text style={[styles.suitSmall, { fontSize: suitSize, color, transform: [{ rotate: "180deg" }] }]}>{suitSymbol}</Text>
+
+        <View style={[styles.corner, styles.cornerBR]}>
+          <Text
+            style={[
+              styles.rankText,
+              { fontSize: rankFontSize, color, transform: [{ rotate: "180deg" }] },
+            ]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            {rank}
+          </Text>
+          <Text
+            style={[
+              styles.suitCorner,
+              { fontSize: suitFontSize, color, transform: [{ rotate: "180deg" }] },
+            ]}
+          >
+            {suitSymbol}
+          </Text>
         </View>
       </View>
+
       {selected && <View style={styles.selectedGlow} />}
     </Pressable>
   );
 }
 
-export function EmptyCardSlot({ small = false, micro = false, style }: { small?: boolean; micro?: boolean; style?: object }) {
-  const cardW = micro ? 30 : small ? 46 : 68;
-  const cardH = micro ? 42 : small ? 64 : 96;
+export function EmptyCardSlot({
+  small = false,
+  micro = false,
+  style,
+}: {
+  small?: boolean;
+  micro?: boolean;
+  style?: object;
+}) {
+  const cardW = micro ? 28 : small ? 44 : 66;
+  const cardH = micro ? 40 : small ? 62 : 92;
   return (
     <View
       style={[
@@ -144,13 +169,13 @@ export function EmptyCardSlot({ small = false, micro = false, style }: { small?:
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 8,
+    borderRadius: 7,
     ...Platform.select({
       ios: {
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
+        shadowOpacity: 0.28,
+        shadowRadius: 3,
       },
       android: { elevation: 4 },
     }),
@@ -158,33 +183,38 @@ const styles = StyleSheet.create({
   cardInner: {
     flex: 1,
     backgroundColor: "#FEFDF8",
-    borderRadius: 8,
+    borderRadius: 7,
     borderWidth: 1,
-    borderColor: "#E8E4D8",
-    padding: 4,
+    borderColor: "#E0DBD0",
+    padding: 3,
     justifyContent: "space-between",
+    overflow: "hidden",
+  },
+  selectedCardInner: {
+    borderColor: "#D4AF37",
+    borderWidth: 1.5,
   },
   faceDown: {
-    backgroundColor: "#1a5c34",
-    borderRadius: 8,
+    backgroundColor: "#164d2a",
+    borderRadius: 7,
     borderWidth: 2,
     borderColor: "#D4AF37",
     overflow: "hidden",
     justifyContent: "center",
     alignItems: "center",
   },
-  faceDownPattern: {
-    gap: 2,
+  faceDownInner: {
     alignItems: "center",
     justifyContent: "center",
-    opacity: 0.5,
   },
-  patternRow: {
-    flexDirection: "row",
-    gap: 2,
-  },
-  patternCard: {
+  faceDownSymbol: {
+    fontSize: 20,
     color: "#D4AF37",
+    opacity: 0.6,
+  },
+  corner: {
+    alignItems: "flex-start",
+    width: "100%",
   },
   cornerTL: {
     alignItems: "flex-start",
@@ -193,23 +223,27 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   rankText: {
-    fontWeight: "700",
-    lineHeight: 20,
+    fontWeight: "800",
+    lineHeight: undefined,
+    includeFontPadding: false,
   },
-  suitSmall: {
-    lineHeight: 14,
-    marginTop: -2,
+  suitCorner: {
+    lineHeight: undefined,
+    includeFontPadding: false,
+    marginTop: 1,
   },
   centerSuit: {
     textAlign: "center",
-    lineHeight: 34,
+    lineHeight: undefined,
+    includeFontPadding: false,
+    alignSelf: "center",
   },
   selectedCard: {
     ...Platform.select({
       ios: {
         shadowColor: "#D4AF37",
         shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.8,
+        shadowOpacity: 0.7,
         shadowRadius: 8,
       },
       android: { elevation: 8 },
@@ -217,15 +251,18 @@ const styles = StyleSheet.create({
   },
   selectedGlow: {
     position: "absolute",
-    inset: -2,
-    borderRadius: 10,
+    top: -2,
+    left: -2,
+    right: -2,
+    bottom: -2,
+    borderRadius: 9,
     borderWidth: 2,
     borderColor: "#D4AF37",
   },
   emptySlot: {
-    borderRadius: 8,
+    borderRadius: 7,
     borderWidth: 1.5,
-    borderColor: "rgba(212, 175, 55, 0.2)",
+    borderColor: "rgba(212, 175, 55, 0.18)",
     borderStyle: "dashed",
   },
 });

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -32,7 +32,6 @@ import { recordWin, recordLoss } from "@/lib/stats";
 export default function GameScreen() {
   const insets = useSafeAreaInsets();
   const [gameState, setGameState] = useState<GameState>(() => createInitialGameState());
-  const [isAIThinking, setIsAIThinking] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
   const [setupSelected, setSetupSelected] = useState<string[]>([]);
   const messageOpacity = useRef(new Animated.Value(1)).current;
@@ -51,7 +50,7 @@ export default function GameScreen() {
       Animated.timing(messageOpacity, {
         toValue: 1,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== "web",
       }).start();
     }
   }, [gameState.message]);
@@ -79,29 +78,27 @@ export default function GameScreen() {
   }, [gameState.phase, gameState.currentPlayerIndex]);
 
   useEffect(() => {
-    if (
-      gameState.phase === "playing" &&
-      !currentPlayer.isHuman &&
-      !isAIThinking
-    ) {
-      setIsAIThinking(true);
-      const delay = 900 + Math.random() * 600;
-      const timer = setTimeout(() => {
-        setGameState((prevState) => {
-          const aiIdx = prevState.players.findIndex((p) => !p.isHuman);
-          const move = getAIMove(prevState);
-          if (move.type === "play" && move.cardIds) {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            return playCards(prevState, aiIdx, move.cardIds);
-          } else {
-            return pickUpPile(prevState, aiIdx);
-          }
-        });
-        setIsAIThinking(false);
-      }, delay);
-      return () => clearTimeout(timer);
-    }
-  }, [gameState.phase, gameState.currentPlayerIndex, isAIThinking]);
+    if (gameState.phase !== "playing") return;
+    const curr = gameState.players[gameState.currentPlayerIndex];
+    if (curr.isHuman) return;
+
+    const delay = 800 + Math.random() * 500;
+    const timer = setTimeout(() => {
+      setGameState((prevState) => {
+        const c = prevState.players[prevState.currentPlayerIndex];
+        if (c.isHuman || prevState.phase !== "playing") return prevState;
+        const aiIdx = prevState.players.findIndex((p) => !p.isHuman);
+        const move = getAIMove(prevState);
+        if (move.type === "play" && move.cardIds) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          return playCards(prevState, aiIdx, move.cardIds);
+        } else {
+          return pickUpPile(prevState, aiIdx);
+        }
+      });
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [gameState]);
 
   const handleSetupToggle = (cardId: string) => {
     setSetupSelected((prev) => {
@@ -213,7 +210,7 @@ export default function GameScreen() {
             <View style={[styles.turnIndicator, !currentPlayer.isHuman && styles.turnIndicatorActive]} />
             <Text style={styles.playerName}>
               {ai.name}
-              {isAIThinking ? "  ···" : ""}
+              {!currentPlayer.isHuman && gameState.phase === "playing" ? "  ···" : ""}
             </Text>
             <Text style={styles.handCount}>{ai.hand.length} in hand</Text>
           </View>
