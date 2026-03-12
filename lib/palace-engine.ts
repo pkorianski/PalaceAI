@@ -118,9 +118,6 @@ export function createInitialGameState(): GameState {
     for (let i = 0; i < 3; i++) {
       player.faceDownPalace[i] = deck[deckIdx++];
     }
-    for (let i = 0; i < 3; i++) {
-      player.faceUpPalace.push(deck[deckIdx++]);
-    }
     for (let i = 0; i < 6; i++) {
       player.hand.push(deck[deckIdx++]);
     }
@@ -204,10 +201,10 @@ export function getPlayerPhase(
   return "facedown";
 }
 
-export function drawUpToSix(player: PlayerState, deck: Card[]): { player: PlayerState; deck: Card[] } {
+export function drawUpToThree(player: PlayerState, deck: Card[]): { player: PlayerState; deck: Card[] } {
   const newDeck = [...deck];
   const newHand = [...player.hand];
-  while (newHand.length < 6 && newDeck.length > 0) {
+  while (newHand.length < 3 && newDeck.length > 0) {
     newHand.push(newDeck.shift()!);
   }
   return { player: { ...player, hand: newHand }, deck: newDeck };
@@ -269,12 +266,8 @@ export function playCards(
     newState = { ...newState, pile: newPile };
   }
 
-  if (getPlayerPhase(player) === "hand" && player.hand.length < 6 && !burned) {
-    const result = drawUpToSix(player, newDeck);
-    player = result.player;
-    newDeck = result.deck;
-  } else if (getPlayerPhase(player) === "hand" && player.hand.length < 6 && burned) {
-    const result = drawUpToSix(player, newDeck);
+  if (getPlayerPhase(player) === "hand" && player.hand.length < 3) {
+    const result = drawUpToThree(player, newDeck);
     player = result.player;
     newDeck = result.deck;
   }
