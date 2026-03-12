@@ -302,12 +302,18 @@ export function playCards(
   newPlayers[playerIdx] = player;
   newState = { ...newState, players: newPlayers };
 
+  const playedRank = playedCards[0].rank;
+  const isReset = playedRank === "2" && !burned;
+
   let nextIdx: number;
   let message: string;
 
   if (burned) {
     nextIdx = playerIdx;
     message = `Pile burned! ${player.name} plays again!`;
+  } else if (isReset) {
+    nextIdx = playerIdx;
+    message = `2 played — ${player.name} plays any card!`;
   } else {
     nextIdx = (playerIdx + 1) % newState.players.length;
     message = `${newState.players[nextIdx].name}'s turn`;
