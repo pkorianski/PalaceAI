@@ -266,7 +266,7 @@ export function playCards(
     newState = { ...newState, pile: newPile };
   }
 
-  if (getPlayerPhase(player) === "hand" && player.hand.length < 3) {
+  if (playerPhase === "hand" && player.hand.length < 3) {
     const result = drawUpToThree(player, newDeck);
     player = result.player;
     newDeck = result.deck;
