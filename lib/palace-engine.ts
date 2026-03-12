@@ -148,10 +148,11 @@ export function getTopPileCard(pile: Card[]): Card | null {
 }
 
 export function getEffectiveTopCard(pile: Card[]): Card | null {
-  for (let i = pile.length - 1; i >= 0; i--) {
-    if (pile[i].rank !== "3") return pile[i];
-  }
-  return null;
+  if (pile.length === 0) return null;
+  const top = pile[pile.length - 1];
+  // 3 on top = any card can follow (pile is "open")
+  if (top.rank === "3") return null;
+  return top;
 }
 
 export function isSpecialCard(rank: Rank): boolean {
