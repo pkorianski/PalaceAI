@@ -352,42 +352,56 @@ export default function GameScreen() {
         </View>
 
         <View style={styles.playerSection}>
-          <View style={styles.palaceRow}>
-            {human.faceDownPalace.map((card, i) =>
-              card ? (
-                <PlayingCard
-                  key={`human-fd-${i}`}
-                  faceDown={humanPhase !== "facedown"}
-                  card={humanPhase === "facedown" ? undefined : undefined}
-                  small
-                  onPress={humanPhase === "facedown" && isHumanTurn ? () => handleFaceDownPlay(i) : undefined}
-                  disabled={humanPhase !== "facedown" || !isHumanTurn}
-                />
-              ) : (
-                <EmptyCardSlot key={`human-fd-empty-${i}`} small />
-              )
-            )}
-            <View style={styles.palaceSpacer} />
-            {gameState.phase === "choose_palace" && gameState.currentPlayerIndex === 0
-              ? human.faceUpPalace.map((card) => (
-                  <PlayingCard key={card.id} card={card} small />
-                ))
-              : human.faceUpPalace.map((card) => (
-                  <PlayingCard
-                    key={card.id}
-                    card={card}
-                    small
-                    selected={humanPhase === "faceup" && selectedPlayCards.includes(card.id)}
-                    onPress={humanPhase === "faceup" && isHumanTurn ? () => handleCardSelect(card.id) : undefined}
-                    disabled={humanPhase !== "faceup" || !isHumanTurn}
-                  />
-                ))}
-          </View>
-
           <View style={styles.playerHeader}>
             <View style={[styles.turnIndicator, currentPlayer.isHuman && gameState.phase === "playing" && styles.turnIndicatorActive]} />
             <Text style={styles.playerName}>{human.name}</Text>
             <Text style={styles.handCount}>{human.hand.length} in hand</Text>
+          </View>
+
+          <View style={styles.palaceRowLabeled}>
+            <View style={styles.palaceGroup}>
+              <View style={styles.palaceGroupCards}>
+                {human.faceDownPalace.map((card, i) =>
+                  card ? (
+                    <PlayingCard
+                      key={`human-fd-${i}`}
+                      faceDown={humanPhase !== "facedown"}
+                      small
+                      onPress={humanPhase === "facedown" && isHumanTurn ? () => handleFaceDownPlay(i) : undefined}
+                      disabled={humanPhase !== "facedown" || !isHumanTurn}
+                    />
+                  ) : (
+                    <EmptyCardSlot key={`human-fd-empty-${i}`} small />
+                  )
+                )}
+              </View>
+              <Text style={styles.palaceGroupLabel}>FACE DOWN</Text>
+            </View>
+            <View style={styles.palaceSpacer} />
+            <View style={styles.palaceGroup}>
+              <View style={styles.palaceGroupCards}>
+                {gameState.phase === "choose_palace" && gameState.currentPlayerIndex === 0
+                  ? [
+                      ...human.faceUpPalace.map((card) => (
+                        <PlayingCard key={card.id} card={card} small />
+                      )),
+                      ...[...Array(3 - human.faceUpPalace.length)].map((_, i) => (
+                        <EmptyCardSlot key={`human-fu-empty-${i}`} small />
+                      )),
+                    ]
+                  : human.faceUpPalace.map((card) => (
+                      <PlayingCard
+                        key={card.id}
+                        card={card}
+                        small
+                        selected={humanPhase === "faceup" && selectedPlayCards.includes(card.id)}
+                        onPress={humanPhase === "faceup" && isHumanTurn ? () => handleCardSelect(card.id) : undefined}
+                        disabled={humanPhase !== "faceup" || !isHumanTurn}
+                      />
+                    ))}
+              </View>
+              <Text style={styles.palaceGroupLabel}>FACE UP</Text>
+            </View>
           </View>
         </View>
 
