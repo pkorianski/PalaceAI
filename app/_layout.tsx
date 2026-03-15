@@ -21,6 +21,17 @@ function RootLayoutNav() {
       <Stack.Screen name="index" />
       <Stack.Screen name="game" options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="rules" options={{ animation: "slide_from_bottom" }} />
+      <Stack.Screen
+        name="achievements"
+        options={{
+          headerShown: true,
+          headerTitle: "Achievements",
+          headerStyle: { backgroundColor: "#0d2b1a" },
+          headerTintColor: "#D4AF37",
+          headerTitleStyle: { fontFamily: "Inter_700Bold", fontSize: 18 },
+          animation: "slide_from_bottom",
+        }}
+      />
     </Stack>
   );
 }

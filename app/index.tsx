@@ -51,6 +51,11 @@ export default function HomeScreen() {
     router.push("/rules");
   };
 
+  const handleAchievements = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push("/achievements");
+  };
+
   const winRate =
     stats.gamesPlayed > 0
       ? Math.round((stats.wins / stats.gamesPlayed) * 100)
@@ -186,13 +191,22 @@ export default function HomeScreen() {
         )}
 
         {totalCount > 0 && (
-          <View style={styles.achievementsCard}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.achievementsCard,
+              pressed && { opacity: 0.85 },
+            ]}
+            onPress={handleAchievements}
+          >
             <View style={styles.achievementsHeader}>
               <Text style={styles.cardSectionTitle}>Achievements</Text>
-              <View style={styles.achievementsBadge}>
-                <Text style={styles.achievementsBadgeText}>
-                  {unlockedCount}/{totalCount}
-                </Text>
+              <View style={styles.achievementsHeaderRight}>
+                <View style={styles.achievementsBadge}>
+                  <Text style={styles.achievementsBadgeText}>
+                    {unlockedCount}/{totalCount}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={14} color="rgba(254,253,248,0.3)" />
               </View>
             </View>
 
@@ -238,7 +252,7 @@ export default function HomeScreen() {
             {unlockedCount === totalCount && (
               <Text style={styles.allUnlocked}>All achievements unlocked!</Text>
             )}
-          </View>
+          </Pressable>
         )}
 
         <View
@@ -483,8 +497,12 @@ const styles = StyleSheet.create({
   achievementsHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
+    justifyContent: "space-between",
+  },
+  achievementsHeaderRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   achievementsBadge: {
     backgroundColor: "rgba(212,175,55,0.15)",
