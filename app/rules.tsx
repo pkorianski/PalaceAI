@@ -46,7 +46,7 @@ const RULES: RuleSection[] = [
     title: "Special Cards",
     icon: "flash-outline",
     content:
-      "2 — Reset: Can be played on anything. You then play again and can play any card.\n\n3 — Open: Can be played on anything. After a 3, the next player can play any card.\n\n10 — Burn: Played on anything. The pile is immediately removed from play. Play again!",
+      "2 — Reset: Can be played on anything. You then play again and can play any card.\n\n10 — Burn: Can be played on anything. The pile is immediately removed from play. Play again!",
   },
   {
     title: "4 of a Kind = Burn",

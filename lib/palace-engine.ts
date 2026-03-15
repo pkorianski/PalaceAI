@@ -146,19 +146,16 @@ export function getTopPileCard(pile: Card[]): Card | null {
 
 export function getEffectiveTopCard(pile: Card[]): Card | null {
   if (pile.length === 0) return null;
-  const top = pile[pile.length - 1];
-  // 3 on top = any card can follow (pile is "open")
-  if (top.rank === "3") return null;
-  return top;
+  return pile[pile.length - 1];
 }
 
 export function isSpecialCard(rank: Rank): boolean {
-  return rank === "2" || rank === "10" || rank === "3";
+  return rank === "2" || rank === "10";
 }
 
 export function canPlayCard(card: Card, pile: Card[]): boolean {
   const rank = card.rank;
-  if (rank === "2" || rank === "10" || rank === "3") return true;
+  if (rank === "2" || rank === "10") return true;
   const top = getEffectiveTopCard(pile);
   if (!top) return true;
   return RANK_VALUES[rank] >= RANK_VALUES[top.rank];
@@ -175,9 +172,6 @@ export function wouldBurn(cards: Card[], pile: Card[]): boolean {
   if (cards[0].rank === "10") return true;
   const newPile = [...pile, ...cards];
   const lastRank = newPile[newPile.length - 1].rank;
-  if (lastRank === "3") {
-    return false;
-  }
   let count = 0;
   for (let i = newPile.length - 1; i >= 0; i--) {
     if (newPile[i].rank === lastRank) {
@@ -402,7 +396,6 @@ function scorePlay(cards: Card[], pile: Card[]): number {
   if (rank === "10") return 100;
   if (wouldBurn(cards, pile)) return 90;
   if (rank === "2") return 50;
-  if (rank === "3") return 30;
   const top = getEffectiveTopCard(pile);
   const topVal = top ? RANK_VALUES[top.rank] : 0;
   const val = RANK_VALUES[rank as Rank];
