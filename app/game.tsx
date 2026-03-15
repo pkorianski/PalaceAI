@@ -27,15 +27,27 @@ import {
   type Card,
 } from "@/lib/palace-engine";
 import { PlayingCard, EmptyCardSlot } from "@/components/PlayingCard";
-import { recordWin, recordLoss } from "@/lib/stats";
+import { recordGameResult, type GameResult } from "@/lib/stats";
+import {
+  checkAndUnlockAchievements,
+  type Achievement,
+} from "@/lib/achievements";
 
 export default function GameScreen() {
   const insets = useSafeAreaInsets();
   const [gameState, setGameState] = useState<GameState>(() => createInitialGameState());
   const [showGameOver, setShowGameOver] = useState(false);
   const [setupSelected, setSetupSelected] = useState<string[]>([]);
+  const [gameOverData, setGameOverData] = useState<{
+    result: GameResult;
+    newAchievements: Achievement[];
+  } | null>(null);
   const messageOpacity = useRef(new Animated.Value(1)).current;
   const prevMessage = useRef("");
+  const humanTurnsRef = useRef(0);
+  const humanPickupsRef = useRef(0);
+  const burnsRef = useRef(0);
+  const prevBurnPileLen = useRef(0);
 
   const human = gameState.players[0];
   const ai = gameState.players[1];
@@ -56,16 +68,32 @@ export default function GameScreen() {
   }, [gameState.message]);
 
   useEffect(() => {
+    if (gameState.burnPile.length > prevBurnPileLen.current) {
+      burnsRef.current++;
+      prevBurnPileLen.current = gameState.burnPile.length;
+    }
+  }, [gameState.burnPile.length]);
+
+  useEffect(() => {
     if (gameState.phase === "game_over" && !showGameOver) {
       const isWin = gameState.winner === "human";
+      const result: GameResult = {
+        won: isWin,
+        turns: humanTurnsRef.current,
+        pickups: humanPickupsRef.current,
+        burns: burnsRef.current,
+      };
       if (isWin) {
-        recordWin();
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
-        recordLoss();
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-      setTimeout(() => setShowGameOver(true), 500);
+      recordGameResult(result).then((updatedStats) =>
+        checkAndUnlockAchievements(updatedStats, result).then((newAchievements) => {
+          setGameOverData({ result, newAchievements });
+          setTimeout(() => setShowGameOver(true), 500);
+        })
+      );
     }
   }, [gameState.phase, gameState.winner]);
 
@@ -153,12 +181,14 @@ export default function GameScreen() {
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    humanTurnsRef.current++;
     setSelectedPlayCards([]);
     setGameState((s) => playCards(s, 0, selectedPlayCards));
   };
 
   const handlePickUp = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    humanPickupsRef.current++;
     setSelectedPlayCards([]);
     setGameState((s) => pickUpPile(s, 0));
   };
@@ -167,6 +197,7 @@ export default function GameScreen() {
     if (!isHumanTurn) return;
     if (humanPhase !== "facedown") return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    humanTurnsRef.current++;
     setGameState((s) => playCards(s, 0, [`fd-${fdIdx}`]));
   };
 
@@ -174,6 +205,11 @@ export default function GameScreen() {
     setShowGameOver(false);
     setSelectedPlayCards([]);
     setSetupSelected([]);
+    setGameOverData(null);
+    humanTurnsRef.current = 0;
+    humanPickupsRef.current = 0;
+    burnsRef.current = 0;
+    prevBurnPileLen.current = 0;
     setGameState(createInitialGameState());
   };
 
@@ -461,29 +497,78 @@ export default function GameScreen() {
       <Modal visible={showGameOver} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalEmoji}>
-              {gameState.winner === "human" ? "🏆" : "💀"}
-            </Text>
-            <Text style={styles.modalTitle}>
-              {gameState.winner === "human" ? "You Win!" : "You Lose"}
-            </Text>
-            <Text style={styles.modalSub}>
-              {gameState.winner === "human"
-                ? "Excellent play! You cleared all your cards."
-                : "The AI beat you this time. Better luck next round!"}
-            </Text>
-            <Pressable
-              style={({ pressed }) => [styles.modalPlayAgain, pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] }]}
-              onPress={handleNewGame}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.modalScroll}
+              bounces={false}
             >
-              <Text style={styles.modalPlayAgainText}>Play Again</Text>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [styles.modalHomeBtn, pressed && { opacity: 0.7 }]}
-              onPress={() => { setShowGameOver(false); router.back(); }}
-            >
-              <Text style={styles.modalHomeBtnText}>Home</Text>
-            </Pressable>
+              <Text style={styles.modalEmoji}>
+                {gameState.winner === "human" ? "🏆" : "💀"}
+              </Text>
+              <Text style={styles.modalTitle}>
+                {gameState.winner === "human" ? "You Win!" : "You Lose"}
+              </Text>
+
+              {gameOverData && (
+                <View style={styles.summaryBox}>
+                  <Text style={styles.summaryLabel}>GAME SUMMARY</Text>
+                  <View style={styles.summaryRow}>
+                    <View style={styles.summaryItem}>
+                      <Text style={styles.summaryValue}>{gameOverData.result.turns}</Text>
+                      <Text style={styles.summaryItemLabel}>Turns</Text>
+                    </View>
+                    <View style={styles.summaryDivider} />
+                    <View style={styles.summaryItem}>
+                      <Text style={[styles.summaryValue, gameOverData.result.pickups > 0 && styles.summaryWarn]}>
+                        {gameOverData.result.pickups}
+                      </Text>
+                      <Text style={styles.summaryItemLabel}>Pickups</Text>
+                    </View>
+                    <View style={styles.summaryDivider} />
+                    <View style={styles.summaryItem}>
+                      <Text style={[styles.summaryValue, gameOverData.result.burns > 0 && styles.summaryGold]}>
+                        {gameOverData.result.burns}
+                      </Text>
+                      <Text style={styles.summaryItemLabel}>Burns</Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+
+              {gameOverData && gameOverData.newAchievements.length > 0 && (
+                <View style={styles.achievementsBox}>
+                  <Text style={styles.achievementsLabel}>
+                    {gameOverData.newAchievements.length === 1
+                      ? "ACHIEVEMENT UNLOCKED"
+                      : `${gameOverData.newAchievements.length} ACHIEVEMENTS UNLOCKED`}
+                  </Text>
+                  {gameOverData.newAchievements.map((a) => (
+                    <View key={a.id} style={styles.achievementRow}>
+                      <View style={styles.achievementIcon}>
+                        <Ionicons name={a.icon as any} size={18} color="#D4AF37" />
+                      </View>
+                      <View style={styles.achievementText}>
+                        <Text style={styles.achievementTitle}>{a.title}</Text>
+                        <Text style={styles.achievementDesc}>{a.desc}</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              <Pressable
+                style={({ pressed }) => [styles.modalPlayAgain, pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] }]}
+                onPress={handleNewGame}
+              >
+                <Text style={styles.modalPlayAgainText}>Play Again</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [styles.modalHomeBtn, pressed && { opacity: 0.7 }]}
+                onPress={() => { setShowGameOver(false); router.back(); }}
+              >
+                <Text style={styles.modalHomeBtnText}>Home</Text>
+              </Pressable>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -791,13 +876,12 @@ const styles = StyleSheet.create({
   modalCard: {
     backgroundColor: "#0f3320",
     borderRadius: 24,
-    padding: 32,
-    alignItems: "center",
     width: "100%",
     maxWidth: 340,
+    maxHeight: "85%",
     borderWidth: 1,
     borderColor: "rgba(212,175,55,0.25)",
-    gap: 12,
+    overflow: "hidden",
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -808,8 +892,13 @@ const styles = StyleSheet.create({
       android: { elevation: 12 },
     }),
   },
+  modalScroll: {
+    alignItems: "center",
+    padding: 28,
+    gap: 16,
+  },
   modalEmoji: {
-    fontSize: 56,
+    fontSize: 52,
   },
   modalTitle: {
     fontSize: 32,
@@ -817,13 +906,100 @@ const styles = StyleSheet.create({
     color: "#D4AF37",
     textAlign: "center",
   },
-  modalSub: {
-    fontSize: 15,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.65)",
+  summaryBox: {
+    width: "100%",
+    backgroundColor: "rgba(0,0,0,0.2)",
+    borderRadius: 14,
+    padding: 16,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+  summaryLabel: {
+    fontSize: 9,
+    fontFamily: "Inter_600SemiBold",
+    color: "rgba(254,253,248,0.4)",
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
     textAlign: "center",
-    lineHeight: 22,
-    marginBottom: 8,
+  },
+  summaryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+  },
+  summaryItem: {
+    alignItems: "center",
+    gap: 3,
+    flex: 1,
+  },
+  summaryValue: {
+    fontSize: 28,
+    fontFamily: "Inter_700Bold",
+    color: "#FEFDF8",
+  },
+  summaryItemLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(254,253,248,0.45)",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  summaryDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: "rgba(255,255,255,0.1)",
+  },
+  summaryWarn: {
+    color: "#E74C3C",
+  },
+  summaryGold: {
+    color: "#D4AF37",
+  },
+  achievementsBox: {
+    width: "100%",
+    backgroundColor: "rgba(212,175,55,0.07)",
+    borderRadius: 14,
+    padding: 14,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: "rgba(212,175,55,0.2)",
+  },
+  achievementsLabel: {
+    fontSize: 9,
+    fontFamily: "Inter_600SemiBold",
+    color: "#D4AF37",
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+    textAlign: "center",
+    marginBottom: 2,
+  },
+  achievementRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  achievementIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "rgba(212,175,55,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  achievementText: {
+    flex: 1,
+    gap: 1,
+  },
+  achievementTitle: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: "#FEFDF8",
+  },
+  achievementDesc: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(254,253,248,0.5)",
   },
   modalPlayAgain: {
     backgroundColor: "#D4AF37",
@@ -832,6 +1008,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 48,
     width: "100%",
     alignItems: "center",
+    marginTop: 4,
     ...Platform.select({
       ios: {
         shadowColor: "#D4AF37",
@@ -848,7 +1025,7 @@ const styles = StyleSheet.create({
     color: "#0d2b1a",
   },
   modalHomeBtn: {
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   modalHomeBtnText: {
     fontSize: 15,

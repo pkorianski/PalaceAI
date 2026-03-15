@@ -6,42 +6,57 @@ export interface GameStats {
   gamesPlayed: number;
   winStreak: number;
   bestStreak: number;
+  totalBurns: number;
+  bestWinTurns: number;
+}
+
+export interface GameResult {
+  won: boolean;
+  turns: number;
+  pickups: number;
+  burns: number;
 }
 
 const STATS_KEY = "palace_stats";
 
+const DEFAULT_STATS: GameStats = {
+  wins: 0,
+  losses: 0,
+  gamesPlayed: 0,
+  winStreak: 0,
+  bestStreak: 0,
+  totalBurns: 0,
+  bestWinTurns: 0,
+};
+
 export async function getStats(): Promise<GameStats> {
   try {
     const raw = await AsyncStorage.getItem(STATS_KEY);
-    if (!raw) return { wins: 0, losses: 0, gamesPlayed: 0, winStreak: 0, bestStreak: 0 };
-    return JSON.parse(raw);
+    if (!raw) return { ...DEFAULT_STATS };
+    return { ...DEFAULT_STATS, ...JSON.parse(raw) };
   } catch {
-    return { wins: 0, losses: 0, gamesPlayed: 0, winStreak: 0, bestStreak: 0 };
+    return { ...DEFAULT_STATS };
   }
 }
 
-export async function recordWin(): Promise<GameStats> {
+export async function recordGameResult(result: GameResult): Promise<GameStats> {
   const stats = await getStats();
-  const newStreak = stats.winStreak + 1;
+  const newStreak = result.won ? stats.winStreak + 1 : 0;
+  const bestWinTurns =
+    result.won
+      ? stats.bestWinTurns === 0
+        ? result.turns
+        : Math.min(stats.bestWinTurns, result.turns)
+      : stats.bestWinTurns;
+
   const updated: GameStats = {
-    wins: stats.wins + 1,
-    losses: stats.losses,
+    wins: stats.wins + (result.won ? 1 : 0),
+    losses: stats.losses + (result.won ? 0 : 1),
     gamesPlayed: stats.gamesPlayed + 1,
     winStreak: newStreak,
     bestStreak: Math.max(stats.bestStreak, newStreak),
-  };
-  await AsyncStorage.setItem(STATS_KEY, JSON.stringify(updated));
-  return updated;
-}
-
-export async function recordLoss(): Promise<GameStats> {
-  const stats = await getStats();
-  const updated: GameStats = {
-    wins: stats.wins,
-    losses: stats.losses + 1,
-    gamesPlayed: stats.gamesPlayed + 1,
-    winStreak: 0,
-    bestStreak: stats.bestStreak,
+    totalBurns: stats.totalBurns + result.burns,
+    bestWinTurns,
   };
   await AsyncStorage.setItem(STATS_KEY, JSON.stringify(updated));
   return updated;

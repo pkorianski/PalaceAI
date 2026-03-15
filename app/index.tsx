@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,26 +6,40 @@ import {
   Pressable,
   Platform,
   StatusBar,
+  ScrollView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { getStats, type GameStats } from "@/lib/stats";
+import {
+  getUnlockedIds,
+  ALL_ACHIEVEMENTS,
+  type Achievement,
+} from "@/lib/achievements";
+
+const DEFAULT_STATS: GameStats = {
+  wins: 0,
+  losses: 0,
+  gamesPlayed: 0,
+  winStreak: 0,
+  bestStreak: 0,
+  totalBurns: 0,
+  bestWinTurns: 0,
+};
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const [stats, setStats] = useState<GameStats>({
-    wins: 0,
-    losses: 0,
-    gamesPlayed: 0,
-    winStreak: 0,
-    bestStreak: 0,
-  });
+  const [stats, setStats] = useState<GameStats>(DEFAULT_STATS);
+  const [unlockedIds, setUnlockedIds] = useState<string[]>([]);
 
-  useEffect(() => {
-    getStats().then(setStats);
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      getStats().then(setStats);
+      getUnlockedIds().then(setUnlockedIds);
+    }, [])
+  );
 
   const handlePlay = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -42,97 +56,200 @@ export default function HomeScreen() {
       ? Math.round((stats.wins / stats.gamesPlayed) * 100)
       : 0;
 
+  const unlockedCount = unlockedIds.length;
+  const totalCount = ALL_ACHIEVEMENTS.length;
+
+  const recentAchievements: Achievement[] = ALL_ACHIEVEMENTS.filter((a) =>
+    unlockedIds.includes(a.id)
+  ).slice(-3).reverse();
+
   return (
-    <View style={[styles.container, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 0) }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop:
+            insets.top + (Platform.OS === "web" ? 67 : 0),
+        },
+      ]}
+    >
       <StatusBar barStyle="light-content" />
 
-      <View style={styles.header}>
-        <View style={styles.suitRow}>
-          <Text style={styles.suitSymbol}>♠</Text>
-          <Text style={[styles.suitSymbol, styles.redSuit]}>♥</Text>
-          <Text style={styles.suitSymbol}>♣</Text>
-          <Text style={[styles.suitSymbol, styles.redSuit]}>♦</Text>
-        </View>
-        <Text style={styles.appName}>PALACE</Text>
-        <Text style={styles.tagline}>The Card Game</Text>
-      </View>
-
-      <View style={styles.cardPreview}>
-        <View style={[styles.previewCard, styles.previewCard1]}>
-          <Text style={styles.previewRank}>K</Text>
-          <Text style={styles.previewSuit}>♠</Text>
-        </View>
-        <View style={[styles.previewCard, styles.previewCard2]}>
-          <Text style={[styles.previewRank, styles.red]}>A</Text>
-          <Text style={[styles.previewSuit, styles.red]}>♥</Text>
-        </View>
-        <View style={[styles.previewCard, styles.previewCard3]}>
-          <Text style={styles.previewRank}>10</Text>
-          <Text style={styles.previewSuit}>♣</Text>
-        </View>
-      </View>
-
-      <Pressable
-        style={({ pressed }) => [
-          styles.playButton,
-          pressed && styles.playButtonPressed,
-        ]}
-        onPress={handlePlay}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.playButtonText}>Play</Text>
-        <Ionicons name="play" size={22} color="#0d2b1a" />
-      </Pressable>
-
-      <Pressable
-        style={({ pressed }) => [
-          styles.secondaryButton,
-          pressed && styles.secondaryButtonPressed,
-        ]}
-        onPress={handleRules}
-      >
-        <Ionicons name="book-outline" size={18} color="#D4AF37" />
-        <Text style={styles.secondaryButtonText}>How to Play</Text>
-      </Pressable>
-
-      {stats.gamesPlayed > 0 && (
-        <View style={styles.statsCard}>
-          <Text style={styles.statsTitle}>Your Stats</Text>
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{stats.gamesPlayed}</Text>
-              <Text style={styles.statLabel}>Played</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, styles.greenStat]}>{stats.wins}</Text>
-              <Text style={styles.statLabel}>Won</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, styles.redStat]}>{stats.losses}</Text>
-              <Text style={styles.statLabel}>Lost</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, styles.goldStat]}>{winRate}%</Text>
-              <Text style={styles.statLabel}>Win Rate</Text>
-            </View>
+        <View style={styles.header}>
+          <View style={styles.suitRow}>
+            <Text style={styles.suitSymbol}>♠</Text>
+            <Text style={[styles.suitSymbol, styles.redSuit]}>♥</Text>
+            <Text style={styles.suitSymbol}>♣</Text>
+            <Text style={[styles.suitSymbol, styles.redSuit]}>♦</Text>
           </View>
-          {stats.bestStreak > 0 && (
-            <View style={styles.streakRow}>
-              <Ionicons name="flame" size={14} color="#D4AF37" />
-              <Text style={styles.streakText}>Best streak: {stats.bestStreak}</Text>
-              {stats.winStreak > 0 && (
-                <Text style={styles.activeStreak}> · Current: {stats.winStreak}</Text>
+          <Text style={styles.appName}>PALACE</Text>
+          <Text style={styles.tagline}>The Card Game</Text>
+        </View>
+
+        <View style={styles.cardPreview}>
+          <View style={[styles.previewCard, styles.previewCard1]}>
+            <Text style={styles.previewRank}>K</Text>
+            <Text style={styles.previewSuit}>♠</Text>
+          </View>
+          <View style={[styles.previewCard, styles.previewCard2]}>
+            <Text style={[styles.previewRank, styles.red]}>A</Text>
+            <Text style={[styles.previewSuit, styles.red]}>♥</Text>
+          </View>
+          <View style={[styles.previewCard, styles.previewCard3]}>
+            <Text style={styles.previewRank}>10</Text>
+            <Text style={styles.previewSuit}>♣</Text>
+          </View>
+        </View>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.playButton,
+            pressed && styles.playButtonPressed,
+          ]}
+          onPress={handlePlay}
+        >
+          <Text style={styles.playButtonText}>Play</Text>
+          <Ionicons name="play" size={22} color="#0d2b1a" />
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.secondaryButton,
+            pressed && styles.secondaryButtonPressed,
+          ]}
+          onPress={handleRules}
+        >
+          <Ionicons name="book-outline" size={18} color="#D4AF37" />
+          <Text style={styles.secondaryButtonText}>How to Play</Text>
+        </Pressable>
+
+        {stats.gamesPlayed > 0 && (
+          <View style={styles.statsCard}>
+            <Text style={styles.cardSectionTitle}>Your Stats</Text>
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{stats.gamesPlayed}</Text>
+                <Text style={styles.statLabel}>Played</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, styles.greenStat]}>{stats.wins}</Text>
+                <Text style={styles.statLabel}>Won</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, styles.redStat]}>{stats.losses}</Text>
+                <Text style={styles.statLabel}>Lost</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, styles.goldStat]}>{winRate}%</Text>
+                <Text style={styles.statLabel}>Win Rate</Text>
+              </View>
+            </View>
+
+            <View style={styles.statsSecondRow}>
+              {stats.bestStreak > 0 && (
+                <View style={styles.miniStat}>
+                  <Ionicons name="flame" size={13} color="#D4AF37" />
+                  <Text style={styles.miniStatText}>
+                    Best streak: <Text style={styles.miniStatBold}>{stats.bestStreak}</Text>
+                  </Text>
+                  {stats.winStreak > 0 && (
+                    <Text style={styles.miniStatBold}> · Active: {stats.winStreak}</Text>
+                  )}
+                </View>
+              )}
+              {stats.totalBurns > 0 && (
+                <View style={styles.miniStat}>
+                  <Ionicons name="bonfire-outline" size={13} color="#D4AF37" />
+                  <Text style={styles.miniStatText}>
+                    Total burns: <Text style={styles.miniStatBold}>{stats.totalBurns}</Text>
+                  </Text>
+                </View>
+              )}
+              {stats.bestWinTurns > 0 && (
+                <View style={styles.miniStat}>
+                  <Ionicons name="flash-outline" size={13} color="#D4AF37" />
+                  <Text style={styles.miniStatText}>
+                    Best win: <Text style={styles.miniStatBold}>{stats.bestWinTurns} turns</Text>
+                  </Text>
+                </View>
               )}
             </View>
-          )}
-        </View>
-      )}
+          </View>
+        )}
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 0) }]}>
-        <Text style={styles.footerText}>Single Player vs AI</Text>
-      </View>
+        {totalCount > 0 && (
+          <View style={styles.achievementsCard}>
+            <View style={styles.achievementsHeader}>
+              <Text style={styles.cardSectionTitle}>Achievements</Text>
+              <View style={styles.achievementsBadge}>
+                <Text style={styles.achievementsBadgeText}>
+                  {unlockedCount}/{totalCount}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { width: `${(unlockedCount / totalCount) * 100}%` },
+                ]}
+              />
+            </View>
+
+            {recentAchievements.length > 0 ? (
+              <View style={styles.recentAchievements}>
+                {recentAchievements.map((a) => (
+                  <View key={a.id} style={styles.achievementRow}>
+                    <View style={styles.achievementIcon}>
+                      <Ionicons
+                        name={a.icon as any}
+                        size={16}
+                        color="#D4AF37"
+                      />
+                    </View>
+                    <View style={styles.achievementText}>
+                      <Text style={styles.achievementTitle}>{a.title}</Text>
+                      <Text style={styles.achievementDesc}>{a.desc}</Text>
+                    </View>
+                    <Ionicons name="checkmark-circle" size={16} color="#2ECC71" />
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <Text style={styles.noAchievementsText}>
+                Win your first game to unlock achievements
+              </Text>
+            )}
+
+            {unlockedCount < totalCount && (
+              <Text style={styles.moreAchievements}>
+                {totalCount - unlockedCount} more to unlock
+              </Text>
+            )}
+            {unlockedCount === totalCount && (
+              <Text style={styles.allUnlocked}>All achievements unlocked!</Text>
+            )}
+          </View>
+        )}
+
+        <View
+          style={[
+            styles.footer,
+            { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 16) },
+          ]}
+        >
+          <Text style={styles.footerText}>Single Player vs AI</Text>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -141,6 +258,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0d2b1a",
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
     alignItems: "center",
     paddingHorizontal: 24,
   },
@@ -272,7 +394,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "rgba(212, 175, 55, 0.35)",
     width: "100%",
-    marginBottom: 28,
+    marginBottom: 24,
   },
   secondaryButtonPressed: {
     backgroundColor: "rgba(212, 175, 55, 0.08)",
@@ -289,14 +411,15 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: "rgba(212, 175, 55, 0.15)",
+    marginBottom: 16,
+    gap: 12,
   },
-  statsTitle: {
-    fontSize: 12,
+  cardSectionTitle: {
+    fontSize: 11,
     fontFamily: "Inter_600SemiBold",
-    color: "rgba(254, 253, 248, 0.45)",
+    color: "rgba(254, 253, 248, 0.4)",
     letterSpacing: 2,
     textTransform: "uppercase",
-    marginBottom: 12,
     textAlign: "center",
   },
   statsRow: {
@@ -307,6 +430,7 @@ const styles = StyleSheet.create({
   statItem: {
     alignItems: "center",
     gap: 2,
+    flex: 1,
   },
   statValue: {
     fontSize: 22,
@@ -328,25 +452,118 @@ const styles = StyleSheet.create({
   greenStat: { color: "#2ECC71" },
   redStat: { color: "#E74C3C" },
   goldStat: { color: "#D4AF37" },
-  streakRow: {
+  statsSecondRow: {
+    gap: 6,
+  },
+  miniStat: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  miniStatText: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(254,253,248,0.5)",
+  },
+  miniStatBold: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    color: "rgba(254,253,248,0.75)",
+  },
+  achievementsCard: {
+    width: "100%",
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(212, 175, 55, 0.15)",
+    marginBottom: 16,
+    gap: 12,
+  },
+  achievementsHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 10,
-    gap: 4,
+    gap: 10,
   },
-  streakText: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    color: "rgba(254, 253, 248, 0.55)",
+  achievementsBadge: {
+    backgroundColor: "rgba(212,175,55,0.15)",
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: "rgba(212,175,55,0.25)",
   },
-  activeStreak: {
-    fontSize: 12,
+  achievementsBadgeText: {
+    fontSize: 11,
     fontFamily: "Inter_600SemiBold",
     color: "#D4AF37",
   },
+  progressTrack: {
+    width: "100%",
+    height: 4,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#D4AF37",
+    borderRadius: 2,
+    minWidth: 4,
+  },
+  recentAchievements: {
+    gap: 10,
+  },
+  achievementRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  achievementIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    backgroundColor: "rgba(212,175,55,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  achievementText: {
+    flex: 1,
+    gap: 1,
+  },
+  achievementTitle: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: "#FEFDF8",
+  },
+  achievementDesc: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(254,253,248,0.45)",
+  },
+  noAchievementsText: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(254,253,248,0.35)",
+    textAlign: "center",
+    paddingVertical: 4,
+  },
+  moreAchievements: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(254,253,248,0.3)",
+    textAlign: "center",
+    letterSpacing: 0.3,
+  },
+  allUnlocked: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    color: "#D4AF37",
+    textAlign: "center",
+    letterSpacing: 0.5,
+  },
   footer: {
-    marginTop: "auto",
     paddingTop: 16,
     alignItems: "center",
   },
