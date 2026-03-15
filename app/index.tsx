@@ -56,6 +56,11 @@ export default function HomeScreen() {
     router.push("/achievements");
   };
 
+  const handleStats = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push("/stats");
+  };
+
   const winRate =
     stats.gamesPlayed > 0
       ? Math.round((stats.wins / stats.gamesPlayed) * 100)
@@ -134,8 +139,14 @@ export default function HomeScreen() {
         </Pressable>
 
         {stats.gamesPlayed > 0 && (
-          <View style={styles.statsCard}>
-            <Text style={styles.cardSectionTitle}>Your Stats</Text>
+          <Pressable
+            style={({ pressed }) => [styles.statsCard, pressed && { opacity: 0.85 }]}
+            onPress={handleStats}
+          >
+            <View style={styles.statsCardHeader}>
+              <Text style={styles.cardSectionTitle}>Your Stats</Text>
+              <Ionicons name="chevron-forward" size={14} color="rgba(254,253,248,0.3)" />
+            </View>
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>{stats.gamesPlayed}</Text>
@@ -187,7 +198,7 @@ export default function HomeScreen() {
                 </View>
               )}
             </View>
-          </View>
+          </Pressable>
         )}
 
         {totalCount > 0 && (
@@ -427,6 +438,11 @@ const styles = StyleSheet.create({
     borderColor: "rgba(212, 175, 55, 0.15)",
     marginBottom: 16,
     gap: 12,
+  },
+  statsCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   cardSectionTitle: {
     fontSize: 11,
