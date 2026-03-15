@@ -205,7 +205,7 @@ export default function GameScreen() {
       </View>
 
       <View style={styles.gameArea}>
-        <View style={styles.playerSection}>
+        <View style={styles.opponentPanel}>
           <View style={styles.playerHeader}>
             <View style={[styles.turnIndicator, !currentPlayer.isHuman && styles.turnIndicatorActive]} />
             <Text style={styles.playerName}>
@@ -215,24 +215,47 @@ export default function GameScreen() {
             <Text style={styles.handCount}>{ai.hand.length} in hand</Text>
           </View>
 
-          <View style={styles.palaceRow}>
-            {ai.faceDownPalace.map((card, i) =>
-              card ? (
-                <PlayingCard key={`ai-fd-${i}`} faceDown small />
-              ) : (
-                <EmptyCardSlot key={`ai-fd-empty-${i}`} small />
-              )
+          <View style={styles.aiFanRow}>
+            {ai.hand.length === 0 ? (
+              <Text style={styles.aiEmptyHand}>No cards in hand</Text>
+            ) : (
+              ai.hand.slice(0, 9).map((_, i) => (
+                <PlayingCard
+                  key={`ai-fan-${i}`}
+                  faceDown
+                  micro
+                  style={{ marginLeft: i === 0 ? 0 : -10 }}
+                />
+              ))
             )}
-            <View style={styles.palaceSpacer} />
-            {ai.faceUpPalace.map((card) => (
-              <PlayingCard key={card.id} card={card} small />
-            ))}
           </View>
 
-          <View style={styles.aiHandRow}>
-            {ai.hand.map((_, i) => (
-              <PlayingCard key={`ai-hand-${i}`} faceDown micro />
-            ))}
+          <View style={styles.palaceRowLabeled}>
+            <View style={styles.palaceGroup}>
+              <View style={styles.palaceGroupCards}>
+                {ai.faceDownPalace.map((card, i) =>
+                  card ? (
+                    <PlayingCard key={`ai-fd-${i}`} faceDown small />
+                  ) : (
+                    <EmptyCardSlot key={`ai-fd-empty-${i}`} small />
+                  )
+                )}
+              </View>
+              <Text style={styles.palaceGroupLabel}>FACE DOWN</Text>
+            </View>
+            <View style={styles.palaceSpacer} />
+            <View style={styles.palaceGroup}>
+              <View style={styles.palaceGroupCards}>
+                {ai.faceUpPalace.length > 0
+                  ? ai.faceUpPalace.map((card) => (
+                      <PlayingCard key={card.id} card={card} small />
+                    ))
+                  : [0, 1, 2].map((i) => (
+                      <EmptyCardSlot key={`ai-fu-empty-${i}`} small />
+                    ))}
+              </View>
+              <Text style={styles.palaceGroupLabel}>FACE UP</Text>
+            </View>
           </View>
         </View>
 
@@ -530,13 +553,45 @@ const styles = StyleSheet.create({
   palaceSpacer: {
     width: 12,
   },
-  aiHandRow: {
+  opponentPanel: {
+    backgroundColor: "rgba(0, 0, 0, 0.22)",
+    borderRadius: 14,
+    padding: 10,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "rgba(212, 175, 55, 0.12)",
+  },
+  aiFanRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 3,
-    paddingHorizontal: 4,
-    maxHeight: 48,
-    overflow: "hidden",
+    alignItems: "center",
+    paddingHorizontal: 2,
+    height: 42,
+  },
+  aiEmptyHand: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(254,253,248,0.3)",
+    fontStyle: "italic",
+  },
+  palaceRowLabeled: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    paddingHorizontal: 2,
+  },
+  palaceGroup: {
+    alignItems: "center",
+    gap: 5,
+  },
+  palaceGroupCards: {
+    flexDirection: "row",
+    gap: 5,
+  },
+  palaceGroupLabel: {
+    fontSize: 8,
+    fontFamily: "Inter_600SemiBold",
+    color: "rgba(254,253,248,0.3)",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   centerArea: {
     flex: 1,
