@@ -8,10 +8,10 @@ import {
   Platform,
   Modal,
   Animated,
+  BackHandler,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useNavigation } from "expo-router";
-import { usePreventRemove } from "@react-navigation/core";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import {
@@ -86,8 +86,6 @@ export default function GameScreen() {
   const humanPickupsRef = useRef(0);
   const burnsRef = useRef(0);
   const prevBurnPileLen = useRef(0);
-  const pendingNavAction = useRef<any>(null);
-
   const human = gameState.players[0];
   const ai = gameState.players[1];
   const currentPlayer = getCurrentPlayer(gameState);
@@ -257,24 +255,23 @@ export default function GameScreen() {
     gameState.phase !== "choose_palace" &&
     gameState.phase !== "game_over";
 
-  usePreventRemove(isGameActive, ({ data }) => {
-    pendingNavAction.current = data.action;
-    setShowLeaveModal(true);
-  });
-
   useEffect(() => {
     navigation.setOptions({ gestureEnabled: !isGameActive });
   }, [navigation, isGameActive]);
 
+  useEffect(() => {
+    if (!isGameActive) return;
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      setShowLeaveModal(true);
+      return true;
+    });
+    return () => sub.remove();
+  }, [isGameActive]);
+
   const handleConfirmLeave = useCallback(() => {
     setShowLeaveModal(false);
-    if (pendingNavAction.current) {
-      navigation.dispatch(pendingNavAction.current);
-      pendingNavAction.current = null;
-    } else {
-      router.back();
-    }
-  }, [navigation]);
+    router.back();
+  }, []);
 
   const handleQuitFromMenu = useCallback(() => {
     setShowMenuSheet(false);
@@ -288,7 +285,6 @@ export default function GameScreen() {
 
   const handleCancelLeave = useCallback(() => {
     setShowLeaveModal(false);
-    pendingNavAction.current = null;
   }, []);
 
   const canPlay = selectedPlayCards.length > 0 && (() => {
