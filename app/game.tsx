@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useNavigation } from "expo-router";
+import { usePreventRemove } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import {
@@ -221,14 +222,13 @@ export default function GameScreen() {
     gameState.phase !== "choose_palace" &&
     gameState.phase !== "game_over";
 
+  usePreventRemove(isGameActive, ({ data }) => {
+    pendingNavAction.current = data.action;
+    setShowLeaveModal(true);
+  });
+
   useEffect(() => {
-    const unsubscribe = navigation.addListener("beforeRemove" as any, (e: any) => {
-      if (!isGameActive) return;
-      e.preventDefault();
-      pendingNavAction.current = e.data.action;
-      setShowLeaveModal(true);
-    });
-    return unsubscribe;
+    navigation.setOptions({ gestureEnabled: !isGameActive });
   }, [navigation, isGameActive]);
 
   const handleConfirmLeave = useCallback(() => {
