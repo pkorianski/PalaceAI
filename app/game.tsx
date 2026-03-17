@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import {
@@ -35,8 +35,10 @@ import {
 
 export default function GameScreen() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
   const [gameState, setGameState] = useState<GameState>(() => createInitialGameState());
   const [showGameOver, setShowGameOver] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [setupSelected, setSetupSelected] = useState<string[]>([]);
   const [gameOverData, setGameOverData] = useState<{
     result: GameResult;
@@ -48,6 +50,7 @@ export default function GameScreen() {
   const humanPickupsRef = useRef(0);
   const burnsRef = useRef(0);
   const prevBurnPileLen = useRef(0);
+  const pendingNavAction = useRef<any>(null);
 
   const human = gameState.players[0];
   const ai = gameState.players[1];
@@ -212,6 +215,34 @@ export default function GameScreen() {
     prevBurnPileLen.current = 0;
     setGameState(createInitialGameState());
   };
+
+  const isGameActive =
+    gameState.phase !== "setup" &&
+    gameState.phase !== "choose_palace" &&
+    gameState.phase !== "game_over";
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("beforeRemove" as any, (e: any) => {
+      if (!isGameActive) return;
+      e.preventDefault();
+      pendingNavAction.current = e.data.action;
+      setShowLeaveModal(true);
+    });
+    return unsubscribe;
+  }, [navigation, isGameActive]);
+
+  const handleConfirmLeave = useCallback(() => {
+    setShowLeaveModal(false);
+    if (pendingNavAction.current) {
+      navigation.dispatch(pendingNavAction.current);
+      pendingNavAction.current = null;
+    }
+  }, [navigation]);
+
+  const handleCancelLeave = useCallback(() => {
+    setShowLeaveModal(false);
+    pendingNavAction.current = null;
+  }, []);
 
   const canPlay = selectedPlayCards.length > 0 && (() => {
     const cardsToPlay = selectedPlayCards.map((id) =>
@@ -569,6 +600,38 @@ export default function GameScreen() {
                 <Text style={styles.modalHomeBtnText}>Home</Text>
               </Pressable>
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={showLeaveModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.leaveCard}>
+            <View style={styles.leaveIconWrap}>
+              <Ionicons name="exit-outline" size={28} color="#E74C3C" />
+            </View>
+            <Text style={styles.leaveTitle}>Leave Game?</Text>
+            <Text style={styles.leaveSub}>
+              Your current game progress will be lost.
+            </Text>
+            <Pressable
+              style={({ pressed }) => [
+                styles.leaveConfirmBtn,
+                pressed && { opacity: 0.85 },
+              ]}
+              onPress={handleConfirmLeave}
+            >
+              <Text style={styles.leaveConfirmText}>Leave</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.leaveKeepBtn,
+                pressed && { opacity: 0.85 },
+              ]}
+              onPress={handleCancelLeave}
+            >
+              <Text style={styles.leaveKeepText}>Keep Playing</Text>
+            </Pressable>
           </View>
         </View>
       </Modal>
@@ -1031,5 +1094,74 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: "Inter_500Medium",
     color: "rgba(254,253,248,0.5)",
+  },
+  leaveCard: {
+    backgroundColor: "#0f3320",
+    borderRadius: 20,
+    padding: 28,
+    width: "100%",
+    maxWidth: 320,
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderColor: "rgba(231,76,60,0.2)",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.4,
+        shadowRadius: 16,
+      },
+      android: { elevation: 12 },
+    }),
+  },
+  leaveIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: "rgba(231,76,60,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  leaveTitle: {
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    color: "#FEFDF8",
+    textAlign: "center",
+  },
+  leaveSub: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(254,253,248,0.5)",
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  leaveConfirmBtn: {
+    backgroundColor: "#E74C3C",
+    borderRadius: 13,
+    paddingVertical: 15,
+    width: "100%",
+    alignItems: "center",
+  },
+  leaveConfirmText: {
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
+    color: "#FEFDF8",
+  },
+  leaveKeepBtn: {
+    backgroundColor: "rgba(255,255,255,0.07)",
+    borderRadius: 13,
+    paddingVertical: 15,
+    width: "100%",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  leaveKeepText: {
+    fontSize: 16,
+    fontFamily: "Inter_600SemiBold",
+    color: "#D4AF37",
   },
 });
