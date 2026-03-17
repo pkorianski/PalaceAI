@@ -11,7 +11,7 @@ import {
   BackHandler,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { router, useNavigation } from "expo-router";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import {
@@ -69,7 +69,6 @@ const RULES = [
 
 export default function GameScreen() {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
   const [gameState, setGameState] = useState<GameState>(() => createInitialGameState());
   const [showGameOver, setShowGameOver] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
@@ -254,10 +253,6 @@ export default function GameScreen() {
     gameState.phase !== "setup" &&
     gameState.phase !== "choose_palace" &&
     gameState.phase !== "game_over";
-
-  useEffect(() => {
-    navigation.setOptions({ gestureEnabled: !isGameActive });
-  }, [navigation, isGameActive]);
 
   useEffect(() => {
     if (!isGameActive) return;

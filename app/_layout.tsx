@@ -19,7 +19,14 @@ function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
       <Stack.Screen name="index" options={{ title: "Home" }} />
-      <Stack.Screen name="game" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen
+        name="game"
+        options={{
+          animation: "slide_from_right",
+          gestureEnabled: false,
+          headerBackVisible: false,
+        }}
+      />
       <Stack.Screen name="rules" options={{ animation: "slide_from_bottom" }} />
       <Stack.Screen
         name="achievements"
