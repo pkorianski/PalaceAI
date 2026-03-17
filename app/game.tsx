@@ -34,12 +34,47 @@ import {
   type Achievement,
 } from "@/lib/achievements";
 
+const RULES = [
+  {
+    title: "Objective",
+    icon: "trophy-outline",
+    content: "Be the first player to get rid of all your cards — hand, face-up palace, and face-down palace.",
+  },
+  {
+    title: "Playing the Game",
+    icon: "card-outline",
+    content: "Play cards equal to or higher than the top pile card. You can play multiple cards of the same rank at once.\n\nAfter playing, draw to keep at least 3 cards in hand while the deck lasts.",
+  },
+  {
+    title: "Can't Play?",
+    icon: "arrow-down-circle-outline",
+    content: "If you cannot (or choose not to) play, pick up the entire pile. The next player starts fresh.",
+  },
+  {
+    title: "Special Cards",
+    icon: "flash-outline",
+    content: "2 — Reset: Play on anything, then play again with any card.\n\n10 — Burn: Play on anything, pile is removed. Play again!",
+  },
+  {
+    title: "4 of a Kind = Burn",
+    icon: "bonfire-outline",
+    content: "If four cards of the same rank appear consecutively on top of the pile, it burns and you play again!",
+  },
+  {
+    title: "Palace Phase",
+    icon: "home-outline",
+    content: "Once your hand is empty and the deck is gone, play face-up palace cards, then flip face-down cards one at a time — you can't look before playing!",
+  },
+];
+
 export default function GameScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [gameState, setGameState] = useState<GameState>(() => createInitialGameState());
   const [showGameOver, setShowGameOver] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showMenuSheet, setShowMenuSheet] = useState(false);
+  const [showRulesOverlay, setShowRulesOverlay] = useState(false);
   const [setupSelected, setSetupSelected] = useState<string[]>([]);
   const [gameOverData, setGameOverData] = useState<{
     result: GameResult;
@@ -236,8 +271,20 @@ export default function GameScreen() {
     if (pendingNavAction.current) {
       navigation.dispatch(pendingNavAction.current);
       pendingNavAction.current = null;
+    } else {
+      router.back();
     }
   }, [navigation]);
+
+  const handleQuitFromMenu = useCallback(() => {
+    setShowMenuSheet(false);
+    setTimeout(() => setShowLeaveModal(true), 150);
+  }, []);
+
+  const handleRulesFromMenu = useCallback(() => {
+    setShowMenuSheet(false);
+    setTimeout(() => setShowRulesOverlay(true), 150);
+  }, []);
 
   const handleCancelLeave = useCallback(() => {
     setShowLeaveModal(false);
@@ -268,7 +315,13 @@ export default function GameScreen() {
           <Ionicons name="chevron-back" size={24} color="#D4AF37" />
         </Pressable>
         <Text style={styles.topBarTitle}>Palace</Text>
-        <View style={{ width: 40 }} />
+        <Pressable
+          onPress={() => setShowMenuSheet(true)}
+          style={({ pressed }) => [styles.menuBtn, pressed && { opacity: 0.6 }]}
+          hitSlop={8}
+        >
+          <Ionicons name="ellipsis-horizontal" size={22} color="#D4AF37" />
+        </Pressable>
       </View>
 
       <View style={styles.gameArea}>
@@ -604,6 +657,88 @@ export default function GameScreen() {
         </View>
       </Modal>
 
+      {/* ── Menu action sheet ── */}
+      <Modal visible={showMenuSheet} transparent animationType="slide">
+        <Pressable style={styles.sheetOverlay} onPress={() => setShowMenuSheet(false)}>
+          <Pressable style={styles.sheetCard} onPress={() => {}}>
+            <View style={styles.sheetHandle} />
+            <Pressable
+              style={({ pressed }) => [styles.sheetRow, pressed && styles.sheetRowPressed]}
+              onPress={handleRulesFromMenu}
+            >
+              <View style={styles.sheetRowIcon}>
+                <Ionicons name="book-outline" size={20} color="#D4AF37" />
+              </View>
+              <Text style={styles.sheetRowText}>How to Play</Text>
+              <Ionicons name="chevron-forward" size={16} color="rgba(254,253,248,0.3)" />
+            </Pressable>
+            <View style={styles.sheetDivider} />
+            <Pressable
+              style={({ pressed }) => [styles.sheetRow, pressed && styles.sheetRowPressed]}
+              onPress={handleQuitFromMenu}
+            >
+              <View style={[styles.sheetRowIcon, styles.sheetRowIconRed]}>
+                <Ionicons name="exit-outline" size={20} color="#E74C3C" />
+              </View>
+              <Text style={[styles.sheetRowText, styles.sheetRowTextRed]}>Quit Game</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.sheetCancelBtn, pressed && { opacity: 0.7 }]}
+              onPress={() => setShowMenuSheet(false)}
+            >
+              <Text style={styles.sheetCancelText}>Cancel</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* ── In-game rules overlay ── */}
+      <Modal visible={showRulesOverlay} animationType="slide">
+        <View style={[styles.rulesContainer, {
+          paddingTop: insets.top + (Platform.OS === "web" ? 67 : 0),
+          paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 0),
+        }]}>
+          <View style={styles.rulesTopBar}>
+            <Text style={styles.rulesTopBarTitle}>How to Play</Text>
+            <Pressable
+              onPress={() => setShowRulesOverlay(false)}
+              style={({ pressed }) => [styles.rulesCloseBtn, pressed && { opacity: 0.6 }]}
+              hitSlop={8}
+            >
+              <Ionicons name="close" size={24} color="#D4AF37" />
+            </Pressable>
+          </View>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.rulesScrollContent}
+          >
+            {RULES.map((rule, idx) => (
+              <View key={idx} style={styles.rulesCard}>
+                <View style={styles.rulesCardHeader}>
+                  <View style={styles.rulesCardIcon}>
+                    <Ionicons name={rule.icon as any} size={18} color="#D4AF37" />
+                  </View>
+                  <Text style={styles.rulesCardTitle}>{rule.title}</Text>
+                </View>
+                <Text style={styles.rulesCardBody}>{rule.content}</Text>
+              </View>
+            ))}
+            <View style={styles.rulesChipSection}>
+              <Text style={styles.rulesChipLabel}>Card Values (low → high)</Text>
+              <View style={styles.rulesChipRow}>
+                {["2★", "3", "4", "5", "6", "7", "8", "9", "10🔥", "J", "Q", "K", "A"].map((r) => (
+                  <View key={r} style={styles.rulesChip}>
+                    <Text style={styles.rulesChipText}>{r}</Text>
+                  </View>
+                ))}
+              </View>
+              <Text style={styles.rulesChipNote}>★ = Reset • 🔥 = Burn pile</Text>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {/* ── Leave confirmation ── */}
       <Modal visible={showLeaveModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.leaveCard}>
@@ -1163,5 +1298,184 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Inter_600SemiBold",
     color: "#D4AF37",
+  },
+  menuBtn: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sheetOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "flex-end",
+  },
+  sheetCard: {
+    backgroundColor: "#0f3320",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    borderTopWidth: 1,
+    borderColor: "rgba(212,175,55,0.15)",
+    gap: 4,
+  },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 8,
+  },
+  sheetRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 4,
+    gap: 14,
+    borderRadius: 12,
+  },
+  sheetRowPressed: {
+    backgroundColor: "rgba(255,255,255,0.06)",
+  },
+  sheetRowIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(212,175,55,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sheetRowIconRed: {
+    backgroundColor: "rgba(231,76,60,0.1)",
+  },
+  sheetRowText: {
+    flex: 1,
+    fontSize: 17,
+    fontFamily: "Inter_500Medium",
+    color: "#FEFDF8",
+  },
+  sheetRowTextRed: {
+    color: "#E74C3C",
+  },
+  sheetDivider: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.07)",
+    marginLeft: 58,
+  },
+  sheetCancelBtn: {
+    alignItems: "center",
+    paddingVertical: 16,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  sheetCancelText: {
+    fontSize: 17,
+    fontFamily: "Inter_600SemiBold",
+    color: "rgba(254,253,248,0.45)",
+  },
+  rulesContainer: {
+    flex: 1,
+    backgroundColor: "#0d2b1a",
+  },
+  rulesTopBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(212,175,55,0.1)",
+  },
+  rulesTopBarTitle: {
+    fontSize: 18,
+    fontFamily: "Inter_700Bold",
+    color: "#D4AF37",
+    letterSpacing: 0.5,
+  },
+  rulesCloseBtn: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.06)",
+  },
+  rulesScrollContent: {
+    padding: 16,
+    gap: 10,
+    paddingBottom: 40,
+  },
+  rulesCard: {
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(212,175,55,0.1)",
+    gap: 10,
+  },
+  rulesCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  rulesCardIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: "rgba(212,175,55,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  rulesCardTitle: {
+    fontSize: 16,
+    fontFamily: "Inter_600SemiBold",
+    color: "#FEFDF8",
+  },
+  rulesCardBody: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(254,253,248,0.7)",
+    lineHeight: 22,
+  },
+  rulesChipSection: {
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(212,175,55,0.1)",
+    gap: 10,
+  },
+  rulesChipLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    color: "rgba(254,253,248,0.4)",
+    textTransform: "uppercase",
+    letterSpacing: 1.5,
+  },
+  rulesChipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  rulesChip: {
+    backgroundColor: "#FEFDF8",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    minWidth: 36,
+    alignItems: "center",
+  },
+  rulesChipText: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: "#1A1A1A",
+  },
+  rulesChipNote: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(254,253,248,0.4)",
   },
 });
