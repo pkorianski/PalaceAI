@@ -298,13 +298,7 @@ export default function GameScreen() {
       paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 0),
     }]}>
       <View style={styles.topBar}>
-        <Pressable
-          onPress={() => router.back()}
-          style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
-          hitSlop={8}
-        >
-          <Ionicons name="chevron-back" size={24} color="#D4AF37" />
-        </Pressable>
+        <View style={styles.backBtn} />
         <Text style={styles.topBarTitle}>Palace</Text>
         <Pressable
           onPress={() => setShowMenuSheet(true)}
