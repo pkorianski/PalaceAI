@@ -1,92 +1,133 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { GameStats, GameResult } from "./stats";
 
-export interface Achievement {
+const ACHIEVEMENTS_KEY = "palace_achievements";
+
+export interface AchievementTier {
   id: string;
   title: string;
   desc: string;
+  threshold: number;
   icon: string;
 }
 
-const ACHIEVEMENTS_KEY = "palace_achievements";
+export interface AchievementGroup {
+  key: string;
+  label: string;
+  progressLabel: (progress: number) => string;
+  tiers: [AchievementTier, AchievementTier, AchievementTier];
+}
 
-export const ALL_ACHIEVEMENTS: Achievement[] = [
+export const ACHIEVEMENT_GROUPS: AchievementGroup[] = [
   {
-    id: "first_win",
-    title: "First Victory",
-    desc: "Win your first game",
-    icon: "trophy-outline",
+    key: "wins",
+    label: "Victories",
+    progressLabel: (n) => `${n} wins`,
+    tiers: [
+      { id: "wins_bronze", title: "First Victory", desc: "Win 1 game", threshold: 1, icon: "trophy-outline" },
+      { id: "wins_silver", title: "Contender", desc: "Win 10 games", threshold: 10, icon: "trophy-outline" },
+      { id: "wins_gold", title: "Champion", desc: "Win 50 games", threshold: 50, icon: "trophy" },
+    ],
   },
   {
-    id: "clean_sweep",
-    title: "Clean Sweep",
-    desc: "Win without picking up the pile",
-    icon: "sparkles-outline",
+    key: "streak",
+    label: "Win Streak",
+    progressLabel: (n) => `Best streak: ${n}`,
+    tiers: [
+      { id: "streak_bronze", title: "Hot Streak", desc: "Win 3 in a row", threshold: 3, icon: "flame-outline" },
+      { id: "streak_silver", title: "On Fire", desc: "Win 5 in a row", threshold: 5, icon: "flame-outline" },
+      { id: "streak_gold", title: "Unstoppable", desc: "Win 10 in a row", threshold: 10, icon: "flame" },
+    ],
   },
   {
-    id: "pyromaniac",
-    title: "Pyromaniac",
-    desc: "Burn the pile 5 times in one game",
-    icon: "bonfire-outline",
+    key: "burns",
+    label: "Pyro",
+    progressLabel: (n) => `${n} total burns`,
+    tiers: [
+      { id: "burns_bronze", title: "Fire Starter", desc: "Burn the pile 10 times total", threshold: 10, icon: "bonfire-outline" },
+      { id: "burns_silver", title: "Pyromaniac", desc: "Burn the pile 50 times total", threshold: 50, icon: "bonfire-outline" },
+      { id: "burns_gold", title: "Scorched Earth", desc: "Burn the pile 200 times total", threshold: 200, icon: "bonfire" },
+    ],
   },
   {
-    id: "comeback",
-    title: "Comeback Kid",
-    desc: "Win after picking up the pile 3+ times",
-    icon: "trending-up-outline",
+    key: "blazer",
+    label: "Single-Game Burns",
+    progressLabel: (n) => n > 0 ? `Best: ${n} in one game` : "No burns yet",
+    tiers: [
+      { id: "blazer_bronze", title: "Spark", desc: "Burn 3 times in one game", threshold: 3, icon: "sparkles-outline" },
+      { id: "blazer_silver", title: "Blaze", desc: "Burn 5 times in one game", threshold: 5, icon: "sparkles-outline" },
+      { id: "blazer_gold", title: "Inferno", desc: "Burn 8 times in one game", threshold: 8, icon: "sparkles" },
+    ],
   },
   {
-    id: "speed_demon",
-    title: "Speed Demon",
-    desc: "Win in 15 or fewer turns",
-    icon: "flash-outline",
+    key: "speed",
+    label: "Speed Run",
+    progressLabel: (n) => n > 0 ? `Best: ${n} turns` : "No wins yet",
+    tiers: [
+      { id: "speed_bronze", title: "Quick Draw", desc: "Win in 25 turns or less", threshold: 25, icon: "flash-outline" },
+      { id: "speed_silver", title: "Speed Demon", desc: "Win in 15 turns or less", threshold: 15, icon: "flash-outline" },
+      { id: "speed_gold", title: "Lightning", desc: "Win in 10 turns or less", threshold: 10, icon: "flash" },
+    ],
   },
   {
-    id: "hot_streak_3",
-    title: "Hot Streak",
-    desc: "Win 3 games in a row",
-    icon: "flame-outline",
+    key: "veteran",
+    label: "Veteran",
+    progressLabel: (n) => `${n} games played`,
+    tiers: [
+      { id: "veteran_bronze", title: "Rookie", desc: "Play 10 games", threshold: 10, icon: "medal-outline" },
+      { id: "veteran_silver", title: "Seasoned", desc: "Play 50 games", threshold: 50, icon: "medal-outline" },
+      { id: "veteran_gold", title: "Legend", desc: "Play 200 games", threshold: 200, icon: "medal" },
+    ],
   },
   {
-    id: "hot_streak_5",
-    title: "On Fire",
-    desc: "Win 5 games in a row",
-    icon: "flame",
+    key: "clean",
+    label: "Clean Wins",
+    progressLabel: (n) => `${n} clean wins`,
+    tiers: [
+      { id: "clean_bronze", title: "Spotless", desc: "Win without picking up the pile", threshold: 1, icon: "leaf-outline" },
+      { id: "clean_silver", title: "Immaculate", desc: "Win cleanly 5 times", threshold: 5, icon: "leaf-outline" },
+      { id: "clean_gold", title: "Untouchable", desc: "Win cleanly 20 times", threshold: 20, icon: "leaf" },
+    ],
   },
   {
-    id: "veteran",
-    title: "Veteran",
-    desc: "Play 10 games",
-    icon: "medal-outline",
-  },
-  {
-    id: "champion",
-    title: "Champion",
-    desc: "Win 10 games",
-    icon: "ribbon-outline",
-  },
-  {
-    id: "dedicated",
-    title: "Dedicated",
-    desc: "Play 25 games",
-    icon: "medal",
+    key: "comeback",
+    label: "Comeback",
+    progressLabel: (n) => `${n} comeback wins`,
+    tiers: [
+      { id: "comeback_bronze", title: "Comeback Kid", desc: "Win after picking up 3+ times", threshold: 1, icon: "trending-up-outline" },
+      { id: "comeback_silver", title: "Never Give Up", desc: "Comeback win 3 times", threshold: 3, icon: "trending-up-outline" },
+      { id: "comeback_gold", title: "Resilient", desc: "Comeback win 10 times", threshold: 10, icon: "trending-up" },
+    ],
   },
 ];
 
-function isNowUnlocked(id: string, stats: GameStats, result: GameResult): boolean {
-  switch (id) {
-    case "first_win":     return result.won && stats.wins === 1;
-    case "clean_sweep":   return result.won && result.pickups === 0;
-    case "pyromaniac":    return result.burns >= 5;
-    case "comeback":      return result.won && result.pickups >= 3;
-    case "speed_demon":   return result.won && result.turns <= 15;
-    case "hot_streak_3":  return stats.winStreak >= 3;
-    case "hot_streak_5":  return stats.winStreak >= 5;
-    case "veteran":       return stats.gamesPlayed >= 10;
-    case "champion":      return stats.wins >= 10;
-    case "dedicated":     return stats.gamesPlayed >= 25;
-    default:              return false;
+export type Achievement = AchievementTier;
+export const ALL_ACHIEVEMENTS: AchievementTier[] = ACHIEVEMENT_GROUPS.flatMap((g) => g.tiers);
+
+export function getGroupProgress(group: AchievementGroup, stats: GameStats): number {
+  switch (group.key) {
+    case "wins":     return stats.wins;
+    case "streak":   return stats.bestStreak;
+    case "burns":    return stats.totalBurns;
+    case "blazer":   return stats.maxBurnsInGame;
+    case "speed":    return stats.bestWinTurns;
+    case "veteran":  return stats.gamesPlayed;
+    case "clean":    return stats.cleanWins;
+    case "comeback": return stats.comebackWins;
+    default:         return 0;
   }
+}
+
+export function isTierUnlocked(
+  tier: AchievementTier,
+  group: AchievementGroup,
+  stats: GameStats
+): boolean {
+  const progress = getGroupProgress(group, stats);
+  if (group.key === "speed") {
+    return stats.bestWinTurns > 0 && stats.bestWinTurns <= tier.threshold;
+  }
+  return progress >= tier.threshold;
 }
 
 export async function getUnlockedIds(): Promise<string[]> {
@@ -101,21 +142,23 @@ export async function getUnlockedIds(): Promise<string[]> {
 export async function checkAndUnlockAchievements(
   stats: GameStats,
   result: GameResult
-): Promise<Achievement[]> {
+): Promise<AchievementTier[]> {
   const alreadyUnlocked = await getUnlockedIds();
-  const newlyUnlocked: Achievement[] = [];
+  const newlyUnlocked: AchievementTier[] = [];
 
-  for (const achievement of ALL_ACHIEVEMENTS) {
-    if (
-      !alreadyUnlocked.includes(achievement.id) &&
-      isNowUnlocked(achievement.id, stats, result)
-    ) {
-      newlyUnlocked.push(achievement);
+  for (const group of ACHIEVEMENT_GROUPS) {
+    for (const tier of group.tiers) {
+      if (
+        !alreadyUnlocked.includes(tier.id) &&
+        isTierUnlocked(tier, group, stats)
+      ) {
+        newlyUnlocked.push(tier);
+      }
     }
   }
 
   if (newlyUnlocked.length > 0) {
-    const updated = [...alreadyUnlocked, ...newlyUnlocked.map((a) => a.id)];
+    const updated = [...alreadyUnlocked, ...newlyUnlocked.map((t) => t.id)];
     await AsyncStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(updated));
   }
 

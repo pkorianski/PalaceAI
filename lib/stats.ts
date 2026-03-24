@@ -8,6 +8,9 @@ export interface GameStats {
   bestStreak: number;
   totalBurns: number;
   bestWinTurns: number;
+  comebackWins: number;
+  cleanWins: number;
+  maxBurnsInGame: number;
 }
 
 export interface GameResult {
@@ -27,6 +30,9 @@ const DEFAULT_STATS: GameStats = {
   bestStreak: 0,
   totalBurns: 0,
   bestWinTurns: 0,
+  comebackWins: 0,
+  cleanWins: 0,
+  maxBurnsInGame: 0,
 };
 
 export async function getStats(): Promise<GameStats> {
@@ -57,6 +63,9 @@ export async function recordGameResult(result: GameResult): Promise<GameStats> {
     bestStreak: Math.max(stats.bestStreak, newStreak),
     totalBurns: stats.totalBurns + result.burns,
     bestWinTurns,
+    comebackWins: stats.comebackWins + (result.won && result.pickups >= 3 ? 1 : 0),
+    cleanWins: stats.cleanWins + (result.won && result.pickups === 0 ? 1 : 0),
+    maxBurnsInGame: Math.max(stats.maxBurnsInGame, result.burns),
   };
   await AsyncStorage.setItem(STATS_KEY, JSON.stringify(updated));
   return updated;

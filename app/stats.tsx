@@ -20,6 +20,9 @@ const DEFAULT_STATS: GameStats = {
   bestStreak: 0,
   totalBurns: 0,
   bestWinTurns: 0,
+  comebackWins: 0,
+  cleanWins: 0,
+  maxBurnsInGame: 0,
 };
 
 interface StatRowProps {

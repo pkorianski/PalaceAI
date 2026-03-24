@@ -33,6 +33,7 @@ import {
   checkAndUnlockAchievements,
   type Achievement,
 } from "@/lib/achievements";
+import { updateDailyChallenge } from "@/lib/daily-challenge";
 
 const RULES = [
   {
@@ -78,6 +79,7 @@ export default function GameScreen() {
   const [gameOverData, setGameOverData] = useState<{
     result: GameResult;
     newAchievements: Achievement[];
+    dailyChallengeCompleted: boolean;
   } | null>(null);
   const messageOpacity = useRef(new Animated.Value(1)).current;
   const prevMessage = useRef("");
@@ -125,8 +127,11 @@ export default function GameScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
       recordGameResult(result).then((updatedStats) =>
-        checkAndUnlockAchievements(updatedStats, result).then((newAchievements) => {
-          setGameOverData({ result, newAchievements });
+        Promise.all([
+          checkAndUnlockAchievements(updatedStats, result),
+          updateDailyChallenge(result),
+        ]).then(([newAchievements, { justCompleted }]) => {
+          setGameOverData({ result, newAchievements, dailyChallengeCompleted: justCompleted });
           setTimeout(() => setShowGameOver(true), 500);
         })
       );
@@ -601,6 +606,13 @@ export default function GameScreen() {
                       <Text style={styles.summaryItemLabel}>Burns</Text>
                     </View>
                   </View>
+                </View>
+              )}
+
+              {gameOverData?.dailyChallengeCompleted && (
+                <View style={styles.dailyCompleteBox}>
+                  <Ionicons name="sunny" size={18} color="#D4AF37" />
+                  <Text style={styles.dailyCompleteText}>Daily Challenge Complete!</Text>
                 </View>
               )}
 
@@ -1138,6 +1150,24 @@ const styles = StyleSheet.create({
   },
   summaryGold: {
     color: "#D4AF37",
+  },
+  dailyCompleteBox: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "rgba(212,175,55,0.1)",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "rgba(212,175,55,0.25)",
+  },
+  dailyCompleteText: {
+    fontSize: 14,
+    fontFamily: "Inter_700Bold",
+    color: "#D4AF37",
+    letterSpacing: 0.3,
   },
   achievementsBox: {
     width: "100%",

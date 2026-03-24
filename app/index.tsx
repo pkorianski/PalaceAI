@@ -18,6 +18,7 @@ import {
   ALL_ACHIEVEMENTS,
   type Achievement,
 } from "@/lib/achievements";
+import { getDailyChallenge, type ActiveDailyChallenge } from "@/lib/daily-challenge";
 
 const DEFAULT_STATS: GameStats = {
   wins: 0,
@@ -27,17 +28,22 @@ const DEFAULT_STATS: GameStats = {
   bestStreak: 0,
   totalBurns: 0,
   bestWinTurns: 0,
+  comebackWins: 0,
+  cleanWins: 0,
+  maxBurnsInGame: 0,
 };
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [stats, setStats] = useState<GameStats>(DEFAULT_STATS);
   const [unlockedIds, setUnlockedIds] = useState<string[]>([]);
+  const [dailyChallenge, setDailyChallenge] = useState<ActiveDailyChallenge | null>(null);
 
   useFocusEffect(
     React.useCallback(() => {
       getStats().then(setStats);
       getUnlockedIds().then(setUnlockedIds);
+      getDailyChallenge().then(setDailyChallenge);
     }, [])
   );
 
@@ -197,6 +203,54 @@ export default function HomeScreen() {
                   </Text>
                 </View>
               )}
+            </View>
+          </Pressable>
+        )}
+
+        {dailyChallenge && (
+          <Pressable
+            style={({ pressed }) => [styles.dailyCard, pressed && { opacity: 0.88 }]}
+            onPress={handlePlay}
+          >
+            <View style={styles.dailyHeader}>
+              <View style={styles.dailyHeaderLeft}>
+                <View style={styles.dailyDot} />
+                <Text style={styles.dailyLabel}>DAILY CHALLENGE</Text>
+              </View>
+              {dailyChallenge.completed ? (
+                <View style={styles.dailyCompletedBadge}>
+                  <Ionicons name="checkmark" size={11} color="#0d2b1a" />
+                  <Text style={styles.dailyCompletedText}>DONE</Text>
+                </View>
+              ) : (
+                <Text style={styles.dailyProgress}>
+                  {dailyChallenge.progress}/{dailyChallenge.target}
+                </Text>
+              )}
+            </View>
+            <View style={styles.dailyBody}>
+              <View style={[styles.dailyIcon, dailyChallenge.completed && styles.dailyIconDone]}>
+                <Ionicons
+                  name={dailyChallenge.icon as any}
+                  size={22}
+                  color={dailyChallenge.completed ? "#0d2b1a" : "#D4AF37"}
+                />
+              </View>
+              <View style={styles.dailyTextWrap}>
+                <Text style={styles.dailyTitle}>{dailyChallenge.title}</Text>
+                <Text style={styles.dailyDesc}>{dailyChallenge.desc}</Text>
+              </View>
+            </View>
+            <View style={styles.dailyTrack}>
+              <View
+                style={[
+                  styles.dailyFill,
+                  {
+                    width: `${Math.min(100, (dailyChallenge.progress / dailyChallenge.target) * 100)}%`,
+                    backgroundColor: dailyChallenge.completed ? "#2ECC71" : "#D4AF37",
+                  },
+                ]}
+              />
             </View>
           </Pressable>
         )}
@@ -597,6 +651,36 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 0.5,
   },
+  dailyCard: {
+    width: "100%",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(212,175,55,0.2)",
+    marginBottom: 16,
+    gap: 12,
+  },
+  dailyHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  dailyHeaderLeft: { flexDirection: "row", alignItems: "center", gap: 6 },
+  dailyDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#D4AF37" },
+  dailyLabel: { fontSize: 10, fontFamily: "Inter_700Bold", color: "rgba(212,175,55,0.7)", letterSpacing: 1.5, textTransform: "uppercase" },
+  dailyProgress: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: "rgba(254,253,248,0.4)" },
+  dailyCompletedBadge: { flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: "#2ECC71", borderRadius: 8, paddingHorizontal: 7, paddingVertical: 3 },
+  dailyCompletedText: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#0d2b1a", letterSpacing: 0.8 },
+  dailyBody: { flexDirection: "row", alignItems: "center", gap: 12 },
+  dailyIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: "rgba(212,175,55,0.1)", alignItems: "center", justifyContent: "center" },
+  dailyIconDone: { backgroundColor: "#2ECC71" },
+  dailyTextWrap: { flex: 1 },
+  dailyTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#FEFDF8", marginBottom: 2 },
+  dailyDesc: { fontSize: 13, fontFamily: "Inter_400Regular", color: "rgba(254,253,248,0.5)" },
+  dailyTrack: { height: 4, backgroundColor: "rgba(255,255,255,0.08)", borderRadius: 2, overflow: "hidden" },
+  dailyFill: { height: "100%", borderRadius: 2, minWidth: 4 },
+
   footer: {
     paddingTop: 16,
     alignItems: "center",
