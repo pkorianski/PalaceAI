@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   createInitialGameState,
   confirmPalaceSetup,
@@ -34,6 +35,29 @@ import {
   type Achievement,
 } from "@/lib/achievements";
 import { updateDailyChallenge } from "@/lib/daily-challenge";
+
+const TUTORIAL_KEY = "palace_tutorial_done";
+
+const TUTORIAL_STEPS = [
+  {
+    step: "1 of 3",
+    icon: "hand-left-outline" as const,
+    title: "Choose Your Palace",
+    body: "Tap 3 cards from your hand below. Pick your strongest — they become your face-up backup cards.",
+  },
+  {
+    step: "2 of 3",
+    icon: "checkmark-circle-outline" as const,
+    title: "Lock Them In",
+    body: "Great picks! Now tap 'Confirm Palace' to place your 3 cards face-up on the board.",
+  },
+  {
+    step: "3 of 3",
+    icon: "play-circle-outline" as const,
+    title: "Your Turn!",
+    body: "Tap a card in your hand to select it, then tap Play. You must match or beat the top card on the pile.",
+  },
+];
 
 const RULES = [
   {
@@ -81,6 +105,8 @@ export default function GameScreen() {
     newAchievements: Achievement[];
     dailyChallengeCompleted: boolean;
   } | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(0);
   const messageOpacity = useRef(new Animated.Value(1)).current;
   const prevMessage = useRef("");
   const humanTurnsRef = useRef(0);
@@ -92,6 +118,22 @@ export default function GameScreen() {
   const currentPlayer = getCurrentPlayer(gameState);
   const isHumanTurn = currentPlayer.isHuman && gameState.phase === "playing";
   const humanPhase = getPlayerPhase(human);
+
+  const isTutStep0Visible =
+    showTutorial && tutorialStep === 0 &&
+    setupSelected.length < 3 &&
+    gameState.phase === "choose_palace" &&
+    gameState.currentPlayerIndex === 0;
+
+  const isTutStep1Visible =
+    showTutorial && tutorialStep === 1 &&
+    setupSelected.length === 3 &&
+    gameState.phase === "choose_palace" &&
+    gameState.currentPlayerIndex === 0;
+
+  const isTutStep2Visible = showTutorial && tutorialStep === 2 && isHumanTurn;
+
+  const anyTutVisible = isTutStep0Visible || isTutStep1Visible || isTutStep2Visible;
 
   useEffect(() => {
     if (gameState.message !== prevMessage.current) {
@@ -111,6 +153,30 @@ export default function GameScreen() {
       prevBurnPileLen.current = gameState.burnPile.length;
     }
   }, [gameState.burnPile.length]);
+
+  // Tutorial: check on mount whether to show first-game walkthrough
+  useEffect(() => {
+    AsyncStorage.getItem(TUTORIAL_KEY).then((val) => {
+      if (!val) {
+        setShowTutorial(true);
+        AsyncStorage.setItem(TUTORIAL_KEY, "true");
+      }
+    });
+  }, []);
+
+  // Tutorial: auto-advance step 0 → 1 when 3 palace cards are selected
+  useEffect(() => {
+    if (showTutorial && tutorialStep === 0 && setupSelected.length === 3) {
+      setTutorialStep(1);
+    }
+  }, [showTutorial, tutorialStep, setupSelected.length]);
+
+  // Tutorial: advance to step 2 when playing phase starts and it's human's turn
+  useEffect(() => {
+    if (showTutorial && tutorialStep <= 1 && gameState.phase === "playing" && isHumanTurn) {
+      setTutorialStep(2);
+    }
+  }, [showTutorial, tutorialStep, gameState.phase, isHumanTurn]);
 
   useEffect(() => {
     if (gameState.phase === "game_over" && !showGameOver) {
@@ -247,12 +313,22 @@ export default function GameScreen() {
     setSelectedPlayCards([]);
     setSetupSelected([]);
     setGameOverData(null);
+    setShowTutorial(false);
+    setTutorialStep(0);
     humanTurnsRef.current = 0;
     humanPickupsRef.current = 0;
     burnsRef.current = 0;
     prevBurnPileLen.current = 0;
     setGameState(createInitialGameState());
   };
+
+  const handleDismissTutStep = useCallback(() => {
+    if (tutorialStep >= 2) {
+      setShowTutorial(false);
+    } else {
+      setTutorialStep((prev) => prev + 1);
+    }
+  }, [tutorialStep]);
 
   const isGameActive =
     gameState.phase !== "setup" &&
@@ -767,6 +843,65 @@ export default function GameScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* ── First-game tutorial overlay ── */}
+      {anyTutVisible && (
+        <View
+          style={[
+            styles.tutorialOverlay,
+            {
+              paddingBottom:
+                insets.bottom + (Platform.OS === "web" ? 34 : 0) + 200,
+            },
+          ]}
+          pointerEvents="box-none"
+        >
+          <View style={styles.tutorialCard}>
+            <View style={styles.tutorialTopRow}>
+              <View style={styles.tutorialStepPill}>
+                <Text style={styles.tutorialStepPillText}>
+                  {TUTORIAL_STEPS[tutorialStep].step}
+                </Text>
+              </View>
+              <Ionicons name="school-outline" size={14} color="rgba(212,175,55,0.45)" />
+            </View>
+
+            <View style={styles.tutorialHeaderRow}>
+              <View style={styles.tutorialIconCircle}>
+                <Ionicons
+                  name={TUTORIAL_STEPS[tutorialStep].icon}
+                  size={20}
+                  color="#D4AF37"
+                />
+              </View>
+              <Text style={styles.tutorialTitle}>
+                {TUTORIAL_STEPS[tutorialStep].title}
+              </Text>
+            </View>
+
+            <Text style={styles.tutorialBody}>
+              {TUTORIAL_STEPS[tutorialStep].body}
+            </Text>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.tutorialBtn,
+                pressed && { opacity: 0.82, transform: [{ scale: 0.97 }] },
+              ]}
+              onPress={handleDismissTutStep}
+            >
+              <Text style={styles.tutorialBtnText}>
+                {tutorialStep >= 2 ? "Got it!" : "Got it  →"}
+              </Text>
+            </Pressable>
+          </View>
+
+          {/* Arrow pointing down toward the hand area */}
+          <View style={styles.tutorialArrowWrap} pointerEvents="none">
+            <Ionicons name="chevron-down" size={22} color="#D4AF37" />
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -1492,5 +1627,93 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: "rgba(254,253,248,0.4)",
+  },
+  tutorialOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    paddingHorizontal: 16,
+    justifyContent: "flex-end",
+  },
+  tutorialCard: {
+    backgroundColor: "#0d2b1a",
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: "#D4AF37",
+    padding: 18,
+    gap: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.45,
+        shadowRadius: 14,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
+  },
+  tutorialTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  tutorialStepPill: {
+    backgroundColor: "rgba(212,175,55,0.14)",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  tutorialStepPillText: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    color: "#D4AF37",
+    letterSpacing: 0.5,
+  },
+  tutorialHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  tutorialIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(212,175,55,0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(212,175,55,0.22)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tutorialTitle: {
+    fontSize: 17,
+    fontFamily: "Inter_700Bold",
+    color: "#FEFDF8",
+  },
+  tutorialBody: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(254,253,248,0.78)",
+    lineHeight: 21,
+  },
+  tutorialBtn: {
+    backgroundColor: "#D4AF37",
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center",
+    marginTop: 2,
+  },
+  tutorialBtnText: {
+    fontSize: 15,
+    fontFamily: "Inter_700Bold",
+    color: "#0d2b1a",
+  },
+  tutorialArrowWrap: {
+    alignItems: "center",
+    marginTop: -2,
+    opacity: 0.85,
   },
 });
