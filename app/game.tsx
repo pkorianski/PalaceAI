@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { hasSeenTutorial, markTutorialSeen } from "@/lib/tutorial";
 import {
   createInitialGameState,
   confirmPalaceSetup,
@@ -35,8 +35,6 @@ import {
   type Achievement,
 } from "@/lib/achievements";
 import { updateDailyChallenge } from "@/lib/daily-challenge";
-
-const TUTORIAL_KEY = "palace_tutorial_done";
 
 const TUTORIAL_STEPS = [
   {
@@ -156,10 +154,10 @@ export default function GameScreen() {
 
   // Tutorial: check on mount whether to show first-game walkthrough
   useEffect(() => {
-    AsyncStorage.getItem(TUTORIAL_KEY).then((val) => {
-      if (!val) {
+    hasSeenTutorial().then((seen) => {
+      if (!seen) {
         setShowTutorial(true);
-        AsyncStorage.setItem(TUTORIAL_KEY, "true");
+        markTutorialSeen();
       }
     });
   }, []);
