@@ -1,0 +1,21 @@
+name: PalaceAI feature
+description: Define a player-facing improvement
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Player outcome
+      description: What should the player be able to do or experience?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Use clear, testable bullets.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes / constraints
