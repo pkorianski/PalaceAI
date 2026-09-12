@@ -1,0 +1,61 @@
+appId: com.palace.cardgame
+---
+- launchApp:
+    clearState: true
+- assertVisible: "PALACE"
+- takeScreenshot: "01-home"
+- tapOn: "Play"
+- assertVisible: "Select 3 cards for your palace.*"
+- takeScreenshot: "02-palace-setup"
+
+# Dismiss tutorial step 1 so the hand remains unobstructed.
+- runFlow:
+    when:
+      visible: "Got it.*"
+    commands:
+      - tapOn: "Got it.*"
+
+# The six setup cards are laid out horizontally at the bottom of the screen.
+# Percentage coordinates keep this first smoke flow independent of shuffled ranks.
+- tapOn:
+    point: "14%,88%"
+- tapOn:
+    point: "32%,88%"
+- tapOn:
+    point: "50%,88%"
+- assertVisible: "Confirm Palace \(3/3\)"
+- takeScreenshot: "03-palace-selected"
+
+# Dismiss tutorial step 2 before confirming the setup.
+- runFlow:
+    when:
+      visible: "Got it.*"
+    commands:
+      - tapOn: "Got it.*"
+- tapOn: "Confirm Palace \(3/3\)"
+
+- extendedWaitUntil:
+    visible: "Your turn.*"
+    timeout: 10000
+- takeScreenshot: "04-first-turn"
+
+# Dismiss the final tutorial card if this is the first run.
+- runFlow:
+    when:
+      visible: "Got it.*"
+    commands:
+      - tapOn: "Got it.*"
+
+# With an empty pile, any opening hand card is legal.
+- tapOn:
+    point: "14%,88%"
+- tapOn:
+    text: "Play"
+    index: 0
+
+# A normal opening play hands the turn to the opponent. Special 2/10 cards can
+# keep the turn, so accept either a visible opponent response or another human turn.
+- extendedWaitUntil:
+    visible: ".*(Opponent|Your turn|plays again).*"
+    timeout: 10000
+- takeScreenshot: "05-after-first-play"
