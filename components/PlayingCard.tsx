@@ -17,6 +17,7 @@ interface PlayingCardProps {
   micro?: boolean;
   disabled?: boolean;
   style?: object;
+  testID?: string;
 }
 
 function getSuitSymbol(suit: Suit): string {
@@ -41,6 +42,7 @@ export function PlayingCard({
   micro = false,
   disabled = false,
   style,
+  testID,
 }: PlayingCardProps) {
   const cardW = micro ? 28 : small ? 44 : 66;
   const cardH = micro ? 40 : small ? 62 : 92;
@@ -48,6 +50,7 @@ export function PlayingCard({
   if (!card || faceDown) {
     return (
       <Pressable
+        testID={testID}
         onPress={onPress}
         disabled={disabled}
         style={({ pressed }) => [
@@ -82,6 +85,7 @@ export function PlayingCard({
 
   return (
     <Pressable
+      testID={testID}
       onPress={onPress}
       disabled={disabled || !onPress}
       style={({ pressed }) => [
@@ -220,49 +224,37 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   cornerBR: {
-    alignItems: "flex-end",
+    alignItems: "flex-start",
+    transform: [{ rotate: "180deg" }],
   },
   rankText: {
     fontWeight: "800",
-    lineHeight: undefined,
-    includeFontPadding: false,
+    lineHeight: 18,
   },
   suitCorner: {
-    lineHeight: undefined,
-    includeFontPadding: false,
-    marginTop: 1,
+    marginTop: -2,
+    lineHeight: 12,
   },
   centerSuit: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: "32%",
     textAlign: "center",
-    lineHeight: undefined,
-    includeFontPadding: false,
-    alignSelf: "center",
   },
   selectedCard: {
-    ...Platform.select({
-      ios: {
-        shadowColor: "#D4AF37",
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.7,
-        shadowRadius: 8,
-      },
-      android: { elevation: 8 },
-    }),
+    zIndex: 10,
   },
   selectedGlow: {
-    position: "absolute",
-    top: -2,
-    left: -2,
-    right: -2,
-    bottom: -2,
-    borderRadius: 9,
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 7,
     borderWidth: 2,
     borderColor: "#D4AF37",
   },
   emptySlot: {
     borderRadius: 7,
-    borderWidth: 1.5,
-    borderColor: "rgba(212, 175, 55, 0.18)",
+    borderWidth: 1,
     borderStyle: "dashed",
+    borderColor: "rgba(254,253,248,0.18)",
   },
 });
