@@ -1,0 +1,79 @@
+name: Mobile QA
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  android-maestro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify Expo dependency alignment
+        run: npx expo install --check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Generate Android project
+        env:
+          EXPO_NO_INTERACTIVE: "1"
+        run: npx expo prebuild --platform android --clean
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+      - name: Install Maestro CLI
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run PalaceAI on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          disable-animations: true
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            maestro test .maestro/smoke.yaml --test-output-dir=artifacts/maestro
+
+      - name: Upload mobile QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: palaceai-mobile-qa
+          path: |
+            .maestro/artifacts/maestro
+            ~/.maestro/tests
+          if-no-files-found: warn
+          retention-days: 14
