@@ -16,8 +16,10 @@ jobs:
         with:
           node-version: 22
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       - name: Check Expo dependency alignment
         run: npx expo install --check
+      - name: Regression tests
+        run: npm test
       - name: Typecheck
         run: npm run typecheck
