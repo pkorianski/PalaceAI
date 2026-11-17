@@ -10,7 +10,7 @@ const { ExpoGoManifestHandlerMiddleware } = require(path.join(cliRoot,
 for (const [header, expected] of [
   [undefined, undefined], ['http', 'http'], ['https', 'https'],
   ['https, http', 'https'], [' HTTPS , http', 'https'],
-  [['https', 'http'], 'https'], ['exp', undefined], ['', undefined],
+  [['https', 'http'], 'https'], ['exp', 'http'], ['', undefined],
 ]) {
   test(`manifest protocol ${JSON.stringify(header)} -> ${expected}`, () => {
     const headers = { host: 'example.exp.direct', 'expo-platform': 'ios',
