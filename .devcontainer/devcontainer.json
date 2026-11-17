@@ -1,7 +1,7 @@
 {
   "name": "PalaceAI Expo",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
-  "postCreateCommand": "npm install",
+  "postCreateCommand": "npm ci",
   "forwardPorts": [8081],
   "portsAttributes": {
     "8081": {
