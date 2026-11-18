@@ -1,7 +1,47 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
 node_modules/
+
+# Expo
 .expo/
-.git/
 dist/
+web-build/
+expo-env.d.ts
+
+# Native
+ios/
+android/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+.vercel
+
+.env
+
+# Release uploads use managed native generation and omit non-app work.
+.git/
 dist-preview/
 server_dist/
 screenshots/
@@ -10,10 +50,4 @@ server/
 shared/
 tests/
 docs/
-.env*
-*.p8
-*.p12
-*.pem
-*.key
-*.mobileprovision
 credentials.json
