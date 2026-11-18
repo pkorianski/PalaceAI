@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { emptyCareer, hydrateCareer, type Career } from "./model";
+import { PROGRESS_KEYS } from "../preferences-model";
 const KEY = "palace_tour_v1";
 let queue: Promise<unknown> = Promise.resolve();
 export function careerId() {
@@ -23,6 +24,12 @@ export function updateCareer(
       await AsyncStorage.setItem(KEY, JSON.stringify(next));
       return next;
     });
+  queue = job;
+  return job;
+}
+
+export function resetPlayerProgress(): Promise<void> {
+  const job = queue.catch(() => {}).then(() => AsyncStorage.multiRemove(PROGRESS_KEYS));
   queue = job;
   return job;
 }

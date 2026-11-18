@@ -9,11 +9,12 @@ import {
   Modal,
   Animated,
   BackHandler,
+  AppState,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import * as Haptics from "@/lib/haptics";
 import { hasSeenTutorial, markTutorialSeen } from "@/lib/tutorial";
 import {
   createInitialGameState,
@@ -105,6 +106,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
   const insets = useSafeAreaInsets();
   const [gameState, setGameState] = useState<GameState>(() => career?.series.game || createInitialGameState());
   const [showGameOver, setShowGameOver] = useState(false);
+  const [foreground, setForeground] = useState(AppState.currentState !== "background");
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showMenuSheet, setShowMenuSheet] = useState(false);
   const [showRulesOverlay, setShowRulesOverlay] = useState(false);
@@ -143,18 +145,26 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
   const isTutStep2Visible = showTutorial && tutorialStep === 2 && isHumanTurn;
 
   const anyTutVisible = isTutStep0Visible || isTutStep1Visible || isTutStep2Visible;
+  const paused = !foreground || showMenuSheet || showRulesOverlay || showLeaveModal;
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", state => setForeground(state === "active"));
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     if (gameState.message !== prevMessage.current) {
       prevMessage.current = gameState.message;
+      if (reducedMotion) { messageOpacity.setValue(1); return; }
       messageOpacity.setValue(0);
-      Animated.timing(messageOpacity, {
+      const animation = Animated.timing(messageOpacity, {
         toValue: 1,
         duration: 300,
         useNativeDriver: Platform.OS !== "web",
-      }).start();
+      });
+      animation.start();
+      return () => animation.stop();
     }
-  }, [gameState.message]);
+  }, [gameState.message, reducedMotion, messageOpacity]);
 
   useEffect(() => {
     if (gameState.burnPile.length > prevBurnPileLen.current) {
@@ -168,7 +178,6 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
     hasSeenTutorial().then((seen) => {
       if (!seen) {
         setShowTutorial(true);
-        markTutorialSeen();
       }
     });
   }, []);
@@ -214,16 +223,16 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
   }, [gameState, career?.onSnapshot]);
 
   useEffect(() => {
-    if (gameState.phase === "choose_palace" && gameState.currentPlayerIndex === 1) {
+    if (!paused && gameState.phase === "choose_palace" && gameState.currentPlayerIndex === 1) {
       const timer = setTimeout(() => {
         setGameState((s) => autoAISetupPalace(s, 1));
       }, 600);
       return () => clearTimeout(timer);
     }
-  }, [gameState.phase, gameState.currentPlayerIndex]);
+  }, [gameState.phase, gameState.currentPlayerIndex, paused]);
 
   useEffect(() => {
-    if (gameState.phase !== "playing") return;
+    if (paused || gameState.phase !== "playing") return;
     const curr = gameState.players[gameState.currentPlayerIndex];
     if (curr.isHuman) return;
 
@@ -243,7 +252,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
       });
     }, delay);
     return () => clearTimeout(timer);
-  }, [gameState]);
+  }, [gameState, paused]);
 
   const handleSetupToggle = (cardId: string) => {
     setSetupSelected((prev) => {
@@ -336,6 +345,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
   const handleDismissTutStep = useCallback(() => {
     if (tutorialStep >= 2) {
       setShowTutorial(false);
+      void markTutorialSeen();
     } else {
       setTutorialStep((prev) => prev + 1);
     }
@@ -394,6 +404,8 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
         <View style={styles.backBtn} />
         <Text style={styles.topBarTitle}>{career ? `${career.rival.name} • ${career.series.wins}–${career.series.losses}` : "Palace"}</Text>
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Game menu"
           onPress={() => setShowMenuSheet(true)}
           style={({ pressed }) => [styles.menuBtn, pressed && { opacity: 0.6 }]}
           hitSlop={8}
@@ -658,7 +670,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
         )}
       </View>
 
-      <Modal visible={showGameOver} transparent animationType={career && reducedMotion ? "none" : "fade"}>
+      <Modal visible={showGameOver} transparent animationType={reducedMotion ? "none" : "fade"} onRequestClose={() => {}}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             {career ? <CareerResult career={career} /> : <ScrollView
@@ -745,7 +757,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
       </Modal>
 
       {/* ── Menu action sheet ── */}
-      <Modal visible={showMenuSheet} transparent animationType="slide">
+      <Modal visible={showMenuSheet} transparent animationType={reducedMotion ? "none" : "slide"} onRequestClose={() => setShowMenuSheet(false)}>
         <Pressable style={styles.sheetOverlay} onPress={() => setShowMenuSheet(false)}>
           <Pressable style={styles.sheetCard} onPress={() => {}}>
             <View style={styles.sheetHandle} />
@@ -780,7 +792,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
       </Modal>
 
       {/* ── In-game rules overlay ── */}
-      <Modal visible={showRulesOverlay} animationType="slide">
+      <Modal visible={showRulesOverlay} animationType={reducedMotion ? "none" : "slide"} onRequestClose={() => setShowRulesOverlay(false)}>
         <View style={[styles.rulesContainer, {
           paddingTop: insets.top + (Platform.OS === "web" ? 67 : 0),
           paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 0),
@@ -788,6 +800,8 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
           <View style={styles.rulesTopBar}>
             <Text style={styles.rulesTopBarTitle}>How to Play</Text>
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close rules"
               onPress={() => setShowRulesOverlay(false)}
               style={({ pressed }) => [styles.rulesCloseBtn, pressed && { opacity: 0.6 }]}
               hitSlop={8}
@@ -826,7 +840,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
       </Modal>
 
       {/* ── Leave confirmation ── */}
-      <Modal visible={showLeaveModal} transparent animationType="fade">
+      <Modal visible={showLeaveModal} transparent animationType={reducedMotion ? "none" : "fade"} onRequestClose={handleCancelLeave}>
         <View style={styles.modalOverlay}>
           <View style={styles.leaveCard}>
             <View style={styles.leaveIconWrap}>
@@ -877,7 +891,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
                   {TUTORIAL_STEPS[tutorialStep].step}
                 </Text>
               </View>
-              <Ionicons name="school-outline" size={14} color="rgba(212,175,55,0.45)" />
+              <Pressable accessibilityRole="button" accessibilityLabel="Skip guide" onPress={() => { setShowTutorial(false); void markTutorialSeen(); }} style={{ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" }}><Text style={{ color: "#EFC778", fontSize: 14 }}>Skip</Text></Pressable>
             </View>
 
             <View style={styles.tutorialHeaderRow}>

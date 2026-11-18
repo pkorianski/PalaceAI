@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { usePreferences } from "@/components/settings/PreferencesProvider";
 export const palette = {
   bg: "#0B201C",
   panel: "#142F29",
@@ -20,13 +21,15 @@ export const palette = {
   border: "#29483C",
 };
 export function useReducedMotion() {
+  const { preferences } = usePreferences();
   const [reduced, set] = useState(true);
   useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(set);
+    let active = true;
+    AccessibilityInfo.isReduceMotionEnabled().then(value => { if (active) set(value); }).catch(() => {});
     const s = AccessibilityInfo.addEventListener("reduceMotionChanged", set);
-    return () => s.remove();
+    return () => { active = false; s.remove(); };
   }, []);
-  return reduced;
+  return reduced || preferences.reduceMotion;
 }
 export function Arrival({
   children,

@@ -15,11 +15,15 @@ import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Defs, Path, RadialGradient, Stop } from "react-native-svg";
 
+import { usePreferences } from "@/components/settings/PreferencesProvider";
+
 const INTRO_DURATION_MS = 1300 + 650 + 250; // Ignite, hold the full lockup, fade.
 
 /** One finite studio ident per root mount; no storage, sound, or network needed. */
 export function StudioIntro({ onComplete }: { onComplete: () => void }) {
   const insets = useSafeAreaInsets();
+  const { preferences } = usePreferences();
+  const forceReduced = preferences.reduceMotion;
   const progress = useRef(new Animated.Value(0)).current;
   const completed = useRef(false);
   const [laidOut, setLaidOut] = useState(false);
@@ -57,7 +61,7 @@ export function StudioIntro({ onComplete }: { onComplete: () => void }) {
 
   useEffect(() => {
     if (!laidOut || reduced === null || completed.current) return;
-    if (reduced) {
+    if (reduced || forceReduced) {
       progress.setValue(0.85); // Fully visible, static studio lockup.
       const timeout = setTimeout(finish, 500);
       return () => clearTimeout(timeout);
@@ -81,7 +85,7 @@ export function StudioIntro({ onComplete }: { onComplete: () => void }) {
       clearTimeout(timeout);
       animation.stop();
     };
-  }, [laidOut, reduced, progress, finish]);
+  }, [laidOut, reduced, forceReduced, progress, finish]);
 
   const tween = (inputRange: number[], outputRange: number[]) =>
     progress.interpolate({ inputRange, outputRange, extrapolate: "clamp" });

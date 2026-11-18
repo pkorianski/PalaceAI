@@ -1,0 +1,15 @@
+const assert = require("node:assert/strict");
+const app = require("../app.json").expo;
+const eas = require("../eas.json");
+const pkg = require("../package.json");
+assert.equal(app.ios.bundleIdentifier, "com.palace.cardgame");
+assert.equal(app.ios.infoPlist.ITSAppUsesNonExemptEncryption, false);
+assert.equal(app.ios.privacyManifests.NSPrivacyTracking, false);
+assert.equal(eas.build.production.distribution, "store");
+assert.equal(eas.build.production.autoIncrement, true);
+assert.equal(eas.cli.appVersionSource, "remote");
+assert.equal(eas.build.simulator.ios.simulator, true);
+for (const dependency of ["expo-location", "expo-image-picker"]) assert.ok(!pkg.dependencies[dependency], `Unused sensitive module: ${dependency}`);
+assert.ok(!("newArchEnabled" in app), "Preserve the existing Expo architecture defaults");
+assert.ok(!("splash" in app), "Keep studio branding in-app after native launch");
+console.log("Release configuration checks passed.");

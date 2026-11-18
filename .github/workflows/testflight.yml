@@ -1,0 +1,24 @@
+name: Queue iOS TestFlight build
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check one-time account setup
+        run: |
+          test -n "$EXPO_TOKEN" || { echo "Add the Expo EXPO_TOKEN repository secret after the first interactive phone build. See docs/IOS_RELEASE.md."; exit 1; }
+          node -e 'const c=require("./app.json").expo; if(!c.extra?.eas?.projectId) throw new Error("Run npm run ios:testflight once from your Codespace to link the Expo project and signing credentials.")'
+          node -e 'const c=require("./eas.json"); if(!c.submit?.production?.ios?.ascAppId) throw new Error("Set the App Store Connect Apple ID in eas.json after the first interactive submission.")'
+      - run: npm ci
+      - run: npm run release:check
+      - name: Queue build and TestFlight upload
+        run: npx --yes eas-cli@27.10.0 build --platform ios --profile production --non-interactive --auto-submit --no-wait

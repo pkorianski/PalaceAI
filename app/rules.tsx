@@ -83,7 +83,9 @@ export default function RulesScreen() {
     >
       <View style={styles.topBar}>
         <Pressable
-          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          onPress={() => router.canGoBack() ? router.back() : router.replace("/")}
           style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
           hitSlop={8}
         >
