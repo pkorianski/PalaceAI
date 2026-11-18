@@ -36,6 +36,12 @@ import {
 } from "@/lib/achievements";
 import { updateDailyChallenge } from "@/lib/daily-challenge";
 
+import { RivalPortrait } from "@/components/tour/Art";
+import { CareerResult, type CareerGame } from "@/components/tour/CareerResult";
+import { useReducedMotion } from "@/components/tour/ui";
+import { getRivalMove } from "@/lib/tour/ai";
+import { useTableTheme } from "@/components/tour/ThemeProvider";
+
 const TUTORIAL_STEPS = [
   {
     step: "1 of 3",
@@ -90,9 +96,14 @@ const RULES = [
   },
 ];
 
-export default function GameScreen() {
+export function GameScreen({ career }: { career?: CareerGame } = {}) {
+  const theme = useTableTheme();
+  const reducedMotion = useReducedMotion();
+  const resultRecorded = useRef(false);
+  const [resultError, setResultError] = useState("");
+  const [resultAttempt, setResultAttempt] = useState(0);
   const insets = useSafeAreaInsets();
-  const [gameState, setGameState] = useState<GameState>(() => createInitialGameState());
+  const [gameState, setGameState] = useState<GameState>(() => career?.series.game || createInitialGameState());
   const [showGameOver, setShowGameOver] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showMenuSheet, setShowMenuSheet] = useState(false);
@@ -107,10 +118,10 @@ export default function GameScreen() {
   const [tutorialStep, setTutorialStep] = useState(0);
   const messageOpacity = useRef(new Animated.Value(1)).current;
   const prevMessage = useRef("");
-  const humanTurnsRef = useRef(0);
-  const humanPickupsRef = useRef(0);
-  const burnsRef = useRef(0);
-  const prevBurnPileLen = useRef(0);
+  const humanTurnsRef = useRef(career?.series.metrics?.turns || 0);
+  const humanPickupsRef = useRef(career?.series.metrics?.pickups || 0);
+  const burnsRef = useRef(career?.series.metrics?.burns || 0);
+  const prevBurnPileLen = useRef(career?.series.game?.burnPile.length || 0);
   const human = gameState.players[0];
   const ai = gameState.players[1];
   const currentPlayer = getCurrentPlayer(gameState);
@@ -177,36 +188,37 @@ export default function GameScreen() {
   }, [showTutorial, tutorialStep, gameState.phase, isHumanTurn]);
 
   useEffect(() => {
-    if (gameState.phase === "game_over" && !showGameOver) {
-      const isWin = gameState.winner === "human";
-      const result: GameResult = {
-        won: isWin,
-        turns: humanTurnsRef.current,
-        pickups: humanPickupsRef.current,
-        burns: burnsRef.current,
-      };
-      if (isWin) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } else {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-      recordGameResult(result).then((updatedStats) =>
-        Promise.all([
-          checkAndUnlockAchievements(updatedStats, result),
-          updateDailyChallenge(result),
-        ]).then(([newAchievements, { justCompleted }]) => {
+    if (gameState.phase !== "game_over" || resultRecorded.current) return;
+    resultRecorded.current = true;
+    const result: GameResult = { won: gameState.winner === "human", turns: humanTurnsRef.current, pickups: humanPickupsRef.current, burns: burnsRef.current };
+    const save = async () => {
+      try {
+        const fresh = career ? await career.onResult(result) : true;
+        if (fresh) {
+          const updatedStats = await recordGameResult(result);
+          const [newAchievements, { justCompleted }] = await Promise.all([checkAndUnlockAchievements(updatedStats, result), updateDailyChallenge(result)]);
           setGameOverData({ result, newAchievements, dailyChallengeCompleted: justCompleted });
-          setTimeout(() => setShowGameOver(true), 500);
-        })
-      );
-    }
-  }, [gameState.phase, gameState.winner]);
+        }
+        Haptics.notificationAsync(result.won ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Error);
+        setResultError(""); setShowGameOver(true);
+      } catch (e) {
+        resultRecorded.current = false;
+        setResultError(`Could not save the result: ${String(e)}`);
+      }
+    };
+    save();
+  }, [gameState.phase, gameState.winner, resultAttempt]);
+
+  useEffect(() => {
+    if (gameState.phase !== "game_over") career?.onSnapshot(gameState, { turns: humanTurnsRef.current, pickups: humanPickupsRef.current, burns: burnsRef.current });
+  }, [gameState, career?.onSnapshot]);
 
   useEffect(() => {
     if (gameState.phase === "choose_palace" && gameState.currentPlayerIndex === 1) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         setGameState((s) => autoAISetupPalace(s, 1));
       }, 600);
+      return () => clearTimeout(timer);
     }
   }, [gameState.phase, gameState.currentPlayerIndex]);
 
@@ -221,7 +233,7 @@ export default function GameScreen() {
         const c = prevState.players[prevState.currentPlayerIndex];
         if (c.isHuman || prevState.phase !== "playing") return prevState;
         const aiIdx = prevState.players.findIndex((p) => !p.isHuman);
-        const move = getAIMove(prevState);
+        const move = career ? getRivalMove(prevState, career.rival.style, career.series.tier) : getAIMove(prevState);
         if (move.type === "play" && move.cardIds) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           return playCards(prevState, aiIdx, move.cardIds);
@@ -307,6 +319,7 @@ export default function GameScreen() {
   };
 
   const handleNewGame = () => {
+    resultRecorded.current = false;
     setShowGameOver(false);
     setSelectedPlayCards([]);
     setSetupSelected([]);
@@ -373,12 +386,13 @@ export default function GameScreen() {
 
   return (
     <View style={[styles.container, {
+      backgroundColor: theme.table,
       paddingTop: insets.top + (Platform.OS === "web" ? 67 : 0),
       paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 0),
     }]}>
       <View style={styles.topBar}>
         <View style={styles.backBtn} />
-        <Text style={styles.topBarTitle}>Palace</Text>
+        <Text style={styles.topBarTitle}>{career ? `${career.rival.name} • ${career.series.wins}–${career.series.losses}` : "Palace"}</Text>
         <Pressable
           onPress={() => setShowMenuSheet(true)}
           style={({ pressed }) => [styles.menuBtn, pressed && { opacity: 0.6 }]}
@@ -388,9 +402,11 @@ export default function GameScreen() {
         </Pressable>
       </View>
 
+      {!!(resultError || career?.error) && <View style={{ padding: 12 }}><Text style={{ color: "#FFBFAC" }}>{resultError || career?.error}</Text>{!!resultError && <Pressable accessibilityRole="button" onPress={() => setResultAttempt(n => n + 1)} style={{ padding: 14 }}><Text style={{ color: "#EFC778" }}>Retry saving result</Text></Pressable>}</View>}
       <View style={styles.gameArea}>
         <View style={styles.opponentPanel}>
           <View style={styles.playerHeader}>
+            {career && <RivalPortrait rival={career.rival} size={30} />}
             <View style={[styles.turnIndicator, !currentPlayer.isHuman && styles.turnIndicatorActive]} />
             <Text style={styles.playerName}>
               {ai.name}
@@ -642,10 +658,10 @@ export default function GameScreen() {
         )}
       </View>
 
-      <Modal visible={showGameOver} transparent animationType="fade">
+      <Modal visible={showGameOver} transparent animationType={career && reducedMotion ? "none" : "fade"}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <ScrollView
+            {career ? <CareerResult career={career} /> : <ScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.modalScroll}
               bounces={false}
@@ -723,7 +739,7 @@ export default function GameScreen() {
               >
                 <Text style={styles.modalHomeBtnText}>Home</Text>
               </Pressable>
-            </ScrollView>
+            </ScrollView>}
           </View>
         </View>
       </Modal>
@@ -818,7 +834,7 @@ export default function GameScreen() {
             </View>
             <Text style={styles.leaveTitle}>Leave Game?</Text>
             <Text style={styles.leaveSub}>
-              Your current game progress will be lost.
+              {career ? "Your deal and series are saved. Resume from the Tour whenever you’re ready." : "Your current game progress will be lost."}
             </Text>
             <Pressable
               style={({ pressed }) => [
@@ -1715,3 +1731,5 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
 });
+
+export default function QuickPlayScreen() { return <GameScreen />; }
