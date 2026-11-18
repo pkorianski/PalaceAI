@@ -106,13 +106,17 @@ const server = http.createServer((req, res) => {
     await capture("10-guide");
     for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "Next", exact: true }).click();
     await page.getByRole("button", { name: "Back to settings", exact: true }).click();
-    await context.setOffline(true);
+    // Web exports lazy route chunks; native exports bundle all these screens.
+    // Load each web screen before testing its offline content/navigation.
     await page.getByRole("button", { name: "Privacy policy", exact: true }).click();
     await page.getByText("Your game. Your device.", { exact: true }).waitFor();
+    await context.setOffline(true);
     await capture("11-privacy");
     await page.getByRole("button", { name: "Back", exact: true }).click();
+    await context.setOffline(false);
     await page.getByRole("button", { name: "Help & support", exact: true }).click();
     await page.getByText("Need a hand?", { exact: true }).waitFor();
+    await context.setOffline(true);
     await page.getByRole("button", { name: "Email support", exact: true }).waitFor();
     await capture("12-support");
     await context.setOffline(false);

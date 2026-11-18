@@ -44,7 +44,7 @@ Cloud builds use the existing Expo account's quota and billing settings. Apple m
 
 ## Verified locally / in CI
 
-Run `npm run release:check`, web/iOS production exports, and the browser startup/Tour/settings smoke test. Native generation uses `npx expo prebuild --platform ios --no-install`; generated `ios/` remains ignored for managed Expo builds. Generated Info.plist has no sensitive `*UsageDescription` keys after unused location/image-picker modules are removed. The manifest declares no tracking/data collection, plus required API reasons from the included React Native, Expo and AsyncStorage privacy manifests. This is a source/generated-project inspection, not a signed-IPA privacy certification. Recheck the archive and Apple's processing report.
+Run `npm run release:check`, web/iOS production exports, and the browser startup/Tour/settings smoke test. Browser offline checks cover already-loaded web routes, because web exports load route chunks on demand. The iOS export bundles these screens; a true offline cold launch remains a signed-device test. Native generation uses `npx expo prebuild --platform ios --no-install`; generated `ios/` remains ignored for managed Expo builds. Generated Info.plist has no sensitive `*UsageDescription` keys after unused location/image-picker modules are removed. The manifest declares no tracking/data collection, plus required API reasons from the included React Native, Expo and AsyncStorage privacy manifests. This is a source/generated-project inspection, not a signed-IPA privacy certification. Recheck the archive and Apple's processing report.
 
 Public URLs:
 
