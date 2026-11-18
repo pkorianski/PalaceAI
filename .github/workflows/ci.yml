@@ -23,3 +23,30 @@ jobs:
         run: npm test
       - name: Typecheck
         run: npm run typecheck
+
+  tour-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install app dependencies
+        run: npm ci
+      - name: Install preview browser tooling
+        run: npm install --no-save --package-lock=false playwright
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Export web preview
+        run: npx expo export --platform web --output-dir dist-preview
+      - name: Test Tour UI and capture phone-sized previews
+        run: node scripts/tour-ui-smoke.cjs
+      - name: Upload preview screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: palace-tour-phone-previews
+          path: screenshots/tour-preview
+          if-no-files-found: warn
