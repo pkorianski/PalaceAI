@@ -90,12 +90,14 @@ export function CareerResult({ career }: { career: CareerGame }) {
             label={o?.complete ? "Back to the tour" : "Next round"}
             onPress={o?.complete ? career.onExit : career.onContinue}
           />
-          <Action
-            secondary
-            label="Return to the map"
-            onPress={career.onExit}
-            icon="trophy-outline"
-          />
+          {!o?.complete && (
+            <Action
+              secondary
+              label="Save and return to the map"
+              onPress={career.onExit}
+              icon="trophy-outline"
+            />
+          )}
         </View>
       </Arrival>
     </ScrollView>

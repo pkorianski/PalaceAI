@@ -41,9 +41,9 @@ See [the build plan](docs/PALACE_TOUR_PLAN.md) for architecture and expansion.
 
 For this release, test on iPhone: Quick Play still works; start Joey's Bronze
 challenge; leave and resume the same deal; finish a series; check the Trophy room;
-try locked tiers/locations; earn and equip a championship theme. Browser screenshot
-capture was blocked in the build environment; native visual/interaction QA remains
-required. Automated tests verify progression and AI legality, not native rendering.
+try locked tiers/locations; earn and equip a championship theme. Phone-sized browser previews are captured by GitHub Actions under the
+`palace-tour-phone-previews` artifact. The victory image uses a labeled QA fixture.
+Native visual/interaction QA remains required; browser previews are not device screenshots.
 
 ## SDK 58 upgrade (#7)
 

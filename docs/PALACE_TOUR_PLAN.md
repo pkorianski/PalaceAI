@@ -44,14 +44,14 @@ cloud saves and multiplayer. None are implied by the local solo circuit.
 - [x] Tour, collection and rival UI
 - [x] Gameplay and rewards integration
 - [x] Automated checks (native visual QA remains a device check)
-- [ ] PR, CI, main release and screenshots
+- [x] PR #10 and CI/browser previews (merge tracked on GitHub)
 
 ## Validation status
 
 27 tests, typecheck, SDK alignment, Doctor 20/20 and iOS export pass.
 Web export compiles. Real browser screenshot launch is blocked by sandbox Unix
-socket restrictions; browser download fallback failed. No screenshots or physical
-iPhone visual validation are claimed. Native haptics/layout remain device checks.
+socket restrictions; browser download fallback failed. GitHub Actions provides an alternate Chromium capture path; browser previews
+are available as workflow artifacts. Physical iPhone validation remains required. Native haptics/layout remain device checks.
 
 DOM smoke checks using the actual exported web bundle pass: Home → map → rival
 → game, initial deal persistence, restored completed-round fixture → victory UI
@@ -61,3 +61,6 @@ verify layout, animation smoothness or native interactions.
 The optional lint command is blocked by the existing ESLint dependency import of
 `zod-validation-error/v4` against a package without that export. Required tests,
 typecheck and Expo checks pass; no lint success is claimed.
+
+GitHub Chromium smoke job passes and captures eight phone-sized web previews.
+The victory capture uses an explicitly documented completed-round fixture.

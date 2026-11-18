@@ -38,6 +38,7 @@ import { updateDailyChallenge } from "@/lib/daily-challenge";
 
 import { RivalPortrait } from "@/components/tour/Art";
 import { CareerResult, type CareerGame } from "@/components/tour/CareerResult";
+import { useReducedMotion } from "@/components/tour/ui";
 import { getRivalMove } from "@/lib/tour/ai";
 import { useTableTheme } from "@/components/tour/ThemeProvider";
 
@@ -97,6 +98,7 @@ const RULES = [
 
 export function GameScreen({ career }: { career?: CareerGame } = {}) {
   const theme = useTableTheme();
+  const reducedMotion = useReducedMotion();
   const resultRecorded = useRef(false);
   const [resultError, setResultError] = useState("");
   const [resultAttempt, setResultAttempt] = useState(0);
@@ -656,7 +658,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
         )}
       </View>
 
-      <Modal visible={showGameOver} transparent animationType="fade">
+      <Modal visible={showGameOver} transparent animationType={career && reducedMotion ? "none" : "fade"}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             {career ? <CareerResult career={career} /> : <ScrollView

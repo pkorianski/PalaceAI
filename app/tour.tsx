@@ -822,7 +822,7 @@ const s = StyleSheet.create({
     borderWidth: 3,
     borderColor: palette.bg,
   },
-  nodeWords: { flex: 1, gap: 3 },
+  nodeWords: { flex: 1, gap: 3, backgroundColor: palette.bg },
   rivalName: {
     color: palette.white,
     fontSize: 22,
