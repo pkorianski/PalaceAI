@@ -15,6 +15,8 @@ import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Defs, Path, RadialGradient, Stop } from "react-native-svg";
 
+const INTRO_DURATION_MS = 1300 + 650 + 250; // Ignite, hold the full lockup, fade.
+
 /** One finite studio ident per root mount; no storage, sound, or network needed. */
 export function StudioIntro({ onComplete }: { onComplete: () => void }) {
   const insets = useSafeAreaInsets();
@@ -43,7 +45,7 @@ export function StudioIntro({ onComplete }: { onComplete: () => void }) {
       if (state !== "active") finish();
     });
     // Completion deliberately does not depend on an animation callback.
-    const watchdog = setTimeout(finish, 2000);
+    const watchdog = setTimeout(finish, INTRO_DURATION_MS + 500);
     return () => {
       active = false;
       clearTimeout(preferenceTimeout);
@@ -61,14 +63,19 @@ export function StudioIntro({ onComplete }: { onComplete: () => void }) {
       return () => clearTimeout(timeout);
     }
     progress.setValue(0);
-    const animation = Animated.timing(progress, {
-      toValue: 1,
-      duration: 1500,
+    const timing = (toValue: number, duration: number) => Animated.timing(progress, {
+      toValue,
+      duration,
       easing: Easing.linear,
       useNativeDriver: Platform.OS !== "web",
       isInteraction: false,
     });
-    const timeout = setTimeout(finish, 1500);
+    const animation = Animated.sequence([
+      timing(0.85, 1300),
+      Animated.delay(650),
+      timing(1, 250),
+    ]);
+    const timeout = setTimeout(finish, INTRO_DURATION_MS);
     animation.start();
     return () => {
       clearTimeout(timeout);
@@ -112,8 +119,8 @@ export function StudioIntro({ onComplete }: { onComplete: () => void }) {
             opacity: tween([0, 0.14, 0.36, 1], [0, 0, 1, 1]),
             transform: [{ scale: tween([0, 0.14, 0.35, 0.56, 1], [0.08, 0.08, 1.12, 1, 1]) }],
           }}>
-            <Svg width={88} height={92} viewBox="0 0 88 92">
-              <Path d="M23 84 V11 M23 49 L68 9 M23 49 L65 88" stroke="#C0FFE9" strokeWidth={14} strokeLinecap="round" strokeLinejoin="round" />
+            <Svg width={106} height={110} viewBox="0 0 88 92">
+              <Path d="M23 84 V11 M23 49 L68 9 M23 49 L65 84" stroke="#C0FFE9" strokeWidth={14} strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
           </Animated.View>
           <Animated.View style={[styles.spark, {
@@ -144,12 +151,12 @@ export function StudioIntro({ onComplete }: { onComplete: () => void }) {
 const styles = StyleSheet.create({
   overlay: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: "#090D16", zIndex: 100, alignItems: "center", justifyContent: "center" },
   identity: { alignItems: "center", gap: 28, paddingHorizontal: 16 },
-  emblem: { width: 88, height: 92, alignItems: "center", justifyContent: "center" },
+  emblem: { width: 106, height: 110, alignItems: "center", justifyContent: "center" },
   glow: { position: "absolute", width: 190, height: 190, borderRadius: 95 },
-  spark: { position: "absolute", left: 19, top: 45, width: 8, height: 8, borderRadius: 4, backgroundColor: "#FFFFFF" },
+  spark: { position: "absolute", left: 24, top: 55, width: 8, height: 8, borderRadius: 4, backgroundColor: "#FFFFFF" },
   wordmark: { alignItems: "center", gap: 10 },
-  name: { color: "#F9FAFB", fontFamily: "Inter_700Bold", fontSize: 27, letterSpacing: 3 },
-  games: { color: "#B9C7D8", fontFamily: "Inter_500Medium", fontSize: 12, letterSpacing: 7, paddingLeft: 7 },
+  name: { color: "#F9FAFB", fontFamily: "Inter_700Bold", fontSize: 31, letterSpacing: 3 },
+  games: { color: "#B9C7D8", fontFamily: "Inter_500Medium", fontSize: 14, letterSpacing: 7, paddingLeft: 7 },
   skip: { position: "absolute", alignSelf: "center", minHeight: 44, minWidth: 100, alignItems: "center", justifyContent: "center", paddingHorizontal: 20 },
   skipText: { color: "#B9C7D8", fontFamily: "Inter_400Regular", fontSize: 13 },
 });
