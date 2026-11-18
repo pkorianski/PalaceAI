@@ -48,7 +48,30 @@ const server = http.createServer((req, res) => {
       await page.waitForTimeout(450);
       return page.screenshot({ path: path.join(out, name + ".png") });
     };
-    await page.goto("http://127.0.0.1:18081");
+    // Verify the real root overlay in both accessibility modes before gameplay.
+    const normal = await browser.newContext({
+      viewport: { width: 320, height: 693 },
+      reducedMotion: "no-preference",
+    });
+    const launch = await normal.newPage();
+    launch.on("pageerror", (error) => errors.push(error.message));
+    await launch.goto("http://127.0.0.1:18081", { waitUntil: "domcontentloaded" });
+    await launch.getByRole("button", { name: "Skip studio intro" }).waitFor();
+    await launch.getByTestId("studio-intro").waitFor({ state: "hidden", timeout: 3000 });
+    await launch.getByRole("button", { name: "Continue Palace Tour" }).click();
+    await launch.getByRole("button", { name: /^Joey, Two Times\./ }).waitFor();
+    assert.equal(await launch.getByTestId("studio-intro").count(), 0, "Navigation must not replay the intro");
+    await launch.reload({ waitUntil: "domcontentloaded" });
+    await launch.getByRole("button", { name: "Skip studio intro" }).click();
+    assert.equal(await launch.getByTestId("studio-intro").count(), 0, "Skip dismisses immediately");
+    await launch.getByRole("button", { name: /^Joey, Two Times\./ }).waitFor();
+    await normal.close();
+
+    await page.goto("http://127.0.0.1:18081", { waitUntil: "domcontentloaded" });
+    await page.getByRole("button", { name: "Skip studio intro" }).waitFor();
+    await page.getByText("KORIANSKI", { exact: true }).waitFor();
+    await page.screenshot({ path: path.join(out, "00-studio-intro.png") });
+    await page.getByTestId("studio-intro").waitFor({ state: "hidden", timeout: 3000 });
     await page
       .getByRole("button", { name: "Continue Palace Tour" })
       .waitFor({ timeout: 30000 });

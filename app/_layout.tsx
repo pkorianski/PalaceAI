@@ -8,13 +8,15 @@ import {
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useCallback, useState } from "react";
+import { View } from "react-native";
+import { StudioIntro } from "@/components/brand/StudioIntro";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { TableThemeProvider } from "@/components/tour/ThemeProvider";
 import { queryClient } from "@/lib/query-client";
 
-SplashScreen.preventAutoHideAsync();
+void SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootLayoutNav() {
   return (
@@ -65,19 +67,28 @@ export default function RootLayout() {
     Inter_700Bold,
   });
 
-  useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
+  const [introComplete, setIntroComplete] = useState(false);
+  const completeIntro = useCallback(() => setIntroComplete(true), []);
 
   if (!fontsLoaded && !fontError) return null;
 
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#0d2b1a" }}>
-          <TableThemeProvider><RootLayoutNav /></TableThemeProvider>
+        <GestureHandlerRootView
+          style={{ flex: 1, backgroundColor: "#0d2b1a" }}
+          onLayout={() => { void SplashScreen.hideAsync().catch(() => {}); }}
+        >
+          <View
+            style={{ flex: 1 }}
+            pointerEvents={introComplete ? "auto" : "none"}
+            accessibilityElementsHidden={!introComplete}
+            importantForAccessibility={introComplete ? "auto" : "no-hide-descendants"}
+            aria-hidden={!introComplete}
+          >
+            <TableThemeProvider><RootLayoutNav /></TableThemeProvider>
+          </View>
+          {!introComplete && <StudioIntro onComplete={completeIntro} />}
         </GestureHandlerRootView>
       </QueryClientProvider>
     </ErrorBoundary>
