@@ -6,6 +6,7 @@ import {
   Pressable,
   Platform,
 } from "react-native";
+import { useTableTheme } from "@/components/tour/ThemeProvider";
 import type { Card, Suit } from "@/lib/palace-engine";
 
 interface PlayingCardProps {
@@ -42,6 +43,7 @@ export function PlayingCard({
   disabled = false,
   style,
 }: PlayingCardProps) {
+  const theme = useTableTheme();
   const cardW = micro ? 28 : small ? 44 : 66;
   const cardH = micro ? 40 : small ? 62 : 92;
 
@@ -59,6 +61,7 @@ export function PlayingCard({
             transform: [{ scale: pressed && !disabled ? 0.95 : 1 }],
           },
           styles.faceDown,
+          { backgroundColor: theme.card, borderColor: theme.accent },
           style,
         ]}
       >

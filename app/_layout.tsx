@@ -11,6 +11,7 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { TableThemeProvider } from "@/components/tour/ThemeProvider";
 import { queryClient } from "@/lib/query-client";
 
 SplashScreen.preventAutoHideAsync();
@@ -27,6 +28,8 @@ function RootLayoutNav() {
           headerBackVisible: false,
         }}
       />
+      <Stack.Screen name="tour" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="tour-match" options={{ gestureEnabled: false, animation: "fade" }} />
       <Stack.Screen name="rules" options={{ animation: "slide_from_bottom" }} />
       <Stack.Screen
         name="achievements"
@@ -74,7 +77,7 @@ export default function RootLayout() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#0d2b1a" }}>
-          <RootLayoutNav />
+          <TableThemeProvider><RootLayoutNav /></TableThemeProvider>
         </GestureHandlerRootView>
       </QueryClientProvider>
     </ErrorBoundary>

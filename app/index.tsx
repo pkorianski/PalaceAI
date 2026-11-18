@@ -20,6 +20,8 @@ import {
 } from "@/lib/achievements";
 import { getDailyChallenge, type ActiveDailyChallenge } from "@/lib/daily-challenge";
 
+import { TourHomeBanner } from "@/components/tour/HomeBanner";
+
 const DEFAULT_STATS: GameStats = {
   wins: 0,
   losses: 0,
@@ -107,20 +109,7 @@ export default function HomeScreen() {
           <Text style={styles.tagline}>The Card Game</Text>
         </View>
 
-        <View style={styles.cardPreview}>
-          <View style={[styles.previewCard, styles.previewCard1]}>
-            <Text style={styles.previewRank}>K</Text>
-            <Text style={styles.previewSuit}>♠</Text>
-          </View>
-          <View style={[styles.previewCard, styles.previewCard2]}>
-            <Text style={[styles.previewRank, styles.red]}>A</Text>
-            <Text style={[styles.previewSuit, styles.red]}>♥</Text>
-          </View>
-          <View style={[styles.previewCard, styles.previewCard3]}>
-            <Text style={styles.previewRank}>10</Text>
-            <Text style={styles.previewSuit}>♣</Text>
-          </View>
-        </View>
+        <TourHomeBanner />
 
         <Pressable
           style={({ pressed }) => [
@@ -129,7 +118,7 @@ export default function HomeScreen() {
           ]}
           onPress={handlePlay}
         >
-          <Text style={styles.playButtonText}>Play</Text>
+          <Text style={styles.playButtonText}>Quick Play</Text>
           <Ionicons name="play" size={22} color="#0d2b1a" />
         </Pressable>
 
@@ -326,7 +315,7 @@ export default function HomeScreen() {
             { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 16) },
           ]}
         >
-          <Text style={styles.footerText}>Single Player vs AI</Text>
+          <Text style={styles.footerText}>YOUR TABLE. YOUR JOURNEY.</Text>
         </View>
       </ScrollView>
     </View>
@@ -347,8 +336,8 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginTop: 20,
-    marginBottom: 16,
+    marginTop: 12,
+    marginBottom: 24,
   },
   suitRow: {
     flexDirection: "row",
@@ -363,7 +352,7 @@ const styles = StyleSheet.create({
     color: "rgba(192, 57, 43, 0.5)",
   },
   appName: {
-    fontSize: 52,
+    fontSize: 36,
     fontFamily: "Inter_700Bold",
     color: "#D4AF37",
     letterSpacing: 8,

@@ -13,11 +13,37 @@ npm run phone
 ```
 
 This installs the committed dependency versions, and starts
-Expo Go mode with a tunnel and cleared Metro cache. Open the new `exp://` link
+Expo Go mode with a tunnel. The Metro cache is retained so restarts stay faster. Open the new `exp://` link
 in Expo Go. Keep the terminal running. If Expo asks for authentication, use the
-same Expo account in the terminal and Expo Go. Use the current App Store Expo Go supporting SDK 58, as shown on the device. Older SDK 57 projects cannot open in that client.
+same Expo account in the terminal and Expo Go. From an iPhone-only Codespace,
+use `npx expo login --no-browser` to avoid a localhost browser callback. Use the current App Store Expo Go supporting SDK 58, as shown on the device. Older SDK 57 projects cannot open in that client.
 
 For later restarts without reinstalling, use `npm run start:tunnel`.
+
+## Palace Tour (#9)
+
+Home now includes the Tour alongside Quick Play. Four illustrated locations
+contain 16 rivals and 48 Bronze/Silver/Gold mastery titles. Bronze is one match,
+Silver best-of-three and Gold best-of-five. Defeat the three local rivals to
+challenge a champion. The next chapter requires that championship plus six
+mastery trophies in the previous chapter. Silver and Gold rematches count.
+
+Tour deals and series scores resume automatically. Leaving a match saves it;
+explicitly abandoning a series clears only that series. Trophies never regress.
+Championship wins unlock card/table themes in the Trophy room. Weekly Circuit
+unlocks at three trophies, rotates AI rivals, and awards permanent weekly ribbons
+at six, twelve and eighteen wins. It is local solo competition, not multiplayer
+or an online leaderboard. Weekly runs reset on Monday at 00:00 UTC.
+
+All content is local and has no paid-service dependencies. Progress lives on the
+current device, separately from existing stats; deleting app data removes it.
+See [the build plan](docs/PALACE_TOUR_PLAN.md) for architecture and expansion.
+
+For this release, test on iPhone: Quick Play still works; start Joey's Bronze
+challenge; leave and resume the same deal; finish a series; check the Trophy room;
+try locked tiers/locations; earn and equip a championship theme. Browser screenshot
+capture was blocked in the build environment; native visual/interaction QA remains
+required. Automated tests verify progression and AI legality, not native rendering.
 
 ## SDK 58 upgrade (#7)
 
@@ -30,7 +56,7 @@ Codespaces and CI already use Node 22.
 The SDK 57 CLI patch is removed: SDK 58's upstream forwarded-header parser
 handles proxy protocol lists and normalizes exp/exps to HTTP/HTTPS. Regression
 tests retain coverage of those inputs, alongside Palace rules/setup/burns.
-No gameplay or screen source files changed. The prior app.json removals of
+The SDK migration preserved gameplay. Tour additions are described above. The prior app.json removals of
 `newArchEnabled` and `splash` remain intact.
 
 ### Update an existing Codespace on main
@@ -38,7 +64,7 @@ No gameplay or screen source files changed. The prior app.json removals of
 Stop Metro (Ctrl-C), then:
 
 ```sh
-git pull --rebase --autostash && npm run phone
+git pull --ff-only && npm run phone
 ```
 
 If a local deletion of the lockfile prevents installation, restore only that
