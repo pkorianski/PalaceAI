@@ -86,8 +86,8 @@ const server = http.createServer((req, res) => {
     await page.waitForFunction(() => JSON.parse(localStorage.getItem("palace_preferences_v1"))?.reduceMotion === true);
     await page.reload();
     await page.getByTestId("studio-intro").waitFor({ state: "hidden", timeout: 3000 });
-    assert.equal(await haptics.getAttribute("aria-checked"), "false", "Haptics preference survives reload");
-    assert.equal(await page.getByRole("switch", { name: "Reduce motion", exact: true }).getAttribute("aria-checked"), "true");
+    assert.equal(await haptics.isChecked(), false, "Haptics preference survives reload");
+    assert.equal(await page.getByRole("switch", { name: "Reduce motion", exact: true }).isChecked(), true);
     // A real storage write failure must not show a saved toggle value.
     await page.evaluate(() => {
       window.__originalSetItem = Storage.prototype.setItem;
@@ -98,7 +98,7 @@ const server = http.createServer((req, res) => {
     });
     await haptics.click();
     await page.getByText("That change could not save.", { exact: false }).waitFor();
-    assert.equal(await haptics.getAttribute("aria-checked"), "false");
+    assert.equal(await haptics.isChecked(), false);
     await page.evaluate(() => { Storage.prototype.setItem = window.__originalSetItem; });
     await page.getByRole("button", { name: "Retry settings", exact: true }).click();
     await page.getByRole("button", { name: "Learn Palace", exact: true }).click();
