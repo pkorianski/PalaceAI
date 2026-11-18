@@ -71,7 +71,7 @@ export function PlayingCard({
       >
         <View style={styles.faceDownInner}>
           {!micro && (
-            <Text style={[styles.faceDownSymbol, small && { fontSize: 14 }]}>♦</Text>
+            <Text maxFontSizeMultiplier={1} style={[styles.faceDownSymbol, small && { fontSize: 14 }]}>♦</Text>
           )}
         </View>
       </Pressable>
@@ -112,39 +112,41 @@ export function PlayingCard({
     >
       <View style={[styles.cardInner, selected && styles.selectedCardInner]}>
         <View style={[styles.corner, styles.cornerTL]}>
-          <Text
-            style={[styles.rankText, { fontSize: rankFontSize, color }]}
+          <Text maxFontSizeMultiplier={1}
+            style={[styles.rankText, { fontSize: rankFontSize, color, lineHeight: micro ? 9 : undefined }]}
             numberOfLines={1}
             adjustsFontSizeToFit
           >
             {rank}
           </Text>
-          <Text style={[styles.suitCorner, { fontSize: suitFontSize, color }]}>
+          <Text maxFontSizeMultiplier={1} style={[styles.suitCorner, { fontSize: suitFontSize, color, lineHeight: micro ? 8 : undefined, marginTop: micro ? 0 : 1 }]}>
             {suitSymbol}
           </Text>
         </View>
 
         {centerFontSize > 0 && (
-          <Text style={[styles.centerSuit, { color, fontSize: centerFontSize }]}>
-            {suitSymbol}
-          </Text>
+          <View style={styles.centerMark} pointerEvents="none">
+            <Text maxFontSizeMultiplier={1} style={[styles.centerSuit, { color, fontSize: centerFontSize }]}>
+              {suitSymbol}
+            </Text>
+          </View>
         )}
 
         <View style={[styles.corner, styles.cornerBR]}>
-          <Text
+          <Text maxFontSizeMultiplier={1}
             style={[
               styles.rankText,
-              { fontSize: rankFontSize, color, transform: [{ rotate: "180deg" }] },
+              { fontSize: rankFontSize, color, lineHeight: micro ? 9 : undefined, transform: [{ rotate: "180deg" }] },
             ]}
             numberOfLines={1}
             adjustsFontSizeToFit
           >
             {rank}
           </Text>
-          <Text
+          <Text maxFontSizeMultiplier={1}
             style={[
               styles.suitCorner,
-              { fontSize: suitFontSize, color, transform: [{ rotate: "180deg" }] },
+              { fontSize: suitFontSize, color, lineHeight: micro ? 8 : undefined, marginTop: micro ? 0 : 1, transform: [{ rotate: "180deg" }] },
             ]}
           >
             {suitSymbol}
@@ -244,6 +246,7 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
     marginTop: 1,
   },
+  centerMark: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0, alignItems: "center", justifyContent: "center" },
   centerSuit: {
     textAlign: "center",
     lineHeight: undefined,
