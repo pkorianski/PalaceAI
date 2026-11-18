@@ -50,8 +50,12 @@ export function PlayingCard({
   if (!card || faceDown) {
     return (
       <Pressable
+        accessible
+        accessibilityRole={onPress ? "button" : "image"}
+        accessibilityLabel="Face-down card"
+        accessibilityState={{ disabled: !!onPress && disabled, selected }}
         onPress={onPress}
-        disabled={disabled}
+        disabled={disabled || !onPress}
         style={({ pressed }) => [
           styles.card,
           {
@@ -85,6 +89,11 @@ export function PlayingCard({
 
   return (
     <Pressable
+      accessible
+      accessibilityRole={onPress ? "button" : "image"}
+      accessibilityLabel={`${({ A: "Ace", K: "King", Q: "Queen", J: "Jack" } as Record<string, string>)[card.rank] || card.rank} of ${card.suit}`}
+      accessibilityState={{ disabled: !!onPress && disabled, selected }}
+      accessibilityHint={onPress ? "Double tap to select or play this card." : undefined}
       onPress={onPress}
       disabled={disabled || !onPress}
       style={({ pressed }) => [

@@ -76,6 +76,48 @@ const server = http.createServer((req, res) => {
       .getByRole("button", { name: "Continue Palace Tour" })
       .waitFor({ timeout: 30000 });
     await capture("01-home");
+    await page.getByRole("button", { name: "Settings", exact: true }).click();
+    const haptics = page.getByRole("switch", { name: "Haptics", exact: true });
+    await haptics.waitFor();
+    await capture("09-settings");
+    await haptics.click();
+    await page.waitForFunction(() => JSON.parse(localStorage.getItem("palace_preferences_v1"))?.haptics === false);
+    await page.getByRole("switch", { name: "Reduce motion", exact: true }).click();
+    await page.waitForFunction(() => JSON.parse(localStorage.getItem("palace_preferences_v1"))?.reduceMotion === true);
+    await page.reload();
+    await page.getByTestId("studio-intro").waitFor({ state: "hidden", timeout: 3000 });
+    assert.equal(await haptics.getAttribute("aria-checked"), "false", "Haptics preference survives reload");
+    assert.equal(await page.getByRole("switch", { name: "Reduce motion", exact: true }).getAttribute("aria-checked"), "true");
+    // A real storage write failure must not show a saved toggle value.
+    await page.evaluate(() => {
+      window.__originalSetItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function(key, value) {
+        if (key === "palace_preferences_v1") throw new Error("QA disk failure");
+        return window.__originalSetItem.call(this, key, value);
+      };
+    });
+    await haptics.click();
+    await page.getByText("That change could not save.", { exact: false }).waitFor();
+    assert.equal(await haptics.getAttribute("aria-checked"), "false");
+    await page.evaluate(() => { Storage.prototype.setItem = window.__originalSetItem; });
+    await page.getByRole("button", { name: "Retry settings", exact: true }).click();
+    await page.getByRole("button", { name: "Learn Palace", exact: true }).click();
+    await page.getByText("Build your palace.", { exact: true }).waitFor();
+    await capture("10-guide");
+    for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "Next", exact: true }).click();
+    await page.getByRole("button", { name: "Back to settings", exact: true }).click();
+    await context.setOffline(true);
+    await page.getByRole("button", { name: "Privacy policy", exact: true }).click();
+    await page.getByText("Your game. Your device.", { exact: true }).waitFor();
+    await capture("11-privacy");
+    await page.getByRole("button", { name: "Back", exact: true }).click();
+    await page.getByRole("button", { name: "Help & support", exact: true }).click();
+    await page.getByText("Need a hand?", { exact: true }).waitFor();
+    await page.getByRole("button", { name: "Email support", exact: true }).waitFor();
+    await capture("12-support");
+    await context.setOffline(false);
+    await page.getByRole("button", { name: "Back", exact: true }).click();
+    await page.getByRole("button", { name: "Back", exact: true }).click();
     await page.getByRole("button", { name: "Continue Palace Tour" }).click();
     await page.getByRole("button", { name: /^Joey, Two Times\./ }).waitFor();
     await capture("02-map");
@@ -133,6 +175,32 @@ const server = http.createServer((req, res) => {
       .click();
     await page.getByRole("tab", { name: "Trophy room", exact: true }).click();
     await capture("08-earned-trophy");
+    await page.goto("http://127.0.0.1:18081");
+    await page.getByTestId("studio-intro").waitFor({ state: "hidden", timeout: 3000 });
+    await page.getByRole("button", { name: "Settings", exact: true }).click();
+    await page.evaluate(() => localStorage.setItem("unrelated_qa", "keep"));
+    const savedTour = await page.evaluate(() => localStorage.getItem("palace_tour_v1"));
+    await page.getByRole("button", { name: "Reset game progress", exact: true }).click();
+    await capture("13-reset-confirmation");
+    await page.getByRole("button", { name: "Keep my progress", exact: true }).click();
+    assert.equal(await page.evaluate(() => localStorage.getItem("palace_tour_v1")), savedTour, "Cancel preserves the save");
+    await page.getByRole("button", { name: "Reset game progress", exact: true }).click();
+    await page.getByRole("button", { name: "Erase game progress", exact: true }).click();
+    await page.getByRole("button", { name: "Settings", exact: true }).waitFor();
+    const resetState = await page.evaluate(() => ({
+      tour: localStorage.getItem("palace_tour_v1"),
+      stats: localStorage.getItem("palace_stats"),
+      achievements: localStorage.getItem("palace_achievements"),
+      tutorial: localStorage.getItem("palace_tutorial_done"),
+      preferences: JSON.parse(localStorage.getItem("palace_preferences_v1")),
+      unrelated: localStorage.getItem("unrelated_qa"),
+    }));
+    assert.equal(resetState.tour, null);
+    assert.equal(resetState.stats, null);
+    assert.equal(resetState.achievements, null);
+    assert.equal(resetState.tutorial, null);
+    assert.deepEqual(resetState.preferences, { version: 1, haptics: false, reduceMotion: true });
+    assert.equal(resetState.unrelated, "keep");
     assert.deepEqual(errors, [], "No uncaught browser errors");
     fs.writeFileSync(
       path.join(out, "README.txt"),

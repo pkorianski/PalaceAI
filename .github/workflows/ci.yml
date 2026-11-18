@@ -23,6 +23,12 @@ jobs:
         run: npm test
       - name: Typecheck
         run: npm run typecheck
+      - name: Release configuration
+        run: node scripts/check-release.cjs
+      - name: Check policy source matches public pages
+        run: |
+          npm run website:build
+          git diff --exit-code -- docs/PRIVACY.md website/palace
 
   tour-preview:
     runs-on: ubuntu-latest

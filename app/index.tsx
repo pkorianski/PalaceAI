@@ -11,7 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import * as Haptics from "@/lib/haptics";
 import { getStats, type GameStats } from "@/lib/stats";
 import {
   getUnlockedIds,
@@ -98,6 +98,9 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        <View style={{ width: "100%", flexDirection: "row", justifyContent: "flex-end" }}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push("/settings")} style={{ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" }}><Ionicons name="settings-outline" size={24} color="#D4AF37" /></Pressable>
+        </View>
         <View style={styles.header}>
           <View style={styles.suitRow}>
             <Text style={styles.suitSymbol}>♠</Text>
@@ -116,6 +119,8 @@ export default function HomeScreen() {
             styles.playButton,
             pressed && styles.playButtonPressed,
           ]}
+          accessibilityRole="button"
+          accessibilityLabel="Quick Play"
           onPress={handlePlay}
         >
           <Text style={styles.playButtonText}>Quick Play</Text>
@@ -127,6 +132,8 @@ export default function HomeScreen() {
             styles.secondaryButton,
             pressed && styles.secondaryButtonPressed,
           ]}
+          accessibilityRole="button"
+          accessibilityLabel="How to Play"
           onPress={handleRules}
         >
           <Ionicons name="book-outline" size={18} color="#D4AF37" />
