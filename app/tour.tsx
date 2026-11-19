@@ -502,7 +502,7 @@ export default function TourScreen() {
               <View style={[ui.panel, { borderColor: "#756240", padding: 24 }]}>
                 <Eyebrow>THE WEEKLY SOLO CIRCUIT</Eyebrow>
                 <TrophyArt size={116} />
-                <Text style={ui.title}>New week.\nNew reputation.</Text>
+                <Text style={ui.title}>{"New week.\nNew reputation."}</Text>
                 <Text style={ui.subtitle}>
                   A rotating lineup of AI rivals. Six wins per division. Three
                   divisions to conquer. Losses never remove wins.
