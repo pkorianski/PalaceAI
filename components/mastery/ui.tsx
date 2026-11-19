@@ -101,7 +101,7 @@ export function XpMeter({ state }: { state: Mastery }) {
     </View>
   );
 }
-export function RoundMastery({ progress }: { progress: RoundProgress | null }) {
+export function RoundMastery({ progress, compact = false }: { progress: RoundProgress | null; compact?: boolean }) {
   if (!progress || progress.duplicate) return null;
   const level = levelFor(progress.state.xp);
   return (
@@ -109,6 +109,7 @@ export function RoundMastery({ progress }: { progress: RoundProgress | null }) {
       accessibilityLiveRegion="polite"
       style={[
         m.card,
+        compact && { padding: 14, gap: 10 },
         { width: "100%", backgroundColor: "#203D32", borderColor: "#8E7545" },
       ]}
     >
@@ -125,7 +126,7 @@ export function RoundMastery({ progress }: { progress: RoundProgress | null }) {
           </Text>
         </View>
       </View>
-      <XpMeter state={progress.state} />
+      {!compact && <XpMeter state={progress.state} />}
       {!!progress.quests.length && (
         <Text style={m.body}>
           {progress.quests.length} weekly{" "}
