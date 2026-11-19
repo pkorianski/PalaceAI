@@ -57,6 +57,14 @@ const server = http.createServer((req, res) => {
     assert.equal(await p.getByRole('button',{name:/^Face-down card [123]$/}).count(),3,'All blind cards expose only positions');
     assert.equal(await p.getByRole('button',{name:/ of (hearts|clubs|diamonds|spades)$/}).count(),0,'No human blind ranks exposed to assistive tech');
     await p.screenshot({path:path.join(out,'21-polish-blind-fixture.png')});
+    // A large pickup hand must remain horizontally browsable and selectable.
+    await p.evaluate(raw => { const c=JSON.parse(raw),s=c.active.game;s.phase='playing';s.currentPlayerIndex=0;s.players[0].hand.push(...s.deck);s.deck=[];s.pile=[];localStorage.setItem('palace_tour_v1',JSON.stringify(c)); },baseline);
+    await p.reload(); await p.getByRole('button',{name:'Pick Up',exact:true}).waitFor();
+    const longHand = p.getByRole('button',{name:/ of (hearts|clubs|diamonds|spades)$/});
+    assert.ok(await longHand.count() > 20,'Fixture represents a large pickup hand');
+    await longHand.last().click();
+    assert.equal(await p.getByRole('button',{name:'Play',exact:true}).isEnabled(),true,'Last offscreen card can be selected');
+    await p.screenshot({path:path.join(out,'23-polish-long-hand-fixture.png')});
     // Save a known round end, return to the previous Tour, then Back reaches Home once.
     await p.evaluate(raw => {const c=JSON.parse(raw);c.active.game.phase='game_over';c.active.game.winner='human';localStorage.setItem('palace_tour_v1',JSON.stringify(c));},baseline);
     await p.goto('http://127.0.0.1:18082');

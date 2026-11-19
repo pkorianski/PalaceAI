@@ -53,13 +53,13 @@ import { useTableTheme } from "@/components/tour/ThemeProvider";
 
 const TUTORIAL_STEPS = [
   {
-    step: "1 of 3",
+    step: "1 of 2",
     icon: "hand-left-outline" as const,
     title: "Choose Your Palace",
     body: "Tap 3 cards from your hand below. Pick your strongest — they become your face-up backup cards.",
   },
   {
-    step: "2 of 3",
+    step: "2 of 2",
     icon: "checkmark-circle-outline" as const,
     title: "Lock Them In",
     body: "Great picks! Now tap 'Confirm Palace' to place your 3 cards face-up on the board.",
@@ -108,7 +108,8 @@ const RULES = [
 export function GameScreen({ career }: { career?: CareerGame } = {}) {
   const theme = useTableTheme();
   const { height, fontScale } = useWindowDimensions();
-  const compact = height < 740 && fontScale < 1.3;
+  const insets = useSafeAreaInsets();
+  const compact = height - insets.top - insets.bottom < 740 && fontScale < 1.3;
   const menuButton = useRef<React.ComponentRef<typeof View>>(null);
   const menuHeading = useRef<React.ComponentRef<typeof Text>>(null);
   const rulesHeading = useRef<React.ComponentRef<typeof Text>>(null);
@@ -136,7 +137,6 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
   }, []);
   const [resultError, setResultError] = useState("");
   const [resultAttempt, setResultAttempt] = useState(0);
-  const insets = useSafeAreaInsets();
   const [gameState, setGameState] = useState<GameState>(() => career?.series.game || createInitialGameState());
   const [showGameOver, setShowGameOver] = useState(false);
   const [foreground, setForeground] = useState(AppState.currentState !== "background");
@@ -177,7 +177,10 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
 
   const isTutStep2Visible = showTutorial && tutorialStep === 2 && isHumanTurn;
 
-  const anyTutVisible = isTutStep0Visible || isTutStep1Visible || isTutStep2Visible;
+  const anyTutVisible = isTutStep0Visible || isTutStep1Visible;
+  useEffect(() => {
+    if (isTutStep2Visible) { setShowTutorial(false); void markTutorialSeen(); }
+  }, [isTutStep2Visible]);
   const paused = !foreground || showMenuSheet || showRulesOverlay || showLeaveModal;
   useEffect(() => {
     const subscription = AppState.addEventListener("change", state => setForeground(state === "active"));
@@ -388,14 +391,6 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
     setGameState(createInitialGameState());
   };
 
-  const handleDismissTutStep = useCallback(() => {
-    if (tutorialStep >= 2) {
-      setShowTutorial(false);
-      void markTutorialSeen();
-    } else {
-      setTutorialStep((prev) => prev + 1);
-    }
-  }, [tutorialStep]);
 
   const isGameActive =
     gameState.phase !== "setup" &&
@@ -477,7 +472,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
             <Text style={styles.handCount}>{ai.hand.length} in hand</Text>
           </View>
 
-          {!compact && <View style={styles.aiFanRow}>
+          {!compact && gameState.phase !== "choose_palace" && <View style={styles.aiFanRow}>
             {ai.hand.length === 0 ? (
               <Text style={styles.aiEmptyHand}>No cards in hand</Text>
             ) : (
@@ -492,6 +487,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
             )}
           </View>}
 
+          {gameState.phase !== "choose_palace" && <>
           <View style={styles.palaceRowLabeled}>
             <View style={styles.palaceGroup}>
               <View style={styles.palaceGroupCards}>
@@ -519,6 +515,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
               <Text style={styles.palaceGroupLabel}>FACE UP</Text>
             </View>
           </View>
+          </>}
         </View>
 
         <View style={[styles.centerArea, { paddingVertical: compact ? 6 : 12 }]}>
@@ -526,7 +523,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
             <Text style={{ fontFamily: "Inter_700Bold", fontSize: 17, color: "#FFF6E5" }}>{turn.heading}</Text>
             <Text style={{ fontSize: 13, lineHeight: 18, textAlign: "center", color: "#C5D7CB" }}>{turn.hint}</Text>
           </View>
-          <Animated.View style={[styles.messageContainer, { opacity: messageOpacity }]}>
+          {(!compact || gameState.phase !== "playing" || !gameState.message.startsWith("Your turn")) && <Animated.View style={[styles.messageContainer, { opacity: messageOpacity }]}>
             <Text style={[styles.messageText, { fontSize: 12 }]}>
               {gameState.phase === "choose_palace"
                 ? gameState.currentPlayerIndex === 0
@@ -534,15 +531,16 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
                   : "Opponent setting up..."
                 : gameState.message}
             </Text>
-          </Animated.View>
+          </Animated.View>}
 
+          {gameState.phase !== "choose_palace" && <>
           <View style={styles.pilesRow}>
             <View style={styles.pileArea}>
               <Text style={styles.pileLabel}>DECK</Text>
               {gameState.deck.length > 0 ? (
-                <PlayingCard faceDown />
+                <PlayingCard faceDown small={compact} />
               ) : (
-                <EmptyCardSlot />
+                <EmptyCardSlot small={compact} />
               )}
               <Text style={styles.pileCount}>{gameState.deck.length}</Text>
             </View>
@@ -551,84 +549,60 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
               <Text style={styles.pileLabel}>PILE</Text>
               {pileTop ? (
                 <View>
-                  {pileCount > 1 && (
+                  {!compact && pileCount > 1 && (
                     <View style={styles.pileStack2} />
                   )}
-                  {pileCount > 2 && (
+                  {!compact && pileCount > 2 && (
                     <View style={styles.pileStack3} />
                   )}
-                  <PlayingCard card={pileTop} />
+                  <PlayingCard card={pileTop} small={compact} />
                 </View>
               ) : (
-                <EmptyCardSlot />
+                <EmptyCardSlot small={compact} />
               )}
               <Text style={styles.pileCount}>{pileCount > 0 ? pileCount : ""}</Text>
             </View>
 
             <View style={styles.pileArea}>
               <Text style={styles.pileLabel}>BURNED</Text>
-              <EmptyCardSlot />
+              <EmptyCardSlot small={compact} />
               <Text style={styles.pileCount}>{gameState.burnPile.length || ""}</Text>
             </View>
           </View>
 
+          </>}
 
         </View>
 
         <View style={styles.playerSection}>
           <View style={styles.playerHeader}>
-            <View style={[styles.turnIndicator, currentPlayer.isHuman && gameState.phase === "playing" && styles.turnIndicatorActive]} />
+            <View style={[styles.turnIndicator, isHumanTurn && styles.turnIndicatorActive]} />
             <View style={{ flex: 1, gap: 2 }}><Text style={styles.playerName}>You</Text>{!!playerTitle && <Text style={{ color: "#C5D7CB", fontSize: 12 }}>{playerTitle}</Text>}</View>
             <Text style={styles.handCount}>{human.hand.length} in hand</Text>
           </View>
-
-          <View style={styles.palaceRowLabeled}>
+          {gameState.phase !== "choose_palace" && <View style={styles.palaceRowLabeled}>
             <View style={styles.palaceGroup}>
               <View style={styles.palaceGroupCards}>
-                {human.faceDownPalace.map((card, i) =>
-                  card ? (
-                    <PlayingCard
-                      key={`human-fd-${i}`}
-                      faceDown
-                      accessibilityLabel={`Face-down card ${i + 1}`}
-                      small
-                      onPress={humanPhase === "facedown" && isHumanTurn ? () => handleFaceDownPlay(i) : undefined}
-                      disabled={humanPhase !== "facedown" || !isHumanTurn}
-                    />
-                  ) : (
-                    <EmptyCardSlot key={`human-fd-empty-${i}`} small />
-                  )
-                )}
+                {human.faceDownPalace.map((card, i) => card ? (
+                  <PlayingCard key={`human-fd-${i}`} faceDown small accessibilityLabel={`Face-down card ${i + 1}`}
+                    onPress={humanPhase === "facedown" && isHumanTurn ? () => handleFaceDownPlay(i) : undefined}
+                    disabled={humanPhase !== "facedown" || !isHumanTurn} />
+                ) : <EmptyCardSlot key={`human-fd-empty-${i}`} small />)}
               </View>
               <Text style={styles.palaceGroupLabel}>FACE DOWN</Text>
             </View>
             <View style={styles.palaceSpacer} />
             <View style={styles.palaceGroup}>
               <View style={styles.palaceGroupCards}>
-                {gameState.phase === "choose_palace" && gameState.currentPlayerIndex === 0
-                  ? [
-                      ...human.faceUpPalace.map((card) => (
-                        <PlayingCard key={card.id} card={card} small />
-                      )),
-                      ...[...Array(3 - human.faceUpPalace.length)].map((_, i) => (
-                        <EmptyCardSlot key={`human-fu-empty-${i}`} small />
-                      )),
-                    ]
-                  : human.faceUpPalace.map((card) => (
-                      <PlayingCard
-                        key={card.id}
-                        card={card}
-                        small
-                        selected={humanPhase === "faceup" && selectedPlayCards.includes(card.id)}
-                        playable={turn.playableIds.includes(card.id)}
-                        onPress={humanPhase === "faceup" && isHumanTurn ? () => handleCardSelect(card.id) : undefined}
-                        disabled={humanPhase !== "faceup" || !isHumanTurn}
-                      />
-                    ))}
+                {human.faceUpPalace.map(card => <PlayingCard key={card.id} card={card} small
+                  selected={humanPhase === "faceup" && selectedPlayCards.includes(card.id)}
+                  playable={turn.playableIds.includes(card.id)}
+                  onPress={humanPhase === "faceup" && isHumanTurn ? () => handleCardSelect(card.id) : undefined}
+                  disabled={humanPhase !== "faceup" || !isHumanTurn} />)}
               </View>
               <Text style={styles.palaceGroupLabel}>FACE UP</Text>
             </View>
-          </View>
+          </View>}
         </View>
 
         {anyTutVisible && <View testID="game-guide" style={{ backgroundColor: "#213E31", borderRadius: 14, padding: 12, gap: 6, borderWidth: 1, borderColor: "#6A693B" }}>
@@ -637,7 +611,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
             <Pressable accessibilityRole="button" accessibilityLabel="Skip guide" onPress={() => { setShowTutorial(false); void markTutorialSeen(); }} style={{ minWidth: 44, minHeight: 44, justifyContent: "center", alignItems: "center" }}><Text style={{ color: "#EFC778" }}>Skip</Text></Pressable>
           </View>
           <Text style={{ fontSize: 13, lineHeight: 19, color: "#CBD8CE" }}>{TUTORIAL_STEPS[tutorialStep].body}</Text>
-          {tutorialStep === 2 && <Pressable accessibilityRole="button" onPress={handleDismissTutStep} style={{ minHeight: 44, justifyContent: "center" }}><Text style={{ color: "#EFC778", fontWeight: "600" }}>Got it!</Text></Pressable>}
+
         </View>}
         {gameState.phase === "choose_palace" && gameState.currentPlayerIndex === 0 ? (
           <View style={styles.handArea}>
@@ -846,7 +820,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
             <View style={styles.sheetHandle} /><Text ref={menuHeading} accessible accessibilityRole="header" style={{ color: "#FFF6E5", fontSize: 18, fontWeight: "600", padding: 16 }}>Game menu</Text>
             <Pressable
               style={({ pressed }) => [styles.sheetRow, pressed && styles.sheetRowPressed]}
-              accessibilityRole="button" onPress={handleRulesFromMenu}
+              accessibilityRole="button" accessibilityLabel="How to Play" onPress={handleRulesFromMenu}
             >
               <View style={styles.sheetRowIcon}>
                 <Ionicons name="book-outline" size={20} color="#D4AF37" />
@@ -857,7 +831,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
             <View style={styles.sheetDivider} />
             <Pressable
               style={({ pressed }) => [styles.sheetRow, pressed && styles.sheetRowPressed]}
-              accessibilityRole="button" onPress={handleQuitFromMenu}
+              accessibilityRole="button" accessibilityLabel="Quit Game" onPress={handleQuitFromMenu}
             >
               <View style={[styles.sheetRowIcon, styles.sheetRowIconRed]}>
                 <Ionicons name="exit-outline" size={20} color="#E74C3C" />
@@ -866,7 +840,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
             </Pressable>
             <Pressable
               style={({ pressed }) => [styles.sheetCancelBtn, pressed && { opacity: 0.7 }]}
-              accessibilityRole="button" onPress={() => setShowMenuSheet(false)}
+              accessibilityRole="button" accessibilityLabel="Cancel" onPress={() => setShowMenuSheet(false)}
             >
               <Text style={styles.sheetCancelText}>Cancel</Text>
             </Pressable>
@@ -994,6 +968,7 @@ const styles = StyleSheet.create({
   },
   playerHeader: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
     gap: 8,
     paddingHorizontal: 4,

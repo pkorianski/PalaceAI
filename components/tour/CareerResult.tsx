@@ -21,7 +21,7 @@ export interface CareerGame {
   onContinue: () => void;
   onExit: () => void;
 }
-export function CareerResult({ career, mastery, settled = true, saveError = "", onRetry }: { career: CareerGame; mastery?: RoundProgress | null; settled?: boolean; saveError?: string; onRetry?: () => void }) {
+export function CareerResult({ career, mastery, settled = true, saveError = "", onRetry }: { career: CareerGame; mastery?: RoundProgress | null; settled?: boolean; saveError?: string; onRetry: () => void }) {
   const [details, setDetails] = useState(false);
   const o = career.outcome,
     v = venueFor(career.rival),
@@ -58,7 +58,7 @@ export function CareerResult({ career, mastery, settled = true, saveError = "", 
         <Text
           style={[ui.subtitle, { textAlign: "center", fontStyle: "italic" }]}
         >{`“${o?.won ? career.rival.victory : career.rival.defeat}”`}</Text>
-        {!!saveError ? <View accessibilityRole="alert" style={{ width: "100%", gap: 8 }}><Text style={ui.error}>{saveError}</Text><Action label="Retry saving result" onPress={onRetry ?? (() => {})} /></View> : !settled && <Text accessibilityLiveRegion="polite" style={ui.subtitle}>Saving your result…</Text>}
+        {!!saveError ? <View accessibilityRole="alert" style={{ width: "100%", gap: 8 }}><Text style={ui.error}>{saveError}</Text><Action label="Retry saving result" onPress={onRetry} /></View> : !settled && <Text accessibilityLiveRegion="polite" style={ui.subtitle}>Saving your result…</Text>}
         <View style={{ width: "100%", gap: 10 }}>
           <Action
             disabled={!o || !settled}
