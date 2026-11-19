@@ -290,11 +290,18 @@ test("a failed save leaves no partial stats/XP and can be retried once", async (
   assert.equal((await repository.load(now)).stats.gamesPlayed, 1);
 });
 test("corrupt persistent mastery is retained without overwriting its bytes", async () => {
+  for (const value of ['{"version":99}', '']) {
+    const db = memoryStore();
+    db.values.set("palace_mastery_v1", value);
+    const repository = createMasteryRepository(db);
+    await assert.rejects(repository.load(now));
+    assert.equal(db.values.get("palace_mastery_v1"), value);
+  }
   const db = memoryStore();
-  db.values.set("palace_mastery_v1", '{"version":99}');
-  const repository = createMasteryRepository(db);
-  await assert.rejects(repository.load(now));
-  assert.equal(db.values.get("palace_mastery_v1"), '{"version":99}');
+  db.values.set("palace_stats", "");
+  await assert.rejects(createMasteryRepository(db).load(now));
+  assert.equal(db.values.has("palace_mastery_v1"), false);
+  assert.equal(db.values.get("palace_stats"), "");
 });
 test("confirmed reset waits for pending player writes and includes mastery", async () => {
   const db = memoryStore(),

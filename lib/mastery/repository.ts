@@ -18,10 +18,10 @@ export function createMasteryRepository(storage: Storage) {
     now: Date,
   ): Promise<{ state: Mastery; original: string | null }> {
     const original = await storage.getItem(MASTERY_KEY);
-    if (original)
+    if (original !== null)
       return { state: hydrateMastery(JSON.parse(original), now), original };
     const legacy = await storage.getItem("palace_stats");
-    const stats = legacy ? JSON.parse(legacy) : {};
+    const stats = legacy !== null ? JSON.parse(legacy) : {};
     if (!stats || typeof stats !== "object" || Array.isArray(stats))
       throw new Error(
         "Saved statistics could not be read. The original save has been kept.",

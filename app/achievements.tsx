@@ -91,9 +91,10 @@ export default function AchievementsScreen() {
     }
   };
   const retry = () => {
-    void loadMastery()
-      .then((s) => {
+    void Promise.all([loadMastery(), getUnlockedIds()])
+      .then(([s, ids]) => {
         setState(s);
+        setBadges(ids);
         setError("");
       })
       .catch(() =>
