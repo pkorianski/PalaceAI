@@ -62,7 +62,7 @@ export default function TourMatch() {
   const onSnapshot = useCallback(
     (
       game: GameState,
-      metrics: { turns: number; pickups: number; burns: number },
+      metrics: { turns: number; pickups: number; burns: number; completedAt?: string },
     ) => {
       updateCareer((c) =>
         c.active && c.active.roundId === roundId

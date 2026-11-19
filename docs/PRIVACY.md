@@ -4,7 +4,7 @@ Updated November 18, 2026
 
 ## Your game stays on your device
 
-Palace is an offline, single-player card game by Korianski Games. Your Tour progress, trophies, statistics, achievements, daily challenge progress, tutorial status and preferences are stored locally on your device. We do not operate a gameplay server or send your gameplay or usage analytics to us.
+Palace is an offline, single-player card game by Korianski Games. Your Tour progress, trophies, statistics, starter badges, mastery XP, dated activity, weekly quest progress and seals, equipped titles/table styles, daily challenge progress, tutorial status and preferences are stored locally on your device. We do not operate a gameplay server or send your gameplay or usage analytics to us.
 
 ## No accounts, ads or tracking
 
@@ -12,7 +12,7 @@ You do not need an account to play. Palace contains no advertising or tracking S
 
 ## Your choices and deletion
 
-In Settings, you can control haptics and reduce motion, and use Reset game progress to erase your local Tour, trophies, statistics, achievements, challenges and tutorial history. Your preferences remain. Deleting the app also removes its local data; copies included in device backups are managed through your Apple or device backup settings. We cannot recover local progress or transfer it between devices.
+In Settings, you can control haptics and reduce motion, and use Reset game progress to erase your local Tour, trophies, statistics, starter badges, mastery XP, weekly quests and seals, equipped rewards, challenges and tutorial history. Your preferences remain. Deleting the app also removes its local data; copies included in device backups are managed through your Apple or device backup settings. We cannot recover local progress or transfer it between devices.
 
 ## Support and external websites
 

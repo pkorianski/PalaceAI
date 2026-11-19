@@ -12,7 +12,7 @@ export interface Series {
   losses: number;
   roundId: string;
   game: GameState | null;
-  metrics?: { turns: number; pickups: number; burns: number };
+  metrics?: { turns: number; pickups: number; burns: number; completedAt?: string };
 }
 export interface Outcome {
   roundId: string;

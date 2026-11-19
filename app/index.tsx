@@ -13,13 +13,9 @@ import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "@/lib/haptics";
 import { getStats, type GameStats } from "@/lib/stats";
-import {
-  getUnlockedIds,
-  ALL_ACHIEVEMENTS,
-  type Achievement,
-} from "@/lib/achievements";
 import { getDailyChallenge, type ActiveDailyChallenge } from "@/lib/daily-challenge";
 
+import { MasteryHomeBanner } from "@/components/mastery/HomeBanner";
 import { TourHomeBanner } from "@/components/tour/HomeBanner";
 
 const DEFAULT_STATS: GameStats = {
@@ -38,13 +34,11 @@ const DEFAULT_STATS: GameStats = {
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [stats, setStats] = useState<GameStats>(DEFAULT_STATS);
-  const [unlockedIds, setUnlockedIds] = useState<string[]>([]);
   const [dailyChallenge, setDailyChallenge] = useState<ActiveDailyChallenge | null>(null);
 
   useFocusEffect(
     React.useCallback(() => {
       getStats().then(setStats);
-      getUnlockedIds().then(setUnlockedIds);
       getDailyChallenge().then(setDailyChallenge);
     }, [])
   );
@@ -59,11 +53,6 @@ export default function HomeScreen() {
     router.push("/rules");
   };
 
-  const handleAchievements = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push("/achievements");
-  };
-
   const handleStats = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push("/stats");
@@ -73,13 +62,6 @@ export default function HomeScreen() {
     stats.gamesPlayed > 0
       ? Math.round((stats.wins / stats.gamesPlayed) * 100)
       : 0;
-
-  const unlockedCount = unlockedIds.length;
-  const totalCount = ALL_ACHIEVEMENTS.length;
-
-  const recentAchievements: Achievement[] = ALL_ACHIEVEMENTS.filter((a) =>
-    unlockedIds.includes(a.id)
-  ).slice(-3).reverse();
 
   return (
     <View
@@ -139,6 +121,8 @@ export default function HomeScreen() {
           <Ionicons name="book-outline" size={18} color="#D4AF37" />
           <Text style={styles.secondaryButtonText}>How to Play</Text>
         </Pressable>
+
+        <MasteryHomeBanner />
 
         {stats.gamesPlayed > 0 && (
           <Pressable
@@ -248,71 +232,6 @@ export default function HomeScreen() {
                 ]}
               />
             </View>
-          </Pressable>
-        )}
-
-        {totalCount > 0 && (
-          <Pressable
-            style={({ pressed }) => [
-              styles.achievementsCard,
-              pressed && { opacity: 0.85 },
-            ]}
-            onPress={handleAchievements}
-          >
-            <View style={styles.achievementsHeader}>
-              <Text style={styles.cardSectionTitle}>Achievements</Text>
-              <View style={styles.achievementsHeaderRight}>
-                <View style={styles.achievementsBadge}>
-                  <Text style={styles.achievementsBadgeText}>
-                    {unlockedCount}/{totalCount}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={14} color="rgba(254,253,248,0.3)" />
-              </View>
-            </View>
-
-            <View style={styles.progressTrack}>
-              <View
-                style={[
-                  styles.progressFill,
-                  { width: `${(unlockedCount / totalCount) * 100}%` },
-                ]}
-              />
-            </View>
-
-            {recentAchievements.length > 0 ? (
-              <View style={styles.recentAchievements}>
-                {recentAchievements.map((a) => (
-                  <View key={a.id} style={styles.achievementRow}>
-                    <View style={styles.achievementIcon}>
-                      <Ionicons
-                        name={a.icon as any}
-                        size={16}
-                        color="#D4AF37"
-                      />
-                    </View>
-                    <View style={styles.achievementText}>
-                      <Text style={styles.achievementTitle}>{a.title}</Text>
-                      <Text style={styles.achievementDesc}>{a.desc}</Text>
-                    </View>
-                    <Ionicons name="checkmark-circle" size={16} color="#2ECC71" />
-                  </View>
-                ))}
-              </View>
-            ) : (
-              <Text style={styles.noAchievementsText}>
-                Win your first game to unlock achievements
-              </Text>
-            )}
-
-            {unlockedCount < totalCount && (
-              <Text style={styles.moreAchievements}>
-                {totalCount - unlockedCount} more to unlock
-              </Text>
-            )}
-            {unlockedCount === totalCount && (
-              <Text style={styles.allUnlocked}>All achievements unlocked!</Text>
-            )}
           </Pressable>
         )}
 

@@ -1,3 +1,4 @@
+import { equipMasteryReward } from "@/lib/mastery/storage";
 import React, { useCallback, useState } from "react";
 import {
   View,
@@ -117,6 +118,7 @@ export default function TourScreen() {
           return { ...c, equipped: id };
         }),
       );
+      await equipMasteryReward("theme", null);
       Haptics.selectionAsync();
     } catch (e) {
       setError(String(e));

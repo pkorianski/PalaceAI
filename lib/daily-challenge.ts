@@ -1,4 +1,6 @@
+import { playerWrite } from "./player-storage-queue";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { applyDailyResult } from "./daily-progress";
 import type { GameResult } from "./stats";
 
 const DAILY_KEY = "palace_daily_challenge";
@@ -15,6 +17,7 @@ export interface ActiveDailyChallenge extends DailyChallengeTemplate {
   date: string;
   progress: number;
   completed: boolean;
+  receipts?: string[];
 }
 
 const CHALLENGE_TEMPLATES: DailyChallengeTemplate[] = [
@@ -70,52 +73,15 @@ export async function getDailyChallenge(): Promise<ActiveDailyChallenge> {
   return fresh;
 }
 
-function getProgressDelta(type: string, result: GameResult): number {
-  switch (type) {
-    case "win1":
-    case "win2":
-    case "win3":
-      return result.won ? 1 : 0;
-    case "play3":
-    case "play5":
-      return 1;
-    case "burn5":
-    case "burn8":
-      return result.burns;
-    case "clean":
-      return result.won && result.pickups === 0 ? 1 : 0;
-    case "comeback":
-      return result.won && result.pickups >= 2 ? 1 : 0;
-    case "blazer3":
-      return result.burns >= 3 ? 1 : 0;
-    case "blazer5":
-      return result.burns >= 5 ? 1 : 0;
-    case "speed20":
-      return result.won && result.turns <= 20 ? 1 : 0;
-    default:
-      return 0;
-  }
-}
-
 export async function updateDailyChallenge(
-  result: GameResult
+  result: GameResult,
+  roundId?: string,
+  completedAt = new Date().toISOString(),
 ): Promise<{ challenge: ActiveDailyChallenge; justCompleted: boolean }> {
-  const challenge = await getDailyChallenge();
-
-  if (challenge.completed) {
-    return { challenge, justCompleted: false };
-  }
-
-  const delta = getProgressDelta(challenge.type, result);
-  const newProgress = Math.min(challenge.progress + delta, challenge.target);
-  const justCompleted = newProgress >= challenge.target;
-
-  const updated: ActiveDailyChallenge = {
-    ...challenge,
-    progress: newProgress,
-    completed: justCompleted,
-  };
-
-  await AsyncStorage.setItem(DAILY_KEY, JSON.stringify(updated));
-  return { challenge: updated, justCompleted };
+  return playerWrite(async () => {
+    const challenge = await getDailyChallenge();
+    const next = applyDailyResult(challenge, result, roundId, completedAt.slice(0, 10));
+    if (next.challenge !== challenge) await AsyncStorage.setItem(DAILY_KEY, JSON.stringify(next.challenge));
+    return next;
+  });
 }

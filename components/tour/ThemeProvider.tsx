@@ -3,6 +3,8 @@ import { AppState } from "react-native";
 import { usePathname } from "expo-router";
 import { VENUES } from "@/lib/tour/content";
 import { loadCareer } from "@/lib/tour/storage";
+import { loadMastery } from "@/lib/mastery/storage";
+import { THEMES, themeAvailable } from "@/lib/mastery/model";
 const classic = {
   card: "#164d2a",
   table: "#0d2b1a",
@@ -15,8 +17,10 @@ export function TableThemeProvider({ children }: React.PropsWithChildren) {
   const [theme, set] = useState(classic);
   useEffect(() => {
     const refresh = () =>
-      loadCareer()
-        .then((c) => {
+      Promise.all([loadCareer(), loadMastery()])
+        .then(([c, mastery]) => {
+          const reward = THEMES.find(t => t.id === mastery.theme && themeAvailable(mastery, t.id));
+          if (reward) { set({ table: reward.table, card: reward.card, accent: reward.accent, name: reward.name }); return; }
           const v = VENUES.find((v) => v.id === c.equipped);
           set(
             v

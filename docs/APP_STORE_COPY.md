@@ -26,6 +26,9 @@ Unlock card and table themes through your Tour. Your earned trophies stay yours,
 A NEW WEEK, A NEW RUN
 Unlock the weekly solo circuit and work toward its ribbons against a rotating lineup of computer opponents. The circuit resets each Monday at 00:00 UTC.
 
+BUILD YOUR LEGACY
+Earn mastery XP with every finished game, chase long-term milestones, and equip earned player titles and table styles. Rotating weekly quests reward steady play with permanent dated seals. Your lifetime progress stays, even when you take a break.
+
 PLAY AT YOUR PACE
 A visual guide and complete rules help you learn. Settings let you control haptics and reduce motion. The installed app plays offline without an account, ads or in-app purchases.
 
