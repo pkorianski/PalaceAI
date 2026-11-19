@@ -115,6 +115,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
   const rulesHeading = useRef<React.ComponentRef<typeof Text>>(null);
   const leaveHeading = useRef<React.ComponentRef<typeof Text>>(null);
   const resultHeading = useRef<React.ComponentRef<typeof Text>>(null);
+  const lastSpoken = useRef({ heading: "", hint: "" });
   const focus = (node: React.ComponentRef<typeof View> | null) => {
     if (!node) return;
     if (Platform.OS === "web") { (node as unknown as { focus?: () => void }).focus?.(); return; }
@@ -430,10 +431,15 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
   const canPlay = turn.canPlay;
   useEffect(() => {
     if (Platform.OS === "web" || paused) return;
+    const guidanceChanged = lastSpoken.current.heading !== turn.heading || lastSpoken.current.hint !== turn.hint;
+    const announcement = guidanceChanged ? `${turn.heading}. ${turn.hint}` : gameState.message;
+    lastSpoken.current = { heading: turn.heading, hint: turn.hint };
+    let current = true;
     void AccessibilityInfo.isScreenReaderEnabled().then(enabled => {
-      if (enabled && alive.current) AccessibilityInfo.announceForAccessibility(`${turn.heading}. ${gameState.message}`);
+      if (enabled && current && alive.current) AccessibilityInfo.announceForAccessibility(announcement);
     }).catch(() => {});
-  }, [turn.heading, gameState.message, paused]);
+    return () => { current = false; };
+  }, [turn.heading, turn.hint, gameState.message, paused]);
 
   const pileTop = gameState.pile.length > 0 ? gameState.pile[gameState.pile.length - 1] : null;
   const pileCount = gameState.pile.length;
@@ -815,8 +821,8 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
 
       {/* ── Menu action sheet ── */}
       <Modal visible={showMenuSheet} transparent animationType={reducedMotion ? "none" : "slide"} onRequestClose={() => setShowMenuSheet(false)} onShow={() => focus(menuHeading.current)} onDismiss={() => { if (!showRulesOverlay && !showLeaveModal) focus(menuButton.current); }}>
-        <Pressable style={styles.sheetOverlay} onPress={() => setShowMenuSheet(false)}>
-          <Pressable style={styles.sheetCard} accessibilityViewIsModal onPress={() => {}}>
+        <Pressable accessible={false} style={styles.sheetOverlay} onPress={() => setShowMenuSheet(false)}>
+          <Pressable accessible={false} style={styles.sheetCard} accessibilityViewIsModal onPress={event => event.stopPropagation()}>
             <View style={styles.sheetHandle} /><Text ref={menuHeading} accessible accessibilityRole="header" style={{ color: "#FFF6E5", fontSize: 18, fontWeight: "600", padding: 16 }}>Game menu</Text>
             <Pressable
               style={({ pressed }) => [styles.sheetRow, pressed && styles.sheetRowPressed]}

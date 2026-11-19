@@ -53,7 +53,9 @@ const server = http.createServer((req, res) => {
     await p.waitForFunction(() => JSON.parse(localStorage.getItem('palace_tour_v1'))?.active?.game);
     const baseline = await p.evaluate(() => localStorage.getItem('palace_tour_v1'));
     await p.evaluate(() => {const c=JSON.parse(localStorage.getItem('palace_tour_v1')),s=c.active.game;s.phase='playing';s.currentPlayerIndex=0;s.players[0].hand=[];s.players[0].faceUpPalace=[];s.deck=[];localStorage.setItem('palace_tour_v1',JSON.stringify(c));localStorage.setItem('palace_tutorial_done','true');});
-    await p.reload(); await p.getByText('Tap a face-down card to flip it',{exact:true}).waitFor();
+    await p.reload(); await p.getByTestId('studio-intro').waitFor({state:'hidden',timeout:5000});
+    await p.getByRole('button',{name:'Face-down card 1',exact:true}).waitFor();
+    await p.getByText('Tap a face-down card to flip it',{exact:true}).waitFor();
     assert.equal(await p.getByRole('button',{name:/^Face-down card [123]$/}).count(),3,'All blind cards expose only positions');
     assert.equal(await p.getByRole('button',{name:/ of (hearts|clubs|diamonds|spades)$/}).count(),0,'No human blind ranks exposed to assistive tech');
     await p.screenshot({path:path.join(out,'21-polish-blind-fixture.png')});
