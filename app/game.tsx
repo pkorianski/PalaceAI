@@ -30,7 +30,11 @@ import {
   type Card,
 } from "@/lib/palace-engine";
 import { PlayingCard, EmptyCardSlot } from "@/components/PlayingCard";
-import { recordGameResult, type GameResult } from "@/lib/stats";
+import type { GameResult } from "@/lib/stats";
+import { careerId } from "@/lib/tour/storage";
+import { loadMastery, recordMasteryRound } from "@/lib/mastery/storage";
+import { equippedTitle, type RoundProgress } from "@/lib/mastery/model";
+import { RoundMastery } from "@/components/mastery/ui";
 import {
   checkAndUnlockAchievements,
   type Achievement,
@@ -101,6 +105,17 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
   const theme = useTableTheme();
   const reducedMotion = useReducedMotion();
   const resultRecorded = useRef(false);
+  const alive = useRef(true);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  const [quickRoundId, setQuickRoundId] = useState(careerId);
+  const completedAt = useRef<string | null>(career?.series.metrics?.completedAt ?? null);
+  const [masteryProgress, setMasteryProgress] = useState<RoundProgress | null>(null);
+  const [playerTitle, setPlayerTitle] = useState("");
+  useEffect(() => {
+    let active = true;
+    void loadMastery().then(s => { if (active) setPlayerTitle(equippedTitle(s)); }).catch(() => {});
+    return () => { active = false; };
+  }, []);
   const [resultError, setResultError] = useState("");
   const [resultAttempt, setResultAttempt] = useState(0);
   const insets = useSafeAreaInsets();
@@ -202,12 +217,18 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
     const result: GameResult = { won: gameState.winner === "human", turns: humanTurnsRef.current, pickups: humanPickupsRef.current, burns: burnsRef.current };
     const save = async () => {
       try {
-        const fresh = career ? await career.onResult(result) : true;
-        if (fresh) {
-          const updatedStats = await recordGameResult(result);
-          const [newAchievements, { justCompleted }] = await Promise.all([checkAndUnlockAchievements(updatedStats, result), updateDailyChallenge(result)]);
-          setGameOverData({ result, newAchievements, dailyChallengeCompleted: justCompleted });
-        }
+        completedAt.current ??= new Date().toISOString();
+        // Save the final deal first so a restart can settle the same round ID.
+        career?.onSnapshot(gameState, { turns: result.turns, pickups: result.pickups, burns: result.burns, completedAt: completedAt.current });
+        const progress = await recordMasteryRound(career?.series.roundId ?? quickRoundId, result, completedAt.current);
+        if (!alive.current) return;
+        setMasteryProgress(previous => previous ?? progress);
+        if (career) await career.onResult(result);
+        if (!alive.current) return;
+        const newAchievements = await checkAndUnlockAchievements(progress.state.stats, result);
+        if (!alive.current) return;
+        const justCompleted = (await updateDailyChallenge(result, career?.series.roundId ?? quickRoundId, completedAt.current)).justCompleted;
+        setGameOverData({ result, newAchievements, dailyChallengeCompleted: justCompleted });
         Haptics.notificationAsync(result.won ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Error);
         setResultError(""); setShowGameOver(true);
       } catch (e) {
@@ -329,6 +350,9 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
 
   const handleNewGame = () => {
     resultRecorded.current = false;
+    completedAt.current = null;
+    setQuickRoundId(careerId());
+    setMasteryProgress(null);
     setShowGameOver(false);
     setSelectedPlayCards([]);
     setSetupSelected([]);
@@ -395,7 +419,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
   const pileCount = gameState.pile.length;
 
   return (
-    <View style={[styles.container, {
+    <View testID="game-table" style={[styles.container, {
       backgroundColor: theme.table,
       paddingTop: insets.top + (Platform.OS === "web" ? 67 : 0),
       paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 0),
@@ -566,7 +590,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
         <View style={styles.playerSection}>
           <View style={styles.playerHeader}>
             <View style={[styles.turnIndicator, currentPlayer.isHuman && gameState.phase === "playing" && styles.turnIndicatorActive]} />
-            <Text style={styles.playerName}>{human.name}</Text>
+            <Text style={styles.playerName}>{playerTitle || human.name}</Text>
             <Text style={styles.handCount}>{human.hand.length} in hand</Text>
           </View>
 
@@ -673,7 +697,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
       <Modal visible={showGameOver} transparent animationType={reducedMotion ? "none" : "fade"} onRequestClose={() => {}}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            {career ? <CareerResult career={career} /> : <ScrollView
+            {career ? <CareerResult career={career} mastery={masteryProgress} /> : <ScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.modalScroll}
               bounces={false}
@@ -685,6 +709,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
                 {gameState.winner === "human" ? "You Win!" : "You Lose"}
               </Text>
 
+              <RoundMastery progress={masteryProgress} />
               {gameOverData && (
                 <View style={styles.summaryBox}>
                   <Text style={styles.summaryLabel}>GAME SUMMARY</Text>

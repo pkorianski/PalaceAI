@@ -9,4 +9,4 @@ export function parsePreferences(raw: string | null): Preferences {
   return { version: 1, haptics: value.haptics, reduceMotion: value.reduceMotion };
 }
 // Only game progress is reset. Preferences and unrelated storage are preserved.
-export const PROGRESS_KEYS = ["palace_stats", "palace_achievements", "palace_daily_challenge", "palace_tutorial_done", "palace_tour_v1"];
+export const PROGRESS_KEYS = ["palace_stats", "palace_achievements", "palace_daily_challenge", "palace_tutorial_done", "palace_tour_v1", "palace_mastery_v1"];

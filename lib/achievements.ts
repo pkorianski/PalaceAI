@@ -1,3 +1,4 @@
+import { playerWrite } from "./player-storage-queue";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { GameStats, GameResult } from "./stats";
 
@@ -131,18 +132,18 @@ export function isTierUnlocked(
 }
 
 export async function getUnlockedIds(): Promise<string[]> {
-  try {
-    const raw = await AsyncStorage.getItem(ACHIEVEMENTS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+  const raw = await AsyncStorage.getItem(ACHIEVEMENTS_KEY);
+  if (!raw) return [];
+  const ids = JSON.parse(raw);
+  if (!Array.isArray(ids) || !ids.every(id => typeof id === "string")) throw new Error("Saved starter badges could not be read. The original save has been kept.");
+  return ids;
 }
 
 export async function checkAndUnlockAchievements(
   stats: GameStats,
   result: GameResult
 ): Promise<AchievementTier[]> {
+  return playerWrite(async () => {
   const alreadyUnlocked = await getUnlockedIds();
   const newlyUnlocked: AchievementTier[] = [];
 
@@ -163,4 +164,5 @@ export async function checkAndUnlockAchievements(
   }
 
   return newlyUnlocked;
+  });
 }

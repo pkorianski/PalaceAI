@@ -1,4 +1,6 @@
 import React from "react";
+import { RoundMastery } from "@/components/mastery/ui";
+import type { RoundProgress } from "@/lib/mastery/model";
 import { ScrollView, Text, View } from "react-native";
 import { TIERS, venueFor, type Rival } from "@/lib/tour/content";
 import type { GameState } from "@/lib/palace-engine";
@@ -13,13 +15,13 @@ export interface CareerGame {
   error: string;
   onSnapshot: (
     game: GameState,
-    metrics: { turns: number; pickups: number; burns: number },
+    metrics: { turns: number; pickups: number; burns: number; completedAt?: string },
   ) => void;
   onResult: (result: GameResult) => Promise<boolean>;
   onContinue: () => void;
   onExit: () => void;
 }
-export function CareerResult({ career }: { career: CareerGame }) {
+export function CareerResult({ career, mastery }: { career: CareerGame; mastery?: RoundProgress | null }) {
   const o = career.outcome,
     v = venueFor(career.rival),
     tier = TIERS[career.series.tier];
@@ -55,6 +57,7 @@ export function CareerResult({ career }: { career: CareerGame }) {
         <Text
           style={[ui.subtitle, { textAlign: "center", fontStyle: "italic" }]}
         >{`“${o?.won ? career.rival.victory : career.rival.defeat}”`}</Text>
+        <RoundMastery progress={mastery ?? null} />
         {o && (
           <View style={[ui.panel, { width: "100%" }]}>
             <View style={ui.row}>

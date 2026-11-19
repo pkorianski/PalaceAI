@@ -179,6 +179,47 @@ const server = http.createServer((req, res) => {
       .click();
     await page.getByRole("tab", { name: "Trophy room", exact: true }).click();
     await capture("08-earned-trophy");
+    // Explicit veteran migration fixture; never presented as real earned play.
+    await page.evaluate(() => {
+      localStorage.setItem("palace_stats", JSON.stringify({ wins: 100, losses: 150, gamesPlayed: 250, winStreak: 0, bestStreak: 5, totalBurns: 600, bestWinTurns: 20, comebackWins: 20, cleanWins: 30, maxBurnsInGame: 8 }));
+      localStorage.setItem("palace_achievements", JSON.stringify(["wins_bronze", "wins_silver", "wins_gold"]));
+      localStorage.removeItem("palace_mastery_v1");
+    });
+    await page.goto("http://127.0.0.1:18081/achievements");
+    await page.getByRole("tab", { name: "Mastery", exact: true }).waitFor();
+    await page.getByText("The long game", { exact: true }).waitFor();
+    await capture("14-mastery-migration-fixture");
+    const migrated = await page.evaluate(() => JSON.parse(localStorage.getItem("palace_mastery_v1")));
+    assert.equal(migrated.stats.wins, 100);
+    assert.equal(migrated.stats.gamesPlayed, 250);
+    assert.deepEqual(migrated.days, []);
+    assert.equal(migrated.weekly.games, 0);
+    await page.getByRole("tab", { name: "Weekly quests", exact: true }).click();
+    await page.getByText("A fresh week. A lasting mark.", { exact: true }).waitFor();
+    await capture("15-weekly-quests-fixture");
+    await page.getByRole("tab", { name: "Starter badges", exact: true }).click();
+    await page.getByText("The original collection.", { exact: true }).waitFor();
+    await page.getByText("First Victory", { exact: true }).waitFor();
+    assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem("palace_achievements"))), ["wins_bronze", "wins_silver", "wins_gold"]);
+    await page.getByRole("tab", { name: "Rewards", exact: true }).click();
+    await page.getByRole("button", { name: "Equip The Regular", exact: true }).click();
+    await page.getByRole("button", { name: "The Regular equipped", exact: true }).waitFor();
+    await page.getByRole("button", { name: "Equip Midnight Ink", exact: true }).click();
+    await page.getByRole("button", { name: "Midnight Ink equipped", exact: true }).waitFor();
+    await capture("16-rewards-fixture");
+    await page.goto("http://127.0.0.1:18081/game");
+    await page.getByText("The Regular", { exact: true }).waitFor();
+    await page.getByText("Confirm Palace (0/3)", { exact: true }).waitFor();
+    assert.equal(await page.getByTestId("game-table").evaluate(el => getComputedStyle(el).backgroundColor), "rgb(16, 26, 48)");
+    await capture("17-equipped-table-fixture");
+    const savedMastery = await page.evaluate(() => localStorage.getItem("palace_mastery_v1"));
+    await page.evaluate(() => localStorage.setItem("palace_mastery_v1", '{"version":999}'));
+    await page.goto("http://127.0.0.1:18081/achievements");
+    await page.getByText("Your progress could not load.", { exact: false }).waitFor();
+    assert.equal(await page.evaluate(() => localStorage.getItem("palace_mastery_v1")), '{"version":999}');
+    await page.evaluate(raw => localStorage.setItem("palace_mastery_v1", raw), savedMastery);
+    await page.getByRole("button", { name: "Retry progress", exact: true }).click();
+    await page.getByText("The long game", { exact: true }).waitFor();
     await page.goto("http://127.0.0.1:18081");
     await page.getByTestId("studio-intro").waitFor({ state: "hidden", timeout: 3000 });
     await page.getByRole("button", { name: "Settings", exact: true }).click();
@@ -198,6 +239,7 @@ const server = http.createServer((req, res) => {
       tutorial: localStorage.getItem("palace_tutorial_done"),
       preferences: JSON.parse(localStorage.getItem("palace_preferences_v1")),
       unrelated: localStorage.getItem("unrelated_qa"),
+      mastery: JSON.parse(localStorage.getItem("palace_mastery_v1")),
     }));
     assert.equal(resetState.tour, null);
     assert.equal(resetState.stats, null);
@@ -205,10 +247,15 @@ const server = http.createServer((req, res) => {
     assert.equal(resetState.tutorial, null);
     assert.deepEqual(resetState.preferences, { version: 1, haptics: false, reduceMotion: true });
     assert.equal(resetState.unrelated, "keep");
+    await page.waitForFunction(() => JSON.parse(localStorage.getItem("palace_mastery_v1"))?.stats.gamesPlayed === 0);
+    const clearedMastery = await page.evaluate(() => JSON.parse(localStorage.getItem("palace_mastery_v1")));
+    assert.equal(clearedMastery.xp, 0);
+    assert.deepEqual(clearedMastery.seals, []);
+    assert.deepEqual(clearedMastery.receipts, []);
     assert.deepEqual(errors, [], "No uncaught browser errors");
     fs.writeFileSync(
       path.join(out, "README.txt"),
-      "Phone-sized Chromium web captures (390x844), not Expo Go device screenshots.\n07 uses a completed-round QA fixture; it is not a claimed human playthrough.\nAssertions: navigation, identical saved deal on reload, exactly one trophy award, cabinet, and no uncaught JS errors.\n",
+      "Phone-sized Chromium web captures (390x844), not Expo Go device screenshots.\n07 uses a completed-round QA fixture. 14–17 use an explicitly seeded veteran migration/equipment fixture. These are not claimed human playthroughs.\nAssertions: navigation, identical saved deal on reload, exactly one trophy award, cabinet, and no uncaught JS errors.\n",
     );
     console.log("Tour browser smoke passed; screenshots:", out);
   } finally {

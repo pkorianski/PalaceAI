@@ -45,13 +45,13 @@ export default function SettingsScreen() {
       <Row title="Help & support" detail="Get help or report an issue." icon="help-buoy-outline" onPress={() => router.push("/support")} />
       <Row title="Privacy policy" detail="Your game, your device." icon="shield-checkmark-outline" onPress={() => router.push("/privacy")} />
     </View>
-    <View style={s.section}><Text style={s.eyebrow}>LOCAL PROGRESS</Text><Text style={s.caption}>Tour progress is saved on this device. Cloud sync and cross-device restore are not available. Quick Play starts a fresh deal when reopened.</Text><View style={s.group}><Row title="Reset game progress" detail="Erase trophies, statistics and saved Tour progress." icon="trash-outline" destructive onPress={() => { setResetError(""); setConfirm(true); }} /></View></View>
+    <View style={s.section}><Text style={s.eyebrow}>LOCAL PROGRESS</Text><Text style={s.caption}>Tour progress is saved on this device. Cloud sync and cross-device restore are not available. Quick Play starts a fresh deal when reopened.</Text><View style={s.group}><Row title="Reset game progress" detail="Erase mastery, trophies, statistics and saved Tour progress." icon="trash-outline" destructive onPress={() => { setResetError(""); setConfirm(true); }} /></View></View>
     <View style={{ alignItems: "center", gap: 5, paddingVertical: 12 }}><Text style={s.rowTitle}>Korianski Games</Text><Text style={s.caption}>Palace · Version {version}{build ? ` (${build})` : ""}</Text><Text style={s.caption}>Made for the next great hand.</Text></View>
     <Modal visible={confirm} transparent animationType={reduced ? "none" : "fade"} onRequestClose={() => { if (!resetting) setConfirm(false); }}>
       <View style={styles.scrim}><View accessibilityViewIsModal style={styles.confirm}><ScrollView contentContainerStyle={{ gap: 18 }}>
         <Ionicons name="trash-outline" size={30} color="#FFAAA0" />
         <Text accessibilityRole="header" style={s.heading}>Reset all game progress?</Text>
-        <Text style={s.body}>This permanently erases your Tour, trophies, themes, statistics, achievements, daily challenges and tutorial history on this device. Your settings stay. This cannot be undone.</Text>
+        <Text style={s.body}>This permanently erases your Tour, trophies, themes, statistics, starter badges, mastery XP, weekly quests and seals, daily challenges and tutorial history on this device. Your settings stay. This cannot be undone.</Text>
         {!!resetError && <Text accessibilityRole="alert" style={s.error}>{resetError}</Text>}
         <Pressable accessibilityRole="button" accessibilityLabel="Erase game progress" disabled={resetting} onPress={() => void reset()} style={[styles.erase, { opacity: resetting ? 0.5 : 1 }]}><Text style={styles.eraseText}>{resetting ? "Erasing…" : "Erase game progress"}</Text></Pressable>
         <Action label="Keep my progress" secondary disabled={resetting} onPress={() => setConfirm(false)} />
