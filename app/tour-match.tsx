@@ -25,7 +25,7 @@ export default function TourMatch() {
     try {
       let c = await loadCareer();
       if (!c.active) {
-        router.replace("/tour");
+        router.dismissTo("/tour");
         return;
       }
       if (!c.active.game)
@@ -94,7 +94,7 @@ export default function TourMatch() {
     },
     [roundId],
   );
-  const exit = () => router.replace("/tour");
+  const exit = () => router.dismissTo("/tour");
   if (loading || !series)
     return (
       <View

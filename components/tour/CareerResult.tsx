@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { RoundMastery } from "@/components/mastery/ui";
 import type { RoundProgress } from "@/lib/mastery/model";
-import { ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { TIERS, venueFor, type Rival } from "@/lib/tour/content";
 import type { GameState } from "@/lib/palace-engine";
 import type { GameResult } from "@/lib/stats";
@@ -21,7 +21,8 @@ export interface CareerGame {
   onContinue: () => void;
   onExit: () => void;
 }
-export function CareerResult({ career, mastery }: { career: CareerGame; mastery?: RoundProgress | null }) {
+export function CareerResult({ career, mastery, settled = true, saveError = "", onRetry }: { career: CareerGame; mastery?: RoundProgress | null; settled?: boolean; saveError?: string; onRetry?: () => void }) {
+  const [details, setDetails] = useState(false);
   const o = career.outcome,
     v = venueFor(career.rival),
     tier = TIERS[career.series.tier];
@@ -47,17 +48,36 @@ export function CareerResult({ career, mastery }: { career: CareerGame; mastery?
           {v.name} • {career.rival.name}
         </Eyebrow>
         <TrophyArt
-          size={125}
+          size={76}
           color={o?.won ? tier.color : "#A0B7A5"}
           dim={!o?.won}
         />
-        <Text style={[ui.title, { textAlign: "center", fontSize: 29 }]}>
+        <Text accessibilityRole="header" style={[ui.title, { textAlign: "center", fontSize: 29 }]}>
           {title}
         </Text>
         <Text
           style={[ui.subtitle, { textAlign: "center", fontStyle: "italic" }]}
         >{`“${o?.won ? career.rival.victory : career.rival.defeat}”`}</Text>
-        <RoundMastery progress={mastery ?? null} />
+        {!!saveError ? <View accessibilityRole="alert" style={{ width: "100%", gap: 8 }}><Text style={ui.error}>{saveError}</Text><Action label="Retry saving result" onPress={onRetry ?? (() => {})} /></View> : !settled && <Text accessibilityLiveRegion="polite" style={ui.subtitle}>Saving your result…</Text>}
+        <View style={{ width: "100%", gap: 10 }}>
+          <Action
+            disabled={!o || !settled}
+            label={o?.complete ? "Back to the tour" : "Next round"}
+            onPress={o?.complete ? career.onExit : career.onContinue}
+          />
+          {!o?.complete && (
+            <Action
+              secondary
+              disabled={!settled}
+              label="Save and return to the map"
+              onPress={career.onExit}
+              icon="trophy-outline"
+            />
+          )}
+        </View>
+        <RoundMastery compact progress={mastery ?? null} />
+        <Pressable accessibilityRole="button" accessibilityState={{ expanded: details }} onPress={() => setDetails(v => !v)} style={{ minHeight: 44, justifyContent: "center" }}><Text style={{ color: palette.gold }}>{details ? "Hide series details" : "Series details"}</Text></Pressable>
+        {details && <>
         {o && (
           <View style={[ui.panel, { width: "100%" }]}>
             <View style={ui.row}>
@@ -86,22 +106,9 @@ export function CareerResult({ career, mastery }: { career: CareerGame; mastery?
             </Text>
           </View>
         )}
-        {!!career.error && <Text style={ui.error}>{career.error}</Text>}
-        <View style={{ width: "100%", gap: 10 }}>
-          <Action
-            disabled={!o}
-            label={o?.complete ? "Back to the tour" : "Next round"}
-            onPress={o?.complete ? career.onExit : career.onContinue}
-          />
-          {!o?.complete && (
-            <Action
-              secondary
-              label="Save and return to the map"
-              onPress={career.onExit}
-              icon="trophy-outline"
-            />
-          )}
-        </View>
+        </>}
+        {!!career.error && <Text accessibilityRole="alert" style={ui.error}>{career.error}</Text>}
+
       </Arrival>
     </ScrollView>
   );

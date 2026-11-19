@@ -10,6 +10,9 @@ import {
   Animated,
   BackHandler,
   AppState,
+  AccessibilityInfo,
+  findNodeHandle,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -29,6 +32,7 @@ import {
   type GameState,
   type Card,
 } from "@/lib/palace-engine";
+import { presentTurn } from "@/lib/game-presentation";
 import { PlayingCard, EmptyCardSlot } from "@/components/PlayingCard";
 import type { GameResult } from "@/lib/stats";
 import { careerId } from "@/lib/tour/storage";
@@ -103,6 +107,20 @@ const RULES = [
 
 export function GameScreen({ career }: { career?: CareerGame } = {}) {
   const theme = useTableTheme();
+  const { height, fontScale } = useWindowDimensions();
+  const compact = height < 740 && fontScale < 1.3;
+  const menuButton = useRef<React.ComponentRef<typeof View>>(null);
+  const menuHeading = useRef<React.ComponentRef<typeof Text>>(null);
+  const rulesHeading = useRef<React.ComponentRef<typeof Text>>(null);
+  const leaveHeading = useRef<React.ComponentRef<typeof Text>>(null);
+  const resultHeading = useRef<React.ComponentRef<typeof Text>>(null);
+  const focus = (node: React.ComponentRef<typeof View> | null) => {
+    if (!node) return;
+    if (Platform.OS === "web") { (node as unknown as { focus?: () => void }).focus?.(); return; }
+    const handle = findNodeHandle(node);
+    if (handle) AccessibilityInfo.setAccessibilityFocus(handle);
+  };
+  const [resultDetails, setResultDetails] = useState(false);
   const reducedMotion = useReducedMotion();
   const resultRecorded = useRef(false);
   const alive = useRef(true);
@@ -216,6 +234,8 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
     resultRecorded.current = true;
     const result: GameResult = { won: gameState.winner === "human", turns: humanTurnsRef.current, pickups: humanPickupsRef.current, burns: burnsRef.current };
     const save = async () => {
+      setShowGameOver(true);
+      setResultError("");
       try {
         completedAt.current ??= new Date().toISOString();
         // Save the final deal first so a restart can settle the same round ID.
@@ -353,6 +373,8 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
     completedAt.current = null;
     setQuickRoundId(careerId());
     setMasteryProgress(null);
+    setResultDetails(false);
+    setResultError("");
     setShowGameOver(false);
     setSelectedPlayCards([]);
     setSetupSelected([]);
@@ -391,8 +413,9 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
 
   const handleConfirmLeave = useCallback(() => {
     setShowLeaveModal(false);
-    router.back();
-  }, []);
+    if (career) career.onExit();
+    else router.dismissTo("/");
+  }, [career]);
 
   const handleQuitFromMenu = useCallback(() => {
     setShowMenuSheet(false);
@@ -408,12 +431,14 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
     setShowLeaveModal(false);
   }, []);
 
-  const canPlay = selectedPlayCards.length > 0 && (() => {
-    const cardsToPlay = selectedPlayCards.map((id) =>
-      human.hand.find((c) => c.id === id) || human.faceUpPalace.find((c) => c.id === id)
-    ).filter(Boolean) as Card[];
-    return canPlayCards(cardsToPlay, gameState.pile);
-  })();
+  const turn = presentTurn(gameState, selectedPlayCards);
+  const canPlay = turn.canPlay;
+  useEffect(() => {
+    if (Platform.OS === "web" || paused) return;
+    void AccessibilityInfo.isScreenReaderEnabled().then(enabled => {
+      if (enabled && alive.current) AccessibilityInfo.announceForAccessibility(`${turn.heading}. ${gameState.message}`);
+    }).catch(() => {});
+  }, [turn.heading, gameState.message, paused]);
 
   const pileTop = gameState.pile.length > 0 ? gameState.pile[gameState.pile.length - 1] : null;
   const pileCount = gameState.pile.length;
@@ -421,14 +446,15 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
   return (
     <View testID="game-table" style={[styles.container, {
       backgroundColor: theme.table,
-      paddingTop: insets.top + (Platform.OS === "web" ? 67 : 0),
-      paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 0),
+      paddingTop: insets.top,
+      paddingBottom: insets.bottom,
     }]}>
       <View style={styles.topBar}>
         <View style={styles.backBtn} />
-        <Text style={styles.topBarTitle}>{career ? `${career.rival.name} • ${career.series.wins}–${career.series.losses}` : "Palace"}</Text>
+        <Text style={[styles.topBarTitle, { flex: 1, textAlign: "center", letterSpacing: 0.5 }]} accessibilityRole="header">{career ? `${career.rival.name} • ${career.series.wins}–${career.series.losses}` : "Palace"}</Text>
         <Pressable
           accessibilityRole="button"
+          ref={menuButton}
           accessibilityLabel="Game menu"
           onPress={() => setShowMenuSheet(true)}
           style={({ pressed }) => [styles.menuBtn, pressed && { opacity: 0.6 }]}
@@ -438,9 +464,9 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
         </Pressable>
       </View>
 
-      {!!(resultError || career?.error) && <View style={{ padding: 12 }}><Text style={{ color: "#FFBFAC" }}>{resultError || career?.error}</Text>{!!resultError && <Pressable accessibilityRole="button" onPress={() => setResultAttempt(n => n + 1)} style={{ padding: 14 }}><Text style={{ color: "#EFC778" }}>Retry saving result</Text></Pressable>}</View>}
-      <View style={styles.gameArea}>
-        <View style={styles.opponentPanel}>
+      {!showGameOver && !!(resultError || career?.error) && <View style={{ padding: 12 }}><Text style={{ color: "#FFBFAC" }}>{resultError || career?.error}</Text>{!!resultError && <Pressable accessibilityRole="button" onPress={() => setResultAttempt(n => n + 1)} style={{ padding: 14 }}><Text style={{ color: "#EFC778" }}>Retry saving result</Text></Pressable>}</View>}
+      <ScrollView testID="board-scroll" bounces={false} contentContainerStyle={[styles.gameArea, { flexGrow: 1 }]} style={{ flex: 1 }}>
+        <View style={[styles.opponentPanel, compact && { paddingVertical: 6, gap: 4 }]}>
           <View style={styles.playerHeader}>
             {career && <RivalPortrait rival={career.rival} size={30} />}
             <View style={[styles.turnIndicator, !currentPlayer.isHuman && styles.turnIndicatorActive]} />
@@ -451,7 +477,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
             <Text style={styles.handCount}>{ai.hand.length} in hand</Text>
           </View>
 
-          <View style={styles.aiFanRow}>
+          {!compact && <View style={styles.aiFanRow}>
             {ai.hand.length === 0 ? (
               <Text style={styles.aiEmptyHand}>No cards in hand</Text>
             ) : (
@@ -464,7 +490,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
                 />
               ))
             )}
-          </View>
+          </View>}
 
           <View style={styles.palaceRowLabeled}>
             <View style={styles.palaceGroup}>
@@ -495,9 +521,13 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
           </View>
         </View>
 
-        <View style={styles.centerArea}>
+        <View style={[styles.centerArea, { paddingVertical: compact ? 6 : 12 }]}>
+          <View accessibilityLiveRegion="polite" style={{ gap: 3, alignItems: "center", paddingHorizontal: 8 }}>
+            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 17, color: "#FFF6E5" }}>{turn.heading}</Text>
+            <Text style={{ fontSize: 13, lineHeight: 18, textAlign: "center", color: "#C5D7CB" }}>{turn.hint}</Text>
+          </View>
           <Animated.View style={[styles.messageContainer, { opacity: messageOpacity }]}>
-            <Text style={styles.messageText} numberOfLines={1}>
+            <Text style={[styles.messageText, { fontSize: 12 }]}>
               {gameState.phase === "choose_palace"
                 ? gameState.currentPlayerIndex === 0
                   ? `Select 3 cards for your palace (${setupSelected.length}/3)`
@@ -542,55 +572,13 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
             </View>
           </View>
 
-          <View style={styles.actionRow}>
-            {isHumanTurn && humanPhase !== "facedown" && (
-              <>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.actionBtn,
-                    styles.playBtn,
-                    !canPlay && styles.actionBtnDisabled,
-                    pressed && canPlay && { opacity: 0.85, transform: [{ scale: 0.97 }] },
-                  ]}
-                  onPress={handlePlaySelected}
-                  disabled={!canPlay}
-                >
-                  <Text style={[styles.actionBtnText, !canPlay && styles.actionBtnTextDisabled]}>
-                    {selectedPlayCards.length > 1 ? `Play ${selectedPlayCards.length}` : "Play"}
-                  </Text>
-                </Pressable>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.actionBtn,
-                    styles.pickupBtn,
-                    gameState.pile.length === 0 && styles.actionBtnDisabled,
-                    pressed && gameState.pile.length > 0 && { opacity: 0.85 },
-                  ]}
-                  onPress={handlePickUp}
-                  disabled={gameState.pile.length === 0}
-                >
-                  <Text style={[styles.actionBtnText, styles.pickupBtnText, gameState.pile.length === 0 && styles.actionBtnTextDisabled]}>
-                    Pick Up
-                  </Text>
-                </Pressable>
-              </>
-            )}
-            {isHumanTurn && humanPhase === "facedown" && (
-              <Text style={styles.tapHint}>Tap a face-down card to flip it</Text>
-            )}
-            {!isHumanTurn && gameState.phase === "playing" && (
-              <View style={styles.aiWaitRow}>
-                <Text style={styles.aiWaitText}>Opponent thinking</Text>
-                <Text style={styles.aiWaitDots}>···</Text>
-              </View>
-            )}
-          </View>
+
         </View>
 
         <View style={styles.playerSection}>
           <View style={styles.playerHeader}>
             <View style={[styles.turnIndicator, currentPlayer.isHuman && gameState.phase === "playing" && styles.turnIndicatorActive]} />
-            <Text style={styles.playerName}>{playerTitle || human.name}</Text>
+            <View style={{ flex: 1, gap: 2 }}><Text style={styles.playerName}>You</Text>{!!playerTitle && <Text style={{ color: "#C5D7CB", fontSize: 12 }}>{playerTitle}</Text>}</View>
             <Text style={styles.handCount}>{human.hand.length} in hand</Text>
           </View>
 
@@ -601,7 +589,8 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
                   card ? (
                     <PlayingCard
                       key={`human-fd-${i}`}
-                      faceDown={humanPhase !== "facedown"}
+                      faceDown
+                      accessibilityLabel={`Face-down card ${i + 1}`}
                       small
                       onPress={humanPhase === "facedown" && isHumanTurn ? () => handleFaceDownPlay(i) : undefined}
                       disabled={humanPhase !== "facedown" || !isHumanTurn}
@@ -631,6 +620,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
                         card={card}
                         small
                         selected={humanPhase === "faceup" && selectedPlayCards.includes(card.id)}
+                        playable={turn.playableIds.includes(card.id)}
                         onPress={humanPhase === "faceup" && isHumanTurn ? () => handleCardSelect(card.id) : undefined}
                         disabled={humanPhase !== "faceup" || !isHumanTurn}
                       />
@@ -641,6 +631,14 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
           </View>
         </View>
 
+        {anyTutVisible && <View testID="game-guide" style={{ backgroundColor: "#213E31", borderRadius: 14, padding: 12, gap: 6, borderWidth: 1, borderColor: "#6A693B" }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Text style={{ flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 15, color: "#FFF6E5" }}>{TUTORIAL_STEPS[tutorialStep].title}</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Skip guide" onPress={() => { setShowTutorial(false); void markTutorialSeen(); }} style={{ minWidth: 44, minHeight: 44, justifyContent: "center", alignItems: "center" }}><Text style={{ color: "#EFC778" }}>Skip</Text></Pressable>
+          </View>
+          <Text style={{ fontSize: 13, lineHeight: 19, color: "#CBD8CE" }}>{TUTORIAL_STEPS[tutorialStep].body}</Text>
+          {tutorialStep === 2 && <Pressable accessibilityRole="button" onPress={handleDismissTutStep} style={{ minHeight: 44, justifyContent: "center" }}><Text style={{ color: "#EFC778", fontWeight: "600" }}>Got it!</Text></Pressable>}
+        </View>}
         {gameState.phase === "choose_palace" && gameState.currentPlayerIndex === 0 ? (
           <View style={styles.handArea}>
             <Text style={styles.handLabel}>YOUR HAND — choose 3 for your palace</Text>
@@ -654,17 +652,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
                 />
               ))}
             </ScrollView>
-            <Pressable
-              style={({ pressed }) => [
-                styles.confirmSetupBtn,
-                setupSelected.length !== 3 && styles.confirmSetupBtnDisabled,
-                pressed && setupSelected.length === 3 && { opacity: 0.85, transform: [{ scale: 0.98 }] },
-              ]}
-              onPress={handleConfirmSetup}
-              disabled={setupSelected.length !== 3}
-            >
-              <Text style={styles.confirmSetupText}>Confirm Palace ({setupSelected.length}/3)</Text>
-            </Pressable>
+
           </View>
         ) : (
           humanPhase !== "facedown" && (
@@ -679,6 +667,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
                       key={card.id}
                       card={card}
                       selected={selectedPlayCards.includes(card.id)}
+                      playable={turn.playableIds.includes(card.id)}
                       onPress={isHumanTurn ? () => handleCardSelect(card.id) : undefined}
                       disabled={!isHumanTurn}
                     />
@@ -692,12 +681,75 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
             </View>
           )
         )}
+      </ScrollView>
+      <View style={{ paddingHorizontal: 12, paddingTop: 6, paddingBottom: 4, backgroundColor: theme.table }}>
+        {gameState.phase === "choose_palace" && gameState.currentPlayerIndex === 0 ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.confirmSetupBtn,
+                setupSelected.length !== 3 && styles.confirmSetupBtnDisabled,
+                pressed && setupSelected.length === 3 && { opacity: 0.85, transform: [{ scale: 0.98 }] },
+              ]}
+              accessibilityRole="button" accessibilityState={{ disabled: setupSelected.length !== 3 }}
+              onPress={handleConfirmSetup}
+              disabled={setupSelected.length !== 3}
+            >
+              <Text style={styles.confirmSetupText}>Confirm Palace ({setupSelected.length}/3)</Text>
+            </Pressable>        ) : (
+          <View style={styles.actionRow}>
+            {isHumanTurn && humanPhase !== "facedown" && (
+              <>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.actionBtn,
+                    styles.playBtn,
+                    !canPlay && styles.actionBtnDisabled,
+                    pressed && canPlay && { opacity: 0.85, transform: [{ scale: 0.97 }] },
+                  ]}
+                  accessibilityRole="button" accessibilityLabel={selectedPlayCards.length > 1 ? `Play ${selectedPlayCards.length}` : "Play"}
+                  accessibilityState={{ disabled: !canPlay }}
+                  onPress={handlePlaySelected}
+                  disabled={!canPlay}
+                >
+                  <Text style={[styles.actionBtnText, !canPlay && styles.actionBtnTextDisabled]}>
+                    {selectedPlayCards.length > 1 ? `Play ${selectedPlayCards.length}` : "Play"}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.actionBtn,
+                    styles.pickupBtn,
+                    gameState.pile.length === 0 && styles.actionBtnDisabled,
+                    pressed && gameState.pile.length > 0 && { opacity: 0.85 },
+                  ]}
+                  accessibilityRole="button" accessibilityLabel="Pick Up"
+                  accessibilityState={{ disabled: gameState.pile.length === 0 }}
+                  onPress={handlePickUp}
+                  disabled={gameState.pile.length === 0}
+                >
+                  <Text style={[styles.actionBtnText, styles.pickupBtnText, gameState.pile.length === 0 && styles.actionBtnTextDisabled]}>
+                    Pick Up
+                  </Text>
+                </Pressable>
+              </>
+            )}
+            {isHumanTurn && humanPhase === "facedown" && (
+              <Text style={styles.tapHint}>Tap a face-down card to flip it</Text>
+            )}
+            {!isHumanTurn && gameState.phase === "playing" && (
+              <View style={styles.aiWaitRow}>
+                <Text style={styles.aiWaitText}>Opponent thinking</Text>
+                <Text style={styles.aiWaitDots}>···</Text>
+              </View>
+            )}
+          </View>        )}
       </View>
 
-      <Modal visible={showGameOver} transparent animationType={reducedMotion ? "none" : "fade"} onRequestClose={() => {}}>
+
+      <Modal visible={showGameOver} transparent animationType={reducedMotion ? "none" : "fade"} onRequestClose={() => {}} onShow={() => focus(resultHeading.current)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            {career ? <CareerResult career={career} mastery={masteryProgress} /> : <ScrollView
+          <View style={styles.modalCard} accessibilityViewIsModal>
+            {career ? <CareerResult career={career} mastery={masteryProgress} settled={!!gameOverData && !resultError} saveError={resultError} onRetry={() => setResultAttempt(n => n + 1)} /> : <ScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.modalScroll}
               bounces={false}
@@ -705,11 +757,27 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
               <Text style={styles.modalEmoji}>
                 {gameState.winner === "human" ? "🏆" : "💀"}
               </Text>
-              <Text style={styles.modalTitle}>
+              <Text ref={resultHeading} accessible accessibilityRole="header" style={styles.modalTitle}>
                 {gameState.winner === "human" ? "You Win!" : "You Lose"}
               </Text>
 
-              <RoundMastery progress={masteryProgress} />
+              {!!resultError ? <View accessibilityRole="alert" style={{ gap: 10 }}><Text style={{ color: "#FFBFAC", fontSize: 15 }}>{resultError}</Text><Pressable accessibilityRole="button" onPress={() => setResultAttempt(n => n + 1)} style={{ padding: 14, minHeight: 48 }}><Text style={{ color: "#EFC778" }}>Retry saving result</Text></Pressable></View> : !gameOverData && <Text accessibilityLiveRegion="polite" style={{ color: "#C5D7CB" }}>Saving your result…</Text>}
+              <Pressable
+                style={({ pressed }) => [styles.modalPlayAgain, pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] }]}
+                accessibilityRole="button" disabled={!gameOverData || !!resultError} accessibilityState={{ disabled: !gameOverData || !!resultError }} onPress={handleNewGame}
+              >
+                <Text style={styles.modalPlayAgainText}>Play Again</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [styles.modalHomeBtn, pressed && { opacity: 0.7 }]}
+                accessibilityRole="button" disabled={!gameOverData || !!resultError} onPress={() => { setShowGameOver(false); router.dismissTo("/"); }}
+              >
+                <Text style={styles.modalHomeBtnText}>Home</Text>
+              </Pressable>
+              <RoundMastery compact progress={masteryProgress} />
+              <Pressable accessibilityRole="button" accessibilityState={{ expanded: resultDetails }} onPress={() => setResultDetails(v => !v)} style={{ minHeight: 44, justifyContent: "center" }}><Text style={{ color: "#EFC778" }}>{resultDetails ? "Hide round details" : "Round details & badges"}</Text></Pressable>
+              {resultDetails && <>
+
               {gameOverData && (
                 <View style={styles.summaryBox}>
                   <Text style={styles.summaryLabel}>GAME SUMMARY</Text>
@@ -764,31 +832,21 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
                 </View>
               )}
 
-              <Pressable
-                style={({ pressed }) => [styles.modalPlayAgain, pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] }]}
-                onPress={handleNewGame}
-              >
-                <Text style={styles.modalPlayAgainText}>Play Again</Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [styles.modalHomeBtn, pressed && { opacity: 0.7 }]}
-                onPress={() => { setShowGameOver(false); router.back(); }}
-              >
-                <Text style={styles.modalHomeBtnText}>Home</Text>
-              </Pressable>
+
+              </>}
             </ScrollView>}
           </View>
         </View>
       </Modal>
 
       {/* ── Menu action sheet ── */}
-      <Modal visible={showMenuSheet} transparent animationType={reducedMotion ? "none" : "slide"} onRequestClose={() => setShowMenuSheet(false)}>
+      <Modal visible={showMenuSheet} transparent animationType={reducedMotion ? "none" : "slide"} onRequestClose={() => setShowMenuSheet(false)} onShow={() => focus(menuHeading.current)} onDismiss={() => { if (!showRulesOverlay && !showLeaveModal) focus(menuButton.current); }}>
         <Pressable style={styles.sheetOverlay} onPress={() => setShowMenuSheet(false)}>
-          <Pressable style={styles.sheetCard} onPress={() => {}}>
-            <View style={styles.sheetHandle} />
+          <Pressable style={styles.sheetCard} accessibilityViewIsModal onPress={() => {}}>
+            <View style={styles.sheetHandle} /><Text ref={menuHeading} accessible accessibilityRole="header" style={{ color: "#FFF6E5", fontSize: 18, fontWeight: "600", padding: 16 }}>Game menu</Text>
             <Pressable
               style={({ pressed }) => [styles.sheetRow, pressed && styles.sheetRowPressed]}
-              onPress={handleRulesFromMenu}
+              accessibilityRole="button" onPress={handleRulesFromMenu}
             >
               <View style={styles.sheetRowIcon}>
                 <Ionicons name="book-outline" size={20} color="#D4AF37" />
@@ -799,7 +857,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
             <View style={styles.sheetDivider} />
             <Pressable
               style={({ pressed }) => [styles.sheetRow, pressed && styles.sheetRowPressed]}
-              onPress={handleQuitFromMenu}
+              accessibilityRole="button" onPress={handleQuitFromMenu}
             >
               <View style={[styles.sheetRowIcon, styles.sheetRowIconRed]}>
                 <Ionicons name="exit-outline" size={20} color="#E74C3C" />
@@ -808,7 +866,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
             </Pressable>
             <Pressable
               style={({ pressed }) => [styles.sheetCancelBtn, pressed && { opacity: 0.7 }]}
-              onPress={() => setShowMenuSheet(false)}
+              accessibilityRole="button" onPress={() => setShowMenuSheet(false)}
             >
               <Text style={styles.sheetCancelText}>Cancel</Text>
             </Pressable>
@@ -817,13 +875,13 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
       </Modal>
 
       {/* ── In-game rules overlay ── */}
-      <Modal visible={showRulesOverlay} animationType={reducedMotion ? "none" : "slide"} onRequestClose={() => setShowRulesOverlay(false)}>
+      <Modal visible={showRulesOverlay} animationType={reducedMotion ? "none" : "slide"} onRequestClose={() => setShowRulesOverlay(false)} onShow={() => focus(rulesHeading.current)} onDismiss={() => focus(menuButton.current)}>
         <View style={[styles.rulesContainer, {
-          paddingTop: insets.top + (Platform.OS === "web" ? 67 : 0),
-          paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 0),
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
         }]}>
           <View style={styles.rulesTopBar}>
-            <Text style={styles.rulesTopBarTitle}>How to Play</Text>
+            <Text ref={rulesHeading} accessible accessibilityRole="header" style={styles.rulesTopBarTitle}>How to Play</Text>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Close rules"
@@ -865,13 +923,13 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
       </Modal>
 
       {/* ── Leave confirmation ── */}
-      <Modal visible={showLeaveModal} transparent animationType={reducedMotion ? "none" : "fade"} onRequestClose={handleCancelLeave}>
+      <Modal visible={showLeaveModal} transparent animationType={reducedMotion ? "none" : "fade"} onRequestClose={handleCancelLeave} onShow={() => focus(leaveHeading.current)} onDismiss={() => focus(menuButton.current)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.leaveCard}>
+          <View style={styles.leaveCard} accessibilityViewIsModal>
             <View style={styles.leaveIconWrap}>
               <Ionicons name="exit-outline" size={28} color="#E74C3C" />
             </View>
-            <Text style={styles.leaveTitle}>Leave Game?</Text>
+            <Text ref={leaveHeading} accessible accessibilityRole="header" style={styles.leaveTitle}>Leave Game?</Text>
             <Text style={styles.leaveSub}>
               {career ? "Your deal and series are saved. Resume from the Tour whenever you’re ready." : "Your current game progress will be lost."}
             </Text>
@@ -880,7 +938,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
                 styles.leaveConfirmBtn,
                 pressed && { opacity: 0.85 },
               ]}
-              onPress={handleConfirmLeave}
+              accessibilityRole="button" onPress={handleConfirmLeave}
             >
               <Text style={styles.leaveConfirmText}>Leave</Text>
             </Pressable>
@@ -889,7 +947,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
                 styles.leaveKeepBtn,
                 pressed && { opacity: 0.85 },
               ]}
-              onPress={handleCancelLeave}
+              accessibilityRole="button" onPress={handleCancelLeave}
             >
               <Text style={styles.leaveKeepText}>Keep Playing</Text>
             </Pressable>
@@ -897,64 +955,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
         </View>
       </Modal>
 
-      {/* ── First-game tutorial overlay ── */}
-      {anyTutVisible && (
-        <View
-          style={[
-            styles.tutorialOverlay,
-            {
-              paddingBottom:
-                insets.bottom + (Platform.OS === "web" ? 34 : 0) + 200,
-            },
-          ]}
-          pointerEvents="box-none"
-        >
-          <View style={styles.tutorialCard}>
-            <View style={styles.tutorialTopRow}>
-              <View style={styles.tutorialStepPill}>
-                <Text style={styles.tutorialStepPillText}>
-                  {TUTORIAL_STEPS[tutorialStep].step}
-                </Text>
-              </View>
-              <Pressable accessibilityRole="button" accessibilityLabel="Skip guide" onPress={() => { setShowTutorial(false); void markTutorialSeen(); }} style={{ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" }}><Text style={{ color: "#EFC778", fontSize: 14 }}>Skip</Text></Pressable>
-            </View>
 
-            <View style={styles.tutorialHeaderRow}>
-              <View style={styles.tutorialIconCircle}>
-                <Ionicons
-                  name={TUTORIAL_STEPS[tutorialStep].icon}
-                  size={20}
-                  color="#D4AF37"
-                />
-              </View>
-              <Text style={styles.tutorialTitle}>
-                {TUTORIAL_STEPS[tutorialStep].title}
-              </Text>
-            </View>
-
-            <Text style={styles.tutorialBody}>
-              {TUTORIAL_STEPS[tutorialStep].body}
-            </Text>
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.tutorialBtn,
-                pressed && { opacity: 0.82, transform: [{ scale: 0.97 }] },
-              ]}
-              onPress={handleDismissTutStep}
-            >
-              <Text style={styles.tutorialBtnText}>
-                {tutorialStep >= 2 ? "Got it!" : "Got it  →"}
-              </Text>
-            </Pressable>
-          </View>
-
-          {/* Arrow pointing down toward the hand area */}
-          <View style={styles.tutorialArrowWrap} pointerEvents="none">
-            <Ionicons name="chevron-down" size={22} color="#D4AF37" />
-          </View>
-        </View>
-      )}
     </View>
   );
 }
@@ -972,8 +973,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   backBtn: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -985,9 +986,8 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   gameArea: {
-    flex: 1,
     paddingHorizontal: 12,
-    gap: 4,
+    gap: 8,
   },
   playerSection: {
     gap: 6,
@@ -1023,7 +1023,7 @@ const styles = StyleSheet.create({
   handCount: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.5)",
+    color: "#B9CEC1",
     marginLeft: "auto",
   },
   palaceRow: {
@@ -1052,12 +1052,14 @@ const styles = StyleSheet.create({
   aiEmptyHand: {
     fontSize: 11,
     fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.3)",
+    color: "#A4B9AA",
     fontStyle: "italic",
   },
   palaceRowLabeled: {
     flexDirection: "row",
     alignItems: "flex-end",
+    flexWrap: "wrap",
+    rowGap: 8,
     paddingHorizontal: 2,
   },
   palaceGroup: {
@@ -1069,9 +1071,9 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   palaceGroupLabel: {
-    fontSize: 8,
+    fontSize: 11,
     fontFamily: "Inter_600SemiBold",
-    color: "rgba(254,253,248,0.3)",
+    color: "#A4B9AA",
     letterSpacing: 1.2,
     textTransform: "uppercase",
   },
@@ -1101,15 +1103,15 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   pileLabel: {
-    fontSize: 9,
+    fontSize: 11,
     fontFamily: "Inter_600SemiBold",
-    color: "rgba(254,253,248,0.4)",
+    color: "#B9CEC1",
     letterSpacing: 1.5,
   },
   pileCount: {
     fontSize: 11,
     fontFamily: "Inter_500Medium",
-    color: "rgba(254,253,248,0.45)",
+    color: "#B9CEC1",
     height: 16,
   },
   pileStack2: {
@@ -1143,8 +1145,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   actionBtn: {
+    minHeight: 48,
+    flex: 1,
     paddingVertical: 10,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
@@ -1177,7 +1181,7 @@ const styles = StyleSheet.create({
     color: "#FEFDF8",
   },
   actionBtnTextDisabled: {
-    color: "rgba(254,253,248,0.4)",
+    color: "#B9CEC1",
   },
   tapHint: {
     fontSize: 13,
@@ -1193,7 +1197,7 @@ const styles = StyleSheet.create({
   aiWaitText: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.5)",
+    color: "#B9CEC1",
   },
   aiWaitDots: {
     fontSize: 16,
@@ -1205,9 +1209,9 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   handLabel: {
-    fontSize: 9,
+    fontSize: 11,
     fontFamily: "Inter_600SemiBold",
-    color: "rgba(254,253,248,0.4)",
+    color: "#B9CEC1",
     letterSpacing: 1.5,
     paddingHorizontal: 4,
     textTransform: "uppercase",
@@ -1217,11 +1221,12 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 4,
     paddingBottom: 2,
+    paddingTop: 12,
   },
   faceupHint: {
     fontSize: 13,
     fontFamily: "Inter_500Medium",
-    color: "rgba(254,253,248,0.5)",
+    color: "#B9CEC1",
     fontStyle: "italic",
     paddingHorizontal: 4,
   },
@@ -1299,9 +1304,9 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.06)",
   },
   summaryLabel: {
-    fontSize: 9,
+    fontSize: 11,
     fontFamily: "Inter_600SemiBold",
-    color: "rgba(254,253,248,0.4)",
+    color: "#B9CEC1",
     letterSpacing: 1.5,
     textTransform: "uppercase",
     textAlign: "center",
@@ -1324,7 +1329,7 @@ const styles = StyleSheet.create({
   summaryItemLabel: {
     fontSize: 11,
     fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.45)",
+    color: "#B9CEC1",
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
@@ -1367,7 +1372,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(212,175,55,0.2)",
   },
   achievementsLabel: {
-    fontSize: 9,
+    fontSize: 11,
     fontFamily: "Inter_600SemiBold",
     color: "#D4AF37",
     letterSpacing: 1.5,
@@ -1400,7 +1405,7 @@ const styles = StyleSheet.create({
   achievementDesc: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.5)",
+    color: "#B9CEC1",
   },
   modalPlayAgain: {
     backgroundColor: "#D4AF37",
@@ -1431,7 +1436,7 @@ const styles = StyleSheet.create({
   modalHomeBtnText: {
     fontSize: 15,
     fontFamily: "Inter_500Medium",
-    color: "rgba(254,253,248,0.5)",
+    color: "#B9CEC1",
   },
   leaveCard: {
     backgroundColor: "#0f3320",
@@ -1471,7 +1476,7 @@ const styles = StyleSheet.create({
   leaveSub: {
     fontSize: 14,
     fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.5)",
+    color: "#B9CEC1",
     textAlign: "center",
     lineHeight: 20,
     marginBottom: 8,
@@ -1503,8 +1508,8 @@ const styles = StyleSheet.create({
     color: "#D4AF37",
   },
   menuBtn: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1577,7 +1582,7 @@ const styles = StyleSheet.create({
   sheetCancelText: {
     fontSize: 17,
     fontFamily: "Inter_600SemiBold",
-    color: "rgba(254,253,248,0.45)",
+    color: "#B9CEC1",
   },
   rulesContainer: {
     flex: 1,
@@ -1654,7 +1659,7 @@ const styles = StyleSheet.create({
   rulesChipLabel: {
     fontSize: 11,
     fontFamily: "Inter_600SemiBold",
-    color: "rgba(254,253,248,0.4)",
+    color: "#B9CEC1",
     textTransform: "uppercase",
     letterSpacing: 1.5,
   },
@@ -1679,7 +1684,7 @@ const styles = StyleSheet.create({
   rulesChipNote: {
     fontSize: 12,
     fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.4)",
+    color: "#B9CEC1",
   },
   tutorialOverlay: {
     position: "absolute",

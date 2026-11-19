@@ -1,609 +1,173 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Platform,
-  StatusBar,
-  ScrollView,
-} from "react-native";
+import { View, Text, StyleSheet, Pressable, StatusBar, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "@/lib/haptics";
 import { getStats, type GameStats } from "@/lib/stats";
 import { getDailyChallenge, type ActiveDailyChallenge } from "@/lib/daily-challenge";
-
 import { MasteryHomeBanner } from "@/components/mastery/HomeBanner";
 import { TourHomeBanner } from "@/components/tour/HomeBanner";
-
-const DEFAULT_STATS: GameStats = {
-  wins: 0,
-  losses: 0,
-  gamesPlayed: 0,
-  winStreak: 0,
-  bestStreak: 0,
-  totalBurns: 0,
-  bestWinTurns: 0,
-  comebackWins: 0,
-  cleanWins: 0,
-  maxBurnsInGame: 0,
-};
-
+import { palette } from "@/components/tour/ui";
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const [stats, setStats] = useState<GameStats>(DEFAULT_STATS);
-  const [dailyChallenge, setDailyChallenge] = useState<ActiveDailyChallenge | null>(null);
-
-  useFocusEffect(
-    React.useCallback(() => {
-      getStats().then(setStats);
-      getDailyChallenge().then(setDailyChallenge);
-    }, [])
-  );
-
-  const handlePlay = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  const [stats, setStats] = useState<GameStats | null>(null);
+  const [daily, setDaily] = useState<ActiveDailyChallenge | null>(null);
+  const [error, setError] = useState(false);
+  useFocusEffect(React.useCallback(() => {
+    let active = true;
+    void Promise.all([getStats(), getDailyChallenge()]).then(([s, d]) => {
+      if (active) {
+        setStats(s);
+        setDaily(d);
+        setError(false);
+      }
+    }).catch(() => {
+      if (active) setError(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, []));
+  const play = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push("/game");
   };
-
-  const handleRules = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push("/rules");
-  };
-
-  const handleStats = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push("/stats");
-  };
-
-  const winRate =
-    stats.gamesPlayed > 0
-      ? Math.round((stats.wins / stats.gamesPlayed) * 100)
-      : 0;
-
-  return (
-    <View
-      style={[
-        styles.container,
-        {
-          paddingTop:
-            insets.top + (Platform.OS === "web" ? 67 : 0),
-        },
-      ]}
-    >
-      <StatusBar barStyle="light-content" />
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={{ width: "100%", flexDirection: "row", justifyContent: "flex-end" }}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push("/settings")} style={{ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" }}><Ionicons name="settings-outline" size={24} color="#D4AF37" /></Pressable>
-        </View>
-        <View style={styles.header}>
-          <View style={styles.suitRow}>
-            <Text style={styles.suitSymbol}>♠</Text>
-            <Text style={[styles.suitSymbol, styles.redSuit]}>♥</Text>
-            <Text style={styles.suitSymbol}>♣</Text>
-            <Text style={[styles.suitSymbol, styles.redSuit]}>♦</Text>
-          </View>
-          <Text style={styles.appName}>PALACE</Text>
-          <Text style={styles.tagline}>The Card Game</Text>
-        </View>
-
-        <TourHomeBanner />
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.playButton,
-            pressed && styles.playButtonPressed,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="Quick Play"
-          onPress={handlePlay}
-        >
-          <Text style={styles.playButtonText}>Quick Play</Text>
-          <Ionicons name="play" size={22} color="#0d2b1a" />
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.secondaryButton,
-            pressed && styles.secondaryButtonPressed,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="How to Play"
-          onPress={handleRules}
-        >
-          <Ionicons name="book-outline" size={18} color="#D4AF37" />
-          <Text style={styles.secondaryButtonText}>How to Play</Text>
-        </Pressable>
-
-        <MasteryHomeBanner />
-
-        {stats.gamesPlayed > 0 && (
-          <Pressable
-            style={({ pressed }) => [styles.statsCard, pressed && { opacity: 0.85 }]}
-            onPress={handleStats}
-          >
-            <View style={styles.statsCardHeader}>
-              <Text style={styles.cardSectionTitle}>Your Stats</Text>
-              <Ionicons name="chevron-forward" size={14} color="rgba(254,253,248,0.3)" />
-            </View>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{stats.gamesPlayed}</Text>
-                <Text style={styles.statLabel}>Played</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, styles.greenStat]}>{stats.wins}</Text>
-                <Text style={styles.statLabel}>Won</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, styles.redStat]}>{stats.losses}</Text>
-                <Text style={styles.statLabel}>Lost</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, styles.goldStat]}>{winRate}%</Text>
-                <Text style={styles.statLabel}>Win Rate</Text>
-              </View>
-            </View>
-
-            <View style={styles.statsSecondRow}>
-              {stats.bestStreak > 0 && (
-                <View style={styles.miniStat}>
-                  <Ionicons name="flame" size={13} color="#D4AF37" />
-                  <Text style={styles.miniStatText}>
-                    Best streak: <Text style={styles.miniStatBold}>{stats.bestStreak}</Text>
-                  </Text>
-                  {stats.winStreak > 0 && (
-                    <Text style={styles.miniStatBold}> · Active: {stats.winStreak}</Text>
-                  )}
-                </View>
-              )}
-              {stats.totalBurns > 0 && (
-                <View style={styles.miniStat}>
-                  <Ionicons name="bonfire-outline" size={13} color="#D4AF37" />
-                  <Text style={styles.miniStatText}>
-                    Total burns: <Text style={styles.miniStatBold}>{stats.totalBurns}</Text>
-                  </Text>
-                </View>
-              )}
-              {stats.bestWinTurns > 0 && (
-                <View style={styles.miniStat}>
-                  <Ionicons name="flash-outline" size={13} color="#D4AF37" />
-                  <Text style={styles.miniStatText}>
-                    Best win: <Text style={styles.miniStatBold}>{stats.bestWinTurns} turns</Text>
-                  </Text>
-                </View>
-              )}
-            </View>
-          </Pressable>
-        )}
-
-        {dailyChallenge && (
-          <Pressable
-            style={({ pressed }) => [styles.dailyCard, pressed && { opacity: 0.88 }]}
-            onPress={handlePlay}
-          >
-            <View style={styles.dailyHeader}>
-              <View style={styles.dailyHeaderLeft}>
-                <View style={styles.dailyDot} />
-                <Text style={styles.dailyLabel}>DAILY CHALLENGE</Text>
-              </View>
-              {dailyChallenge.completed ? (
-                <View style={styles.dailyCompletedBadge}>
-                  <Ionicons name="checkmark" size={11} color="#0d2b1a" />
-                  <Text style={styles.dailyCompletedText}>DONE</Text>
-                </View>
-              ) : (
-                <Text style={styles.dailyProgress}>
-                  {dailyChallenge.progress}/{dailyChallenge.target}
-                </Text>
-              )}
-            </View>
-            <View style={styles.dailyBody}>
-              <View style={[styles.dailyIcon, dailyChallenge.completed && styles.dailyIconDone]}>
-                <Ionicons
-                  name={dailyChallenge.icon as any}
-                  size={22}
-                  color={dailyChallenge.completed ? "#0d2b1a" : "#D4AF37"}
-                />
-              </View>
-              <View style={styles.dailyTextWrap}>
-                <Text style={styles.dailyTitle}>{dailyChallenge.title}</Text>
-                <Text style={styles.dailyDesc}>{dailyChallenge.desc}</Text>
-              </View>
-            </View>
-            <View style={styles.dailyTrack}>
-              <View
-                style={[
-                  styles.dailyFill,
-                  {
-                    width: `${Math.min(100, (dailyChallenge.progress / dailyChallenge.target) * 100)}%`,
-                    backgroundColor: dailyChallenge.completed ? "#2ECC71" : "#D4AF37",
-                  },
-                ]}
-              />
-            </View>
-          </Pressable>
-        )}
-
-        <View
-          style={[
-            styles.footer,
-            { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 16) },
-          ]}
-        >
-          <Text style={styles.footerText}>YOUR TABLE. YOUR JOURNEY.</Text>
-        </View>
-      </ScrollView>
+  return <View style={[s.screen, {
+    paddingTop: insets.top
+  }]}>
+    <StatusBar barStyle="light-content" />
+    <View style={s.header}>
+      <View><Text accessibilityRole="header" style={s.logo}>PALACE</Text><Text style={s.tagline}>Your next great hand.</Text></View>
+      <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push("/settings")} style={s.icon}><Ionicons name="settings-outline" size={24} color={palette.gold} /></Pressable>
     </View>
-  );
+    <ScrollView contentContainerStyle={[s.content, {
+      paddingBottom: insets.bottom + 24
+    }]}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Quick Play" accessibilityHint="Start a fresh single game." onPress={play} style={({
+        pressed
+      }) => [s.play, {
+        opacity: pressed ? 0.8 : 1
+      }]}>
+        <View style={{
+          flex: 1
+        }}><Text style={s.playTitle}>Quick Play</Text><Text style={s.playCaption}>One game. Make it yours.</Text></View><Ionicons name="play" size={25} color={palette.bg} />
+      </Pressable>
+      <TourHomeBanner />
+      <MasteryHomeBanner />
+      <View style={s.links}>
+        <Pressable accessibilityRole="button" accessibilityLabel="How to Play" onPress={() => router.push("/rules")} style={s.link}><Ionicons name="book-outline" size={20} color={palette.gold} /><Text style={s.linkText}>How to Play</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Statistics" onPress={() => router.push("/stats")} style={s.link}><Ionicons name="stats-chart-outline" size={20} color={palette.gold} /><Text style={s.linkText}>Statistics</Text></Pressable>
+      </View>
+      {stats && stats.gamesPlayed > 0 && <Text style={s.caption}>{stats.wins.toLocaleString()} wins · {Math.round(stats.wins / stats.gamesPlayed * 100)}% win rate · Best streak {stats.bestStreak}</Text>}
+      {!!error && <Text accessibilityRole="alert" style={s.caption}>Your summary couldn’t load. Open Statistics or Progress to try again.</Text>}
+      {daily && <Pressable accessibilityRole="button" accessibilityLabel={`Daily challenge: ${daily.title}. ${daily.progress} of ${daily.target}${daily.completed ? ', complete' : ''}. Quick Play.`} onPress={play} style={s.daily}>
+        <View style={s.row}><Ionicons name={daily.completed ? "checkmark-circle" : "sunny-outline"} size={22} color={palette.gold} /><Text style={s.linkText}>{daily.completed ? "Daily challenge complete" : "Daily challenge"}</Text><Text style={s.caption}>{daily.progress}/{daily.target}</Text></View>
+        <Text style={s.dailyTitle}>{daily.title}</Text><Text style={s.caption}>{daily.desc}</Text>
+      </Pressable>}
+    </ScrollView>
+  </View>;
 }
-
-const styles = StyleSheet.create({
-  container: {
+const s = StyleSheet.create({
+  screen: {
     flex: 1,
-    backgroundColor: "#0d2b1a",
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    alignItems: "center",
-    paddingHorizontal: 24,
+    backgroundColor: palette.bg
   },
   header: {
-    alignItems: "center",
-    marginTop: 12,
-    marginBottom: 24,
-  },
-  suitRow: {
+    paddingHorizontal: 22,
+    paddingVertical: 14,
     flexDirection: "row",
-    gap: 12,
-    marginBottom: 8,
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12
   },
-  suitSymbol: {
-    fontSize: 20,
-    color: "rgba(254, 253, 248, 0.4)",
-  },
-  redSuit: {
-    color: "rgba(192, 57, 43, 0.5)",
-  },
-  appName: {
-    fontSize: 36,
+  logo: {
     fontFamily: "Inter_700Bold",
-    color: "#D4AF37",
-    letterSpacing: 8,
+    fontSize: 29,
+    color: palette.gold,
+    letterSpacing: 4
   },
   tagline: {
-    fontSize: 13,
     fontFamily: "Inter_400Regular",
-    color: "rgba(254, 253, 248, 0.5)",
-    letterSpacing: 4,
-    textTransform: "uppercase",
-    marginTop: 2,
+    fontSize: 13,
+    color: palette.muted,
+    marginTop: 3
   },
-  cardPreview: {
-    width: 180,
-    height: 120,
-    position: "relative",
-    marginBottom: 32,
-    marginTop: 8,
+  icon: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center"
   },
-  previewCard: {
-    position: "absolute",
-    width: 72,
-    height: 100,
-    backgroundColor: "#FEFDF8",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#E8E4D8",
-    padding: 8,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.35,
-        shadowRadius: 6,
-      },
-      android: { elevation: 6 },
-    }),
+  content: {
+    paddingHorizontal: 20,
+    gap: 16,
+    width: "100%",
+    maxWidth: 620,
+    alignSelf: "center"
   },
-  previewCard1: {
-    left: 0,
-    top: 10,
-    transform: [{ rotate: "-15deg" }],
+  play: {
+    minHeight: 76,
+    borderRadius: 18,
+    backgroundColor: palette.gold,
+    padding: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12
   },
-  previewCard2: {
-    left: 54,
-    top: 0,
-    zIndex: 2,
-    transform: [{ rotate: "2deg" }],
+  playTitle: {
+    color: palette.bg,
+    fontSize: 23,
+    fontFamily: "Inter_700Bold"
   },
-  previewCard3: {
-    left: 110,
-    top: 12,
-    transform: [{ rotate: "18deg" }],
+  playCaption: {
+    color: "#344332",
+    fontSize: 13,
+    marginTop: 3
   },
-  previewRank: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#1A1A1A",
-    lineHeight: 26,
+  links: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10
   },
-  previewSuit: {
-    fontSize: 16,
-    color: "#1A1A1A",
-  },
-  red: {
-    color: "#C0392B",
-  },
-  playButton: {
+  link: {
+    flexGrow: 1,
+    minHeight: 52,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: palette.panel,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#D4AF37",
-    borderRadius: 16,
-    paddingVertical: 18,
-    paddingHorizontal: 48,
-    gap: 10,
-    width: "100%",
-    marginBottom: 12,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#D4AF37",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 12,
-      },
-      android: { elevation: 6 },
-    }),
+    gap: 10
   },
-  playButtonPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.98 }],
-  },
-  playButtonText: {
-    fontSize: 20,
-    fontFamily: "Inter_700Bold",
-    color: "#0d2b1a",
-    letterSpacing: 1,
-  },
-  secondaryButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: "rgba(212, 175, 55, 0.35)",
-    width: "100%",
-    marginBottom: 24,
-  },
-  secondaryButtonPressed: {
-    backgroundColor: "rgba(212, 175, 55, 0.08)",
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontFamily: "Inter_500Medium",
-    color: "#D4AF37",
-  },
-  statsCard: {
-    width: "100%",
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "rgba(212, 175, 55, 0.15)",
-    marginBottom: 16,
-    gap: 12,
-  },
-  statsCardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  cardSectionTitle: {
-    fontSize: 11,
+  linkText: {
     fontFamily: "Inter_600SemiBold",
-    color: "rgba(254, 253, 248, 0.4)",
-    letterSpacing: 2,
-    textTransform: "uppercase",
-    textAlign: "center",
+    fontSize: 15,
+    color: palette.white,
+    flexShrink: 1
   },
-  statsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-around",
-  },
-  statItem: {
-    alignItems: "center",
-    gap: 2,
-    flex: 1,
-  },
-  statValue: {
-    fontSize: 22,
-    fontFamily: "Inter_700Bold",
-    color: "#FEFDF8",
-  },
-  statLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(254, 253, 248, 0.45)",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  statDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-  },
-  greenStat: { color: "#2ECC71" },
-  redStat: { color: "#E74C3C" },
-  goldStat: { color: "#D4AF37" },
-  statsSecondRow: {
-    gap: 6,
-  },
-  miniStat: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  miniStatText: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.5)",
-  },
-  miniStatBold: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-    color: "rgba(254,253,248,0.75)",
-  },
-  achievementsCard: {
-    width: "100%",
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "rgba(212, 175, 55, 0.15)",
-    marginBottom: 16,
-    gap: 12,
-  },
-  achievementsHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  achievementsHeaderRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  achievementsBadge: {
-    backgroundColor: "rgba(212,175,55,0.15)",
-    borderRadius: 20,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderWidth: 1,
-    borderColor: "rgba(212,175,55,0.25)",
-  },
-  achievementsBadgeText: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-    color: "#D4AF37",
-  },
-  progressTrack: {
-    width: "100%",
-    height: 4,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#D4AF37",
-    borderRadius: 2,
-    minWidth: 4,
-  },
-  recentAchievements: {
-    gap: 10,
-  },
-  achievementRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  achievementIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 9,
-    backgroundColor: "rgba(212,175,55,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  achievementText: {
-    flex: 1,
-    gap: 1,
-  },
-  achievementTitle: {
+  caption: {
     fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
-    color: "#FEFDF8",
+    lineHeight: 20,
+    color: palette.muted
   },
-  achievementDesc: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.45)",
-  },
-  noAchievementsText: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.35)",
-    textAlign: "center",
-    paddingVertical: 4,
-  },
-  moreAchievements: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.3)",
-    textAlign: "center",
-    letterSpacing: 0.3,
-  },
-  allUnlocked: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-    color: "#D4AF37",
-    textAlign: "center",
-    letterSpacing: 0.5,
-  },
-  dailyCard: {
-    width: "100%",
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 16,
-    padding: 16,
+  daily: {
+    padding: 18,
     borderWidth: 1,
-    borderColor: "rgba(212,175,55,0.2)",
-    marginBottom: 16,
-    gap: 12,
+    borderColor: palette.border,
+    borderRadius: 18,
+    gap: 8
   },
-  dailyHeader: {
+  dailyTitle: {
+    fontSize: 18,
+    color: palette.white,
+    fontFamily: "Inter_600SemiBold"
+  },
+  row: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-  },
-  dailyHeaderLeft: { flexDirection: "row", alignItems: "center", gap: 6 },
-  dailyDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#D4AF37" },
-  dailyLabel: { fontSize: 10, fontFamily: "Inter_700Bold", color: "rgba(212,175,55,0.7)", letterSpacing: 1.5, textTransform: "uppercase" },
-  dailyProgress: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: "rgba(254,253,248,0.4)" },
-  dailyCompletedBadge: { flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: "#2ECC71", borderRadius: 8, paddingHorizontal: 7, paddingVertical: 3 },
-  dailyCompletedText: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#0d2b1a", letterSpacing: 0.8 },
-  dailyBody: { flexDirection: "row", alignItems: "center", gap: 12 },
-  dailyIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: "rgba(212,175,55,0.1)", alignItems: "center", justifyContent: "center" },
-  dailyIconDone: { backgroundColor: "#2ECC71" },
-  dailyTextWrap: { flex: 1 },
-  dailyTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#FEFDF8", marginBottom: 2 },
-  dailyDesc: { fontSize: 13, fontFamily: "Inter_400Regular", color: "rgba(254,253,248,0.5)" },
-  dailyTrack: { height: 4, backgroundColor: "rgba(255,255,255,0.08)", borderRadius: 2, overflow: "hidden" },
-  dailyFill: { height: "100%", borderRadius: 2, minWidth: 4 },
-
-  footer: {
-    paddingTop: 16,
-    alignItems: "center",
-  },
-  footerText: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(254, 253, 248, 0.25)",
-    letterSpacing: 1,
-  },
+    gap: 10,
+    flexWrap: "wrap"
+  }
 });

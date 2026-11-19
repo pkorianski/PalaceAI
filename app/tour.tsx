@@ -132,7 +132,7 @@ export default function TourScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Back to home"
-          onPress={() => router.back()}
+          onPress={() => router.canGoBack() ? router.back() : router.replace("/")}
           style={s.back}
         >
           <Ionicons name="arrow-back" size={22} color={palette.white} />

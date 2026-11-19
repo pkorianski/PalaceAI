@@ -42,6 +42,7 @@ export default function AchievementsScreen() {
   const [state, setState] = useState<Mastery | null>(null),
     [badges, setBadges] = useState<string[]>([]),
     [error, setError] = useState("");
+  const [showHelp, setShowHelp] = useState(false);
   const [expanded, setExpanded] = useState<string | null>("days"),
     [busy, setBusy] = useState(false);
   const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null),
@@ -173,16 +174,11 @@ export default function AchievementsScreen() {
                     >
                       Next reward: {nextReward(state)}
                     </Text>
-                    <View style={styles.rule} />
-                    <Text style={m.body}>
-                      Every finished game earns XP. Wins, pile burns, milestones
-                      and weekly quests add more. Levels continue beyond the
-                      last badge.
-                    </Text>
-                    <Text style={m.caption}>
-                      Previously saved statistics count. Calendar goals start
-                      with your first game using mastery.
-                    </Text>
+                    <Pressable accessibilityRole="button" accessibilityState={{ expanded: showHelp }} onPress={() => setShowHelp(v => !v)} style={{ minHeight: 44, justifyContent: "center" }}><Text style={{ color: palette.gold }}>{showHelp ? "Hide mastery guide" : "How mastery works"}</Text></Pressable>
+                    {showHelp && <>
+                      <Text style={m.body}>Finish games to earn XP. Wins, pile burns, milestones and weekly quests add more. Levels keep going beyond the last badge.</Text>
+                      <Text style={m.caption}>Saved statistics count. Calendar goals start with your first game using mastery.</Text>
+                    </>}
                     {next && (
                       <Text
                         style={[m.text, { fontSize: 15, color: palette.gold }]}
