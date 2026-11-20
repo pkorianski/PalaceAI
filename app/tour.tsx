@@ -26,6 +26,7 @@ import {
 import { loadCareer, updateCareer, careerId } from "@/lib/tour/storage";
 import {
   emptyCareer,
+  nextRival,
   trophyCount,
   venueMedals,
   venueUnlocked,
@@ -337,7 +338,7 @@ export default function TourScreen() {
                       </View>
                       <View style={s.nodeWords}>
                         <Eyebrow color={venue.accent}>
-                          {r.champion ? "CHAPTER CHAMPION" : `TABLE 0${i + 1}`}
+                          {career.active?.rivalId === r.id ? "YOUR SAVED SERIES" : !career.active && nextRival(career).id === r.id ? "UP NEXT" : r.champion ? "CHAPTER CHAMPION" : `TABLE 0${i + 1}`}
                         </Eyebrow>
                         <Text style={s.rivalName}>{r.name}</Text>
                         <Text style={s.rivalTitle}>{r.title}</Text>

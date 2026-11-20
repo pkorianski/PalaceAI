@@ -59,7 +59,7 @@ export default function HomeScreen() {
         <Pressable accessibilityRole="button" accessibilityLabel="How to Play" onPress={() => router.push("/rules")} style={s.link}><Ionicons name="book-outline" size={20} color={palette.gold} /><Text style={s.linkText}>How to Play</Text></Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="Statistics" onPress={() => router.push("/stats")} style={s.link}><Ionicons name="stats-chart-outline" size={20} color={palette.gold} /><Text style={s.linkText}>Statistics</Text></Pressable>
       </View>
-      {stats && stats.gamesPlayed > 0 && <Text style={s.caption}>{stats.wins.toLocaleString()} wins · {Math.round(stats.wins / stats.gamesPlayed * 100)}% win rate · Best streak {stats.bestStreak}</Text>}
+      {stats && stats.gamesPlayed > 0 && <Text style={s.caption}>{stats.wins.toLocaleString()} {stats.wins === 1 ? "win" : "wins"} · {Math.round(stats.wins / stats.gamesPlayed * 100)}% win rate · Best streak {stats.bestStreak}</Text>}
       {!!error && <Text accessibilityRole="alert" style={s.caption}>Your summary couldn’t load. Open Statistics or Progress to try again.</Text>}
       {daily && <Pressable accessibilityRole="button" accessibilityLabel={`Daily challenge: ${daily.title}. ${daily.progress} of ${daily.target}${daily.completed ? ', complete' : ''}. Quick Play.`} onPress={play} style={s.daily}>
         <View style={s.row}><Ionicons name={daily.completed ? "checkmark-circle" : "sunny-outline"} size={22} color={palette.gold} /><Text style={s.linkText}>{daily.completed ? "Daily challenge complete" : "Daily challenge"}</Text><Text style={s.caption}>{daily.progress}/{daily.target}</Text></View>

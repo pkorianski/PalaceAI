@@ -13,7 +13,7 @@ const server = http.createServer((req, res) => {
   await new Promise(r => server.listen(18082, '127.0.0.1', r));
   let browser;
   try {
-    browser = await chromium.launch({headless:true});
+    browser = await chromium.launch({headless:true, executablePath: process.env.PALACE_CHROMIUM_PATH || undefined});
     const errors = [];
     for (const viewport of [{width:375,height:667},{width:390,height:844},{width:320,height:568}]) {
       const c = await browser.newContext({viewport, deviceScaleFactor:2, isMobile:true, hasTouch:true, reducedMotion:'reduce'}), p = await c.newPage();
@@ -71,7 +71,9 @@ const server = http.createServer((req, res) => {
     await p.evaluate(raw => {const c=JSON.parse(raw);c.active.game.phase='game_over';c.active.game.winner='human';localStorage.setItem('palace_tour_v1',JSON.stringify(c));},baseline);
     await p.goto('http://127.0.0.1:18082');
     await p.getByTestId('studio-intro').waitFor({state:'hidden',timeout:5000});
+    await p.screenshot({path:path.join(out,'24-rewards-home.png')});
     await p.getByRole('button',{name:'Continue Palace Tour'}).click();
+    await p.screenshot({path:path.join(out,'25-rewards-tour.png')});
     await p.evaluate(() => {
       window.__setItem = Storage.prototype.setItem;
       Storage.prototype.setItem = function(key, value) { if(key === 'palace_mastery_v1') throw Error('QA result disk failure'); return window.__setItem.call(this,key,value); };
@@ -92,6 +94,18 @@ const server = http.createServer((req, res) => {
     const saved = await p.evaluate(() => ({career:JSON.parse(localStorage.getItem('palace_tour_v1')),mastery:JSON.parse(localStorage.getItem('palace_mastery_v1'))}));
     assert.equal(saved.career.receipts.length,1,'Retry awards one Tour receipt');
     assert.equal(saved.mastery.stats.gamesPlayed,1,'Retry records one game');
+    // Separate, labeled fixture for a first champion trophy and table unlock.
+    await p.evaluate(raw => {
+      const career=JSON.parse(raw); career.active.rivalId='quarter-rosa'; career.trophies={'quarter-joey':1,'quarter-mina':1,'quarter-frankie':1};
+      career.active.id='qa-champion'; career.active.roundId='qa-champion-round';
+      career.active.game.phase='game_over';career.active.game.winner='human';
+      localStorage.setItem('palace_tour_v1',JSON.stringify(career));
+    },baseline);
+    await p.reload(); await p.getByTestId('studio-intro').waitFor({state:'hidden',timeout:5000});
+    await p.getByRole('button',{name:'Continue Palace Tour'}).click();
+    const resume = p.getByRole('button',{name:/^Resume •/}); await resume.click();
+    await p.getByText('NEW TABLE STYLE UNLOCKED',{exact:true}).waitFor();
+    await p.screenshot({path:path.join(out,'26-rewards-champion-fixture.png')});
     await c.close(); assert.deepEqual(errors,[],'No uncaught UI exceptions');
     console.log('UX polish smoke passed: compact Home/actions, help round-trip, blind secrecy, Tour return.');
   } finally {await browser?.close();server.close();}

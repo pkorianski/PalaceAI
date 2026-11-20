@@ -33,7 +33,7 @@ const server = http.createServer((req, res) => {
   await new Promise((resolve) => server.listen(18081, "127.0.0.1", resolve));
   let browser;
   try {
-    browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch({ headless: true, executablePath: process.env.PALACE_CHROMIUM_PATH || undefined });
     const context = await browser.newContext({
       viewport: { width: 390, height: 844 },
       deviceScaleFactor: 2,

@@ -466,3 +466,12 @@ export function nextReward(state: Mastery): string {
     ? `${candidates[0].name} at level ${candidates[0].level}`
     : `Another dated seal from your next weekly board`;
 }
+
+// Presentation only: uses the same level ordering as nextReward, with a visual payload.
+export function rewardPreview(state: Mastery) {
+  const level = levelFor(state.xp);
+  return [
+    ...TITLES.filter(t => t.level > level).map(t => ({ ...t, kind: "title" as const })),
+    ...THEMES.filter(t => !t.seals && t.level > level).map(t => ({ ...t, kind: "theme" as const })),
+  ].sort((a, b) => a.level - b.level)[0] ?? null;
+}

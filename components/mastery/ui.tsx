@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { Meter, palette } from "@/components/tour/ui";
 import {
+  TITLES, THEMES,
   levelFor,
   levelStart,
   type Mastery,
@@ -104,6 +105,10 @@ export function XpMeter({ state }: { state: Mastery }) {
 export function RoundMastery({ progress, compact = false }: { progress: RoundProgress | null; compact?: boolean }) {
   if (!progress || progress.duplicate) return null;
   const level = levelFor(progress.state.xp);
+  const unlocks = [
+    ...TITLES.filter(t => t.level > progress.beforeLevel && t.level <= level).map(t => t.name),
+    ...THEMES.filter(t => t.level <= level && progress.state.seals.length >= t.seals && (t.seals ? progress.seal && progress.state.seals.length === t.seals : t.level > progress.beforeLevel)).map(t => t.name),
+  ];
   return (
     <View
       accessibilityLiveRegion="polite"
@@ -126,6 +131,7 @@ export function RoundMastery({ progress, compact = false }: { progress: RoundPro
           </Text>
         </View>
       </View>
+      {!!unlocks.length && <View style={{ gap: 4 }}><Text style={m.eyebrow}>NEW IN YOUR COLLECTION</Text><Text style={[m.text, { color: palette.gold }]}>{unlocks.join(" · ")}</Text><Text style={m.caption}>Preview and equip in Progress → Rewards.</Text></View>}
       {!compact && <XpMeter state={progress.state} />}
       {!!progress.quests.length && (
         <Text style={m.body}>

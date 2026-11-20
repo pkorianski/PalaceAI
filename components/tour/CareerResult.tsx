@@ -7,6 +7,7 @@ import type { GameState } from "@/lib/palace-engine";
 import type { GameResult } from "@/lib/stats";
 import type { Outcome, Series } from "@/lib/tour/model";
 import { Action, Arrival, Eyebrow, Meter, palette, ui } from "./ui";
+import { TrophyReveal } from "./TrophyReveal";
 import { TrophyArt } from "./Art";
 export interface CareerGame {
   rival: Rival;
@@ -39,6 +40,8 @@ export function CareerResult({ career, mastery, settled = true, saveError = "", 
         : o.won
           ? "Keep the pressure on."
           : "The series is still alive.";
+  const earned = !!(settled && o?.complete && o.won && o.earned && o.mode === "tour");
+  const themeEarned = earned && career.rival.champion && career.series.tier === 0;
   return (
     <ScrollView
       contentContainerStyle={{ padding: 26, gap: 18, alignItems: "center" }}
@@ -47,17 +50,26 @@ export function CareerResult({ career, mastery, settled = true, saveError = "", 
         <Eyebrow color={v.accent}>
           {v.name} • {career.rival.name}
         </Eyebrow>
+        <TrophyReveal celebrate={earned}>
         <TrophyArt
-          size={76}
+          size={earned ? 108 : 76}
           color={o?.won ? tier.color : "#A0B7A5"}
           dim={!o?.won}
         />
+        </TrophyReveal>
+        {earned && <Text accessibilityLiveRegion="polite" style={[ui.pill, { color: tier.color }]}>{tier.name.toUpperCase()} TROPHY EARNED</Text>}
         <Text accessibilityRole="header" style={[ui.title, { textAlign: "center", fontSize: 29 }]}>
           {title}
         </Text>
         <Text
           style={[ui.subtitle, { textAlign: "center", fontStyle: "italic" }]}
         >{`“${o?.won ? career.rival.victory : career.rival.defeat}”`}</Text>
+        {themeEarned && <View style={[ui.panel, { width: "100%", backgroundColor: v.table, borderColor: v.accent, alignItems: "center", gap: 8 }]}>
+          <Eyebrow color={v.accent}>NEW TABLE STYLE UNLOCKED</Eyebrow>
+          <View accessible={false} style={{ flexDirection: "row", gap: 6 }}>{[0, 1, 2].map(i => <View key={i} style={{ width: 28, height: 42, borderRadius: 5, borderWidth: 1, borderColor: v.accent, backgroundColor: v.card, alignItems: "center", justifyContent: "center" }}><Text style={{ color: v.accent }}>{v.symbol}</Text></View>)}</View>
+          <Text style={[ui.subtitle, { color: v.accent }]}>{v.reward} · Equip in the Trophy room</Text>
+        </View>}
+        {earned && !themeEarned && <Text style={[ui.subtitle, { textAlign: "center" }]}>A permanent place in your trophy collection.</Text>}
         {!!saveError ? <View accessibilityRole="alert" style={{ width: "100%", gap: 8 }}><Text style={ui.error}>{saveError}</Text><Action label="Retry saving result" onPress={onRetry} /></View> : !settled && <Text accessibilityLiveRegion="polite" style={ui.subtitle}>Saving your result…</Text>}
         <View style={{ width: "100%", gap: 10 }}>
           <Action

@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { loadCareer } from "@/lib/tour/storage";
 import { emptyCareer, nextRival, trophyCount } from "@/lib/tour/model";
-import { venueFor } from "@/lib/tour/content";
+import { venueFor, rivalById, TIERS, STYLE_LABELS } from "@/lib/tour/content";
 import { RivalPortrait, VenueScene } from "./Art";
 import { Eyebrow, palette, ui } from "./ui";
 export function TourHomeBanner() {
@@ -19,7 +19,7 @@ export function TourHomeBanner() {
       active = false;
     };
   }, []));
-  const rival = nextRival(career),
+  const rival = (career.active && rivalById(career.active.rivalId)) || nextRival(career),
     venue = venueFor(rival),
     count = trophyCount(career);
   return <Pressable accessibilityRole="button" accessibilityLabel="Continue Palace Tour" onPress={() => router.push("/tour")} style={({
@@ -43,14 +43,15 @@ export function TourHomeBanner() {
           <Text style={ui.pill}>◆ {count} / 48</Text>
         </View>
         <Text style={s.title}>
-          {count ? "Your next chapter." : "The Palace Tour"}
+          {career.active ? `Back to ${rival.name}’s table.` : `Meet ${rival.name}.`}
         </Text>
         <Text style={[ui.subtitle, {
         fontSize: 14,
         lineHeight: 21
       }]}>
-          {career.active ? "Your unfinished series is waiting." : `${rival.name} is waiting in ${venue.name}.`}
+          {career.active ? `${TIERS[career.active.tier].name} · ${career.active.wins}–${career.active.losses} · ${venue.name}` : `${STYLE_LABELS[rival.style]} · ${venue.name}`}
         </Text>
+        <Text style={{ color: palette.gold, fontSize: 12 }}>{count === 48 && !career.active ? "Tour mastered · Revisit any table" : career.active?.mode === "circuit" ? "Next goal: another weekly circuit win" : `Next prize: ${TIERS[career.active?.tier ?? Math.min(career.trophies[rival.id] || 0, 2)].name} trophy`}</Text>
         <View style={s.button}>
           <Text style={ui.actionText}>
             {career.active ? "Resume your tour" : count ? "Continue the adventure" : "Start your adventure"}

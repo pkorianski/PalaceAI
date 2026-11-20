@@ -1,3 +1,4 @@
+import { STYLE_LABELS } from "@/lib/tour/content";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
@@ -478,6 +479,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
             <Text style={styles.handCount}>{ai.hand.length} in hand</Text>
           </View>
 
+          {career && <Text style={{ color: "#A4B9AA", fontSize: 12 }}>{STYLE_LABELS[career.rival.style]}</Text>}
           {!compact && gameState.phase !== "choose_palace" && <View style={styles.aiFanRow}>
             {ai.hand.length === 0 ? (
               <Text style={styles.aiEmptyHand}>No cards in hand</Text>
@@ -741,1020 +743,108 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
                 {gameState.winner === "human" ? "You Win!" : "You Lose"}
               </Text>
 
-              {!!resultError ? <View accessibilityRole="alert" style={{ gap: 10 }}><Text style={{ color: "#FFBFAC", fontSize: 15 }}>{resultError}</Text><Pressable accessibilityRole="button" onPress={() => setResultAttempt(n => n + 1)} style={{ padding: 14, minHeight: 48 }}><Text style={{ color: "#EFC778" }}>Retry saving result</Text></Pressable></View> : !gameOverData && <Text accessibilityLiveRegion="polite" style={{ color: "#C5D7CB" }}>Saving your result…</Text>}
-              <Pressable
-                style={({ pressed }) => [styles.modalPlayAgain, pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] }]}
-                accessibilityRole="button" disabled={!gameOverData || !!resultError} accessibilityState={{ disabled: !gameOverData || !!resultError }} onPress={handleNewGame}
-              >
-                <Text style={styles.modalPlayAgainText}>Play Again</Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [styles.modalHomeBtn, pressed && { opacity: 0.7 }]}
-                accessibilityRole="button" disabled={!gameOverData || !!resultError} onPress={() => { setShowGameOver(false); router.dismissTo("/"); }}
-              >
-                <Text style={styles.modalHomeBtnText}>Home</Text>
-              </Pressable>
-              <RoundMastery compact progress={masteryProgress} />
-              <Pressable accessibilityRole="button" accessibilityState={{ expanded: resultDetails }} onPress={() => setResultDetails(v => !v)} style={{ minHeight: 44, justifyContent: "center" }}><Text style={{ color: "#EFC778" }}>{resultDetails ? "Hide round details" : "Round details & badges"}</Text></Pressable>
-              {resultDetails && <>
-
-              {gameOverData && (
-                <View style={styles.summaryBox}>
-                  <Text style={styles.summaryLabel}>GAME SUMMARY</Text>
-                  <View style={styles.summaryRow}>
-                    <View style={styles.summaryItem}>
-                      <Text style={styles.summaryValue}>{gameOverData.result.turns}</Text>
-                      <Text style={styles.summaryItemLabel}>Turns</Text>
-                    </View>
-                    <View style={styles.summaryDivider} />
-                    <View style={styles.summaryItem}>
-                      <Text style={[styles.summaryValue, gameOverData.result.pickups > 0 && styles.summaryWarn]}>
-                        {gameOverData.result.pickups}
-                      </Text>
-                      <Text style={styles.summaryItemLabel}>Pickups</Text>
-                    </View>
-                    <View style={styles.summaryDivider} />
-                    <View style={styles.summaryItem}>
-                      <Text style={[styles.summaryValue, gameOverData.result.burns > 0 && styles.summaryGold]}>
-                        {gameOverData.result.burns}
-                      </Text>
-                      <Text style={styles.summaryItemLabel}>Burns</Text>
-                    </View>
-                  </View>
-                </View>
-              )}
-
-              {gameOverData?.dailyChallengeCompleted && (
-                <View style={styles.dailyCompleteBox}>
-                  <Ionicons name="sunny" size={18} color="#D4AF37" />
-                  <Text style={styles.dailyCompleteText}>Daily Challenge Complete!</Text>
-                </View>
-              )}
-
-              {gameOverData && gameOverData.newAchievements.length > 0 && (
-                <View style={styles.achievementsBox}>
-                  <Text style={styles.achievementsLabel}>
-                    {gameOverData.newAchievements.length === 1
-                      ? "ACHIEVEMENT UNLOCKED"
-                      : `${gameOverData.newAchievements.length} ACHIEVEMENTS UNLOCKED`}
-                  </Text>
-                  {gameOverData.newAchievements.map((a) => (
-                    <View key={a.id} style={styles.achievementRow}>
-                      <View style={styles.achievementIcon}>
-                        <Ionicons name={a.icon as any} size={18} color="#D4AF37" />
-                      </View>
-                      <View style={styles.achievementText}>
-                        <Text style={styles.achievementTitle}>{a.title}</Text>
-                        <Text style={styles.achievementDesc}>{a.desc}</Text>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              )}
-
-
-              </>}
-            </ScrollView>}
-          </View>
-        </View>
-      </Modal>
-
-      {/* ── Menu action sheet ── */}
-      <Modal visible={showMenuSheet} transparent animationType={reducedMotion ? "none" : "slide"} onRequestClose={() => setShowMenuSheet(false)} onShow={() => focus(menuHeading.current)} onDismiss={() => { if (!showRulesOverlay && !showLeaveModal) focus(menuButton.current); }}>
-        <Pressable accessible={false} style={styles.sheetOverlay} onPress={() => setShowMenuSheet(false)}>
-          <Pressable accessible={false} style={styles.sheetCard} accessibilityViewIsModal onPress={event => event.stopPropagation()}>
-            <View style={styles.sheetHandle} /><Text ref={menuHeading} accessible accessibilityRole="header" style={{ color: "#FFF6E5", fontSize: 18, fontWeight: "600", padding: 16 }}>Game menu</Text>
-            <Pressable
-              style={({ pressed }) => [styles.sheetRow, pressed && styles.sheetRowPressed]}
-              accessibilityRole="button" accessibilityLabel="How to Play" onPress={handleRulesFromMenu}
-            >
-              <View style={styles.sheetRowIcon}>
-                <Ionicons name="book-outline" size={20} color="#D4AF37" />
-              </View>
-              <Text style={styles.sheetRowText}>How to Play</Text>
-              <Ionicons name="chevron-forward" size={16} color="rgba(254,253,248,0.3)" />
-            </Pressable>
-            <View style={styles.sheetDivider} />
-            <Pressable
-              style={({ pressed }) => [styles.sheetRow, pressed && styles.sheetRowPressed]}
-              accessibilityRole="button" accessibilityLabel="Quit Game" onPress={handleQuitFromMenu}
-            >
-              <View style={[styles.sheetRowIcon, styles.sheetRowIconRed]}>
-                <Ionicons name="exit-outline" size={20} color="#E74C3C" />
-              </View>
-              <Text style={[styles.sheetRowText, styles.sheetRowTextRed]}>Quit Game</Text>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [styles.sheetCancelBtn, pressed && { opacity: 0.7 }]}
-              accessibilityRole="button" accessibilityLabel="Cancel" onPress={() => setShowMenuSheet(false)}
-            >
-              <Text style={styles.sheetCancelText}>Cancel</Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      {/* ── In-game rules overlay ── */}
-      <Modal visible={showRulesOverlay} animationType={reducedMotion ? "none" : "slide"} onRequestClose={() => setShowRulesOverlay(false)} onShow={() => focus(rulesHeading.current)} onDismiss={() => focus(menuButton.current)}>
-        <View style={[styles.rulesContainer, {
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom,
-        }]}>
-          <View style={styles.rulesTopBar}>
-            <Text ref={rulesHeading} accessible accessibilityRole="header" style={styles.rulesTopBarTitle}>How to Play</Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Close rules"
-              onPress={() => setShowRulesOverlay(false)}
-              style={({ pressed }) => [styles.rulesCloseBtn, pressed && { opacity: 0.6 }]}
-              hitSlop={8}
-            >
-              <Ionicons name="close" size={24} color="#D4AF37" />
-            </Pressable>
-          </View>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.rulesScrollContent}
-          >
-            {RULES.map((rule, idx) => (
-              <View key={idx} style={styles.rulesCard}>
-                <View style={styles.rulesCardHeader}>
-                  <View style={styles.rulesCardIcon}>
-                    <Ionicons name={rule.icon as any} size={18} color="#D4AF37" />
-                  </View>
-                  <Text style={styles.rulesCardTitle}>{rule.title}</Text>
-                </View>
-                <Text style={styles.rulesCardBody}>{rule.content}</Text>
-              </View>
-            ))}
-            <View style={styles.rulesChipSection}>
-              <Text style={styles.rulesChipLabel}>Card Values (low → high)</Text>
-              <View style={styles.rulesChipRow}>
-                {["2★", "3", "4", "5", "6", "7", "8", "9", "10🔥", "J", "Q", "K", "A"].map((r) => (
-                  <View key={r} style={styles.rulesChip}>
-                    <Text style={styles.rulesChipText}>{r}</Text>
-                  </View>
-                ))}
-              </View>
-              <Text style={styles.rulesChipNote}>★ = Reset • 🔥 = Burn pile</Text>
-            </View>
-          </ScrollView>
-        </View>
-      </Modal>
-
-      {/* ── Leave confirmation ── */}
-      <Modal visible={showLeaveModal} transparent animationType={reducedMotion ? "none" : "fade"} onRequestClose={handleCancelLeave} onShow={() => focus(leaveHeading.current)} onDismiss={() => focus(menuButton.current)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.leaveCard} accessibilityViewIsModal>
-            <View style={styles.leaveIconWrap}>
-              <Ionicons name="exit-outline" size={28} color="#E74C3C" />
-            </View>
-            <Text ref={leaveHeading} accessible accessibilityRole="header" style={styles.leaveTitle}>Leave Game?</Text>
-            <Text style={styles.leaveSub}>
-              {career ? "Your deal and series are saved. Resume from the Tour whenever you’re ready." : "Your current game progress will be lost."}
-            </Text>
-            <Pressable
-              style={({ pressed }) => [
-                styles.leaveConfirmBtn,
-                pressed && { opacity: 0.85 },
-              ]}
-              accessibilityRole="button" onPress={handleConfirmLeave}
-            >
-              <Text style={styles.leaveConfirmText}>Leave</Text>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [
-                styles.leaveKeepBtn,
-                pressed && { opacity: 0.85 },
-              ]}
-              accessibilityRole="button" onPress={handleCancelLeave}
-            >
-              <Text style={styles.leaveKeepText}>Keep Playing</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-
-
-    </View>
-  );
+              {!!resultError ? <View accessibilityRole="alert" style={{ gap: 10 }}><Text style={{ color: "#FFBFAC", fontSize: 15 }}>{resultError}</Text><Pressable accessibilityRole="but…24804 tokens truncated…nGame, result.burns),
+    },
+  };
+  const quests: string[] = [];
+  let seal = false;
+  if (weekKey(new Date(completedAt)) === s.weekly.key) {
+    s = {
+      ...s,
+      weekly: {
+        ...s.weekly,
+        games: s.weekly.games + 1,
+        wins: s.weekly.wins + +result.won,
+        burns: s.weekly.burns + result.burns,
+        days: s.weekly.days.includes(day)
+          ? s.weekly.days
+          : [...s.weekly.days, day],
+        rewarded: [...s.weekly.rewarded],
+      },
+    };
+    for (const quest of questBoard(s.weekly.key))
+      if (
+        quest.value(s) >= quest.target &&
+        !s.weekly.rewarded.includes(quest.id)
+      ) {
+        s.weekly.rewarded.push(quest.id);
+        quests.push(quest.name);
+        s.xp += 150;
+      }
+    if (s.weekly.rewarded.length === 4 && !s.seals.includes(s.weekly.key)) {
+      s = { ...s, seals: [...s.seals, s.weekly.key], xp: s.xp + 250 };
+      seal = true;
+    }
+  }
+  const previous = s.milestones;
+  s = awardMilestones(s);
+  return {
+    state: s,
+    xpGained: s.xp - before,
+    beforeLevel,
+    milestones: s.milestones.filter((id) => !previous.includes(id)),
+    quests,
+    seal,
+    duplicate: false,
+  };
+}
+export function equipReward(
+  state: Mastery,
+  type: "title" | "theme",
+  id: string | null,
+): Mastery {
+  if (type === "title") {
+    const title = TITLES.find((t) => t.id === id);
+    if (!title || title.level > levelFor(state.xp))
+      throw new Error("Reach the required mastery level to equip this title.");
+    return { ...state, title: title.id };
+  }
+  if (id !== null && !themeAvailable(state, id))
+    throw new Error(
+      "Earn the required mastery level or weekly seals to equip this table.",
+    );
+  return { ...state, theme: id };
+}
+export function nextMilestone(state: Mastery) {
+  return TRACKS.flatMap((track) => {
+    const index = track.goals.findIndex(
+      (_, i) => !state.milestones.includes(`${track.id}-${i}`),
+    );
+    return index < 0
+      ? []
+      : [
+          {
+            track,
+            index,
+            target: track.goals[index],
+            value: metricValue(state, track.id),
+          },
+        ];
+  }).sort((a, b) => b.value / b.target - a.value / a.target)[0];
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#145229",
-  },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  backBtn: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  topBarTitle: {
-    fontSize: 17,
-    fontFamily: "Inter_600SemiBold",
-    color: "#D4AF37",
-    letterSpacing: 2,
-    textTransform: "uppercase",
-  },
-  gameArea: {
-    paddingHorizontal: 12,
-    gap: 8,
-  },
-  playerSection: {
-    gap: 6,
-  },
-  playerHeader: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 4,
-  },
-  turnIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "rgba(255,255,255,0.2)",
-  },
-  turnIndicatorActive: {
-    backgroundColor: "#D4AF37",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#D4AF37",
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.8,
-        shadowRadius: 4,
-      },
-    }),
-  },
-  playerName: {
-    fontSize: 15,
-    fontFamily: "Inter_600SemiBold",
-    color: "#FEFDF8",
-  },
-  handCount: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    color: "#B9CEC1",
-    marginLeft: "auto",
-  },
-  palaceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 4,
-  },
-  palaceSpacer: {
-    width: 12,
-  },
-  opponentPanel: {
-    backgroundColor: "rgba(0, 0, 0, 0.22)",
-    borderRadius: 14,
-    padding: 10,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: "rgba(212, 175, 55, 0.12)",
-  },
-  aiFanRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 2,
-    height: 42,
-  },
-  aiEmptyHand: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    color: "#A4B9AA",
-    fontStyle: "italic",
-  },
-  palaceRowLabeled: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    flexWrap: "wrap",
-    rowGap: 8,
-    paddingHorizontal: 2,
-  },
-  palaceGroup: {
-    alignItems: "center",
-    gap: 5,
-  },
-  palaceGroupCards: {
-    flexDirection: "row",
-    gap: 5,
-  },
-  palaceGroupLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-    color: "#A4B9AA",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-  },
-  centerArea: {
-    flex: 1,
-    gap: 8,
-    justifyContent: "center",
-  },
-  messageContainer: {
-    alignItems: "center",
-    paddingHorizontal: 16,
-  },
-  messageText: {
-    fontSize: 13,
-    fontFamily: "Inter_500Medium",
-    color: "rgba(254,253,248,0.75)",
-    textAlign: "center",
-  },
-  pilesRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 24,
-    alignItems: "flex-end",
-  },
-  pileArea: {
-    alignItems: "center",
-    gap: 4,
-  },
-  pileLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-    color: "#B9CEC1",
-    letterSpacing: 1.5,
-  },
-  pileCount: {
-    fontSize: 11,
-    fontFamily: "Inter_500Medium",
-    color: "#B9CEC1",
-    height: 16,
-  },
-  pileStack2: {
-    position: "absolute",
-    width: 68,
-    height: 96,
-    borderRadius: 8,
-    backgroundColor: "#FEFDF8",
-    top: -3,
-    left: 3,
-    borderWidth: 1,
-    borderColor: "#E8E4D8",
-  },
-  pileStack3: {
-    position: "absolute",
-    width: 68,
-    height: 96,
-    borderRadius: 8,
-    backgroundColor: "#FEFDF8",
-    top: -6,
-    left: 6,
-    borderWidth: 1,
-    borderColor: "#E8E4D8",
-  },
-  actionRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 10,
-    paddingHorizontal: 16,
-    minHeight: 44,
-    alignItems: "center",
-  },
-  actionBtn: {
-    minHeight: 48,
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  playBtn: {
-    backgroundColor: "#D4AF37",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#D4AF37",
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.4,
-        shadowRadius: 6,
-      },
-      android: { elevation: 4 },
-    }),
-  },
-  pickupBtn: {
-    borderWidth: 1.5,
-    borderColor: "rgba(254,253,248,0.3)",
-  },
-  actionBtnDisabled: {
-    opacity: 0.35,
-  },
-  actionBtnText: {
-    fontSize: 14,
-    fontFamily: "Inter_600SemiBold",
-    color: "#0d2b1a",
-  },
-  pickupBtnText: {
-    color: "#FEFDF8",
-  },
-  actionBtnTextDisabled: {
-    color: "#B9CEC1",
-  },
-  tapHint: {
-    fontSize: 13,
-    fontFamily: "Inter_500Medium",
-    color: "rgba(254,253,248,0.6)",
-    textAlign: "center",
-  },
-  aiWaitRow: {
-    flexDirection: "row",
-    gap: 6,
-    alignItems: "center",
-  },
-  aiWaitText: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: "#B9CEC1",
-  },
-  aiWaitDots: {
-    fontSize: 16,
-    color: "#D4AF37",
-    letterSpacing: 3,
-  },
-  handArea: {
-    gap: 8,
-    paddingBottom: 4,
-  },
-  handLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-    color: "#B9CEC1",
-    letterSpacing: 1.5,
-    paddingHorizontal: 4,
-    textTransform: "uppercase",
-  },
-  handScrollContent: {
-    flexDirection: "row",
-    gap: 8,
-    paddingHorizontal: 4,
-    paddingBottom: 2,
-    paddingTop: 12,
-  },
-  faceupHint: {
-    fontSize: 13,
-    fontFamily: "Inter_500Medium",
-    color: "#B9CEC1",
-    fontStyle: "italic",
-    paddingHorizontal: 4,
-  },
-  confirmSetupBtn: {
-    backgroundColor: "#D4AF37",
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginHorizontal: 4,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#D4AF37",
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.35,
-        shadowRadius: 8,
-      },
-      android: { elevation: 4 },
-    }),
-  },
-  confirmSetupBtnDisabled: {
-    opacity: 0.4,
-  },
-  confirmSetupText: {
-    fontSize: 16,
-    fontFamily: "Inter_600SemiBold",
-    color: "#0d2b1a",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.75)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-  },
-  modalCard: {
-    backgroundColor: "#0f3320",
-    borderRadius: 24,
-    width: "100%",
-    maxWidth: 340,
-    maxHeight: "85%",
-    borderWidth: 1,
-    borderColor: "rgba(212,175,55,0.25)",
-    overflow: "hidden",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.4,
-        shadowRadius: 16,
-      },
-      android: { elevation: 12 },
-    }),
-  },
-  modalScroll: {
-    alignItems: "center",
-    padding: 28,
-    gap: 16,
-  },
-  modalEmoji: {
-    fontSize: 52,
-  },
-  modalTitle: {
-    fontSize: 32,
-    fontFamily: "Inter_700Bold",
-    color: "#D4AF37",
-    textAlign: "center",
-  },
-  summaryBox: {
-    width: "100%",
-    backgroundColor: "rgba(0,0,0,0.2)",
-    borderRadius: 14,
-    padding: 16,
-    gap: 10,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
-  },
-  summaryLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-    color: "#B9CEC1",
-    letterSpacing: 1.5,
-    textTransform: "uppercase",
-    textAlign: "center",
-  },
-  summaryRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-around",
-  },
-  summaryItem: {
-    alignItems: "center",
-    gap: 3,
-    flex: 1,
-  },
-  summaryValue: {
-    fontSize: 28,
-    fontFamily: "Inter_700Bold",
-    color: "#FEFDF8",
-  },
-  summaryItemLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    color: "#B9CEC1",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  summaryDivider: {
-    width: 1,
-    height: 36,
-    backgroundColor: "rgba(255,255,255,0.1)",
-  },
-  summaryWarn: {
-    color: "#E74C3C",
-  },
-  summaryGold: {
-    color: "#D4AF37",
-  },
-  dailyCompleteBox: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "rgba(212,175,55,0.1)",
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "rgba(212,175,55,0.25)",
-  },
-  dailyCompleteText: {
-    fontSize: 14,
-    fontFamily: "Inter_700Bold",
-    color: "#D4AF37",
-    letterSpacing: 0.3,
-  },
-  achievementsBox: {
-    width: "100%",
-    backgroundColor: "rgba(212,175,55,0.07)",
-    borderRadius: 14,
-    padding: 14,
-    gap: 10,
-    borderWidth: 1,
-    borderColor: "rgba(212,175,55,0.2)",
-  },
-  achievementsLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-    color: "#D4AF37",
-    letterSpacing: 1.5,
-    textTransform: "uppercase",
-    textAlign: "center",
-    marginBottom: 2,
-  },
-  achievementRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  achievementIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: "rgba(212,175,55,0.12)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  achievementText: {
-    flex: 1,
-    gap: 1,
-  },
-  achievementTitle: {
-    fontSize: 14,
-    fontFamily: "Inter_600SemiBold",
-    color: "#FEFDF8",
-  },
-  achievementDesc: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    color: "#B9CEC1",
-  },
-  modalPlayAgain: {
-    backgroundColor: "#D4AF37",
-    borderRadius: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 48,
-    width: "100%",
-    alignItems: "center",
-    marginTop: 4,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#D4AF37",
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.4,
-        shadowRadius: 8,
-      },
-      android: { elevation: 4 },
-    }),
-  },
-  modalPlayAgainText: {
-    fontSize: 17,
-    fontFamily: "Inter_700Bold",
-    color: "#0d2b1a",
-  },
-  modalHomeBtn: {
-    paddingVertical: 10,
-  },
-  modalHomeBtnText: {
-    fontSize: 15,
-    fontFamily: "Inter_500Medium",
-    color: "#B9CEC1",
-  },
-  leaveCard: {
-    backgroundColor: "#0f3320",
-    borderRadius: 20,
-    padding: 28,
-    width: "100%",
-    maxWidth: 320,
-    alignItems: "center",
-    gap: 10,
-    borderWidth: 1,
-    borderColor: "rgba(231,76,60,0.2)",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.4,
-        shadowRadius: 16,
-      },
-      android: { elevation: 12 },
-    }),
-  },
-  leaveIconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: "rgba(231,76,60,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 4,
-  },
-  leaveTitle: {
-    fontSize: 22,
-    fontFamily: "Inter_700Bold",
-    color: "#FEFDF8",
-    textAlign: "center",
-  },
-  leaveSub: {
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    color: "#B9CEC1",
-    textAlign: "center",
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  leaveConfirmBtn: {
-    backgroundColor: "#E74C3C",
-    borderRadius: 13,
-    paddingVertical: 15,
-    width: "100%",
-    alignItems: "center",
-  },
-  leaveConfirmText: {
-    fontSize: 16,
-    fontFamily: "Inter_700Bold",
-    color: "#FEFDF8",
-  },
-  leaveKeepBtn: {
-    backgroundColor: "rgba(255,255,255,0.07)",
-    borderRadius: 13,
-    paddingVertical: 15,
-    width: "100%",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-  },
-  leaveKeepText: {
-    fontSize: 16,
-    fontFamily: "Inter_600SemiBold",
-    color: "#D4AF37",
-  },
-  menuBtn: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sheetOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "flex-end",
-  },
-  sheetCard: {
-    backgroundColor: "#0f3320",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 12,
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    borderTopWidth: 1,
-    borderColor: "rgba(212,175,55,0.15)",
-    gap: 4,
-  },
-  sheetHandle: {
-    width: 36,
-    height: 4,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    borderRadius: 2,
-    alignSelf: "center",
-    marginBottom: 8,
-  },
-  sheetRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 4,
-    gap: 14,
-    borderRadius: 12,
-  },
-  sheetRowPressed: {
-    backgroundColor: "rgba(255,255,255,0.06)",
-  },
-  sheetRowIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "rgba(212,175,55,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sheetRowIconRed: {
-    backgroundColor: "rgba(231,76,60,0.1)",
-  },
-  sheetRowText: {
-    flex: 1,
-    fontSize: 17,
-    fontFamily: "Inter_500Medium",
-    color: "#FEFDF8",
-  },
-  sheetRowTextRed: {
-    color: "#E74C3C",
-  },
-  sheetDivider: {
-    height: 1,
-    backgroundColor: "rgba(255,255,255,0.07)",
-    marginLeft: 58,
-  },
-  sheetCancelBtn: {
-    alignItems: "center",
-    paddingVertical: 16,
-    marginTop: 4,
-    marginBottom: 8,
-  },
-  sheetCancelText: {
-    fontSize: 17,
-    fontFamily: "Inter_600SemiBold",
-    color: "#B9CEC1",
-  },
-  rulesContainer: {
-    flex: 1,
-    backgroundColor: "#0d2b1a",
-  },
-  rulesTopBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(212,175,55,0.1)",
-  },
-  rulesTopBarTitle: {
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
-    color: "#D4AF37",
-    letterSpacing: 0.5,
-  },
-  rulesCloseBtn: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.06)",
-  },
-  rulesScrollContent: {
-    padding: 16,
-    gap: 10,
-    paddingBottom: 40,
-  },
-  rulesCard: {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "rgba(212,175,55,0.1)",
-    gap: 10,
-  },
-  rulesCardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  rulesCardIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: "rgba(212,175,55,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rulesCardTitle: {
-    fontSize: 16,
-    fontFamily: "Inter_600SemiBold",
-    color: "#FEFDF8",
-  },
-  rulesCardBody: {
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.7)",
-    lineHeight: 22,
-  },
-  rulesChipSection: {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "rgba(212,175,55,0.1)",
-    gap: 10,
-  },
-  rulesChipLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-    color: "#B9CEC1",
-    textTransform: "uppercase",
-    letterSpacing: 1.5,
-  },
-  rulesChipRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-  },
-  rulesChip: {
-    backgroundColor: "#FEFDF8",
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    minWidth: 36,
-    alignItems: "center",
-  },
-  rulesChipText: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
-    color: "#1A1A1A",
-  },
-  rulesChipNote: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    color: "#B9CEC1",
-  },
-  tutorialOverlay: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    paddingHorizontal: 16,
-    justifyContent: "flex-end",
-  },
-  tutorialCard: {
-    backgroundColor: "#0d2b1a",
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: "#D4AF37",
-    padding: 18,
-    gap: 12,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.45,
-        shadowRadius: 14,
-      },
-      android: {
-        elevation: 10,
-      },
-    }),
-  },
-  tutorialTopRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  tutorialStepPill: {
-    backgroundColor: "rgba(212,175,55,0.14)",
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-  },
-  tutorialStepPillText: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-    color: "#D4AF37",
-    letterSpacing: 0.5,
-  },
-  tutorialHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  tutorialIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(212,175,55,0.1)",
-    borderWidth: 1,
-    borderColor: "rgba(212,175,55,0.22)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tutorialTitle: {
-    fontSize: 17,
-    fontFamily: "Inter_700Bold",
-    color: "#FEFDF8",
-  },
-  tutorialBody: {
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.78)",
-    lineHeight: 21,
-  },
-  tutorialBtn: {
-    backgroundColor: "#D4AF37",
-    borderRadius: 12,
-    paddingVertical: 13,
-    alignItems: "center",
-    marginTop: 2,
-  },
-  tutorialBtnText: {
-    fontSize: 15,
-    fontFamily: "Inter_700Bold",
-    color: "#0d2b1a",
-  },
-  tutorialArrowWrap: {
-    alignItems: "center",
-    marginTop: -2,
-    opacity: 0.85,
-  },
-});
+export function nextReward(state: Mastery): string {
+  const level = levelFor(state.xp);
+  const candidates = [
+    ...TITLES.filter((t) => t.level > level).map((t) => ({
+      name: t.name,
+      level: t.level,
+    })),
+    ...THEMES.filter((t) => !t.seals && t.level > level).map((t) => ({
+      name: t.name,
+      level: t.level,
+    })),
+  ].sort((a, b) => a.level - b.level);
+  return candidates[0]
+    ? `${candidates[0].name} at level ${candidates[0].level}`
+    : `Another dated seal from your next weekly board`;
+}
 
-export default function QuickPlayScreen() { return <GameScreen />; }
+// Presentation only: uses the same level ordering as nextReward, with a visual payload.
+export function rewardPreview(state: Mastery) {
+  const level = levelFor(state.xp);
+  return [
+    ...TITLES.filter(t => t.level > level).map(t => ({ ...t, kind: "title" as const })),
+    ...THEMES.filter(t => !t.seals && t.level > level).map(t => ({ ...t, kind: "theme" as const })),
+  ].sort((a, b) => a.level - b.level)[0] ?? null;
+}
