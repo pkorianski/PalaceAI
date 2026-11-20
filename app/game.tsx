@@ -1,3 +1,4 @@
+import { STYLE_LABELS } from "@/lib/tour/content";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
@@ -478,6 +479,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
             <Text style={styles.handCount}>{ai.hand.length} in hand</Text>
           </View>
 
+          {career && <Text style={{ color: "#A4B9AA", fontSize: 12 }}>{STYLE_LABELS[career.rival.style]}</Text>}
           {!compact && gameState.phase !== "choose_palace" && <View style={styles.aiFanRow}>
             {ai.hand.length === 0 ? (
               <Text style={styles.aiEmptyHand}>No cards in hand</Text>
