@@ -15,12 +15,12 @@ export function presentTurn(state: GameState, selected: string[] = []) {
     hint = "Your result is being saved.";
   } else if (state.phase === "playing") {
     heading = active ? "Your turn" : `${state.players[state.currentPlayerIndex].name}’s turn`;
-    if (!active) hint = "Your opponent is thinking. You’re up next.";
-    else if (phase === "facedown") hint = "Choose a face-down card. You’ll discover its rank when you play it.";
+    if (!active) hint = "You’re up next.";
+    else if (phase === "facedown") hint = "Tap a face-down card to flip it.";
     else if (!playableIds.length) hint = "No playable cards. Pick up the pile to continue.";
     else if (selected.length && !canPlay) hint = "This selection can’t play. Choose a marked card or pick up the pile.";
     else if (canPlay) hint = `Ready to play ${cards.length === 1 ? 'your card' : `${cards.length} cards`}.`;
-    else hint = "Marked cards can play. Select matching ranks, then tap Play.";
+    else hint = "Select a marked card, then tap Play.";
   }
   return {
     active,

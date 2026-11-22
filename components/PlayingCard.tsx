@@ -8,6 +8,7 @@ interface PlayingCardProps {
   selected?: boolean;
   onPress?: () => void;
   small?: boolean;
+  large?: boolean;
   micro?: boolean;
   disabled?: boolean;
   style?: object;
@@ -35,6 +36,7 @@ export function PlayingCard({
   selected = false,
   onPress,
   small = false,
+  large = false,
   micro = false,
   disabled = false,
   style,
@@ -42,8 +44,8 @@ export function PlayingCard({
   accessibilityLabel
 }: PlayingCardProps) {
   const theme = useTableTheme();
-  const cardW = micro ? 28 : small ? 44 : 66;
-  const cardH = micro ? 40 : small ? 62 : 92;
+  const cardW = micro ? 28 : small ? 44 : large ? 84 : 66;
+  const cardH = micro ? 40 : small ? 62 : large ? 118 : 92;
   if (!card || faceDown) {
     return <Pressable accessible={!micro} importantForAccessibility={micro ? "no-hide-descendants" : "auto"} accessibilityRole={onPress ? "button" : "image"} accessibilityLabel={accessibilityLabel ?? "Face-down card"} accessibilityState={{
       disabled: !!onPress && disabled,
@@ -62,7 +64,7 @@ export function PlayingCard({
       borderColor: theme.accent
     }, style]}>
         <View style={styles.faceDownInner}>
-          {!micro && <Text maxFontSizeMultiplier={1} style={[styles.faceDownSymbol, small && {
+          {!micro && <Text maxFontSizeMultiplier={1} style={[styles.faceDownSymbol, large && { fontSize: 30 }, small && {
           fontSize: 14
         }]}>♦</Text>}
         </View>
@@ -72,9 +74,9 @@ export function PlayingCard({
   const suitSymbol = getSuitSymbol(card.suit);
   const rank = card.rank;
   const color = red ? "#C0392B" : "#1A1A1A";
-  const rankFontSize = micro ? 8 : small ? 11 : 16;
-  const suitFontSize = micro ? 7 : small ? 9 : 12;
-  const centerFontSize = micro ? 0 : small ? 16 : 26;
+  const rankFontSize = micro ? 8 : small ? 11 : large ? 21 : 16;
+  const suitFontSize = micro ? 7 : small ? 9 : large ? 15 : 12;
+  const centerFontSize = micro ? 0 : small ? 16 : large ? 34 : 26;
   return <Pressable accessible accessibilityRole={onPress ? "button" : "image"} accessibilityLabel={`${({
     A: "Ace",
     K: "King",

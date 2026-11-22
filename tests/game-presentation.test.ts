@@ -19,7 +19,7 @@ test('move guidance uses engine legality, including resets and burns', () => {
   const s = playing(),
     v = presentTurn(s);
   assert.deepEqual(v.playableIds, ['A-hearts', '2-hearts', '10-hearts']);
-  assert.match(v.hint, /Marked/);
+  assert.match(v.hint, /marked/);
   assert.equal(presentTurn(s, ['3-hearts']).canPlay, false);
   assert.match(presentTurn(s, ['3-hearts']).hint, /can’t play/);
   assert.equal(presentTurn(s, ['A-hearts']).canPlay, true);
@@ -40,7 +40,7 @@ test('blind guidance never depends on unknown ranks and exposes no playable IDs'
   assert.deepEqual(presentTurn(s), a);
   assert.deepEqual(a.playableIds, []);
   assert.equal(a.canPlay, false);
-  assert.match(a.hint, /discover/);
+  assert.match(a.hint, /flip/);
 });
 test('face-up phase guides the visible palace, not the empty hand', () => {
   const s = playing();
@@ -55,5 +55,5 @@ test('opponent turn never presents the human hand as playable', () => {
   s.currentPlayerIndex = 1;
   assert.deepEqual(presentTurn(s, ['A-hearts']).playableIds, []);
   assert.equal(presentTurn(s, ['A-hearts']).canPlay, false);
-  assert.match(presentTurn(s).hint, /thinking/);
+  assert.match(presentTurn(s).hint, /up next/);
 });

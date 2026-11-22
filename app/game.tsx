@@ -153,8 +153,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
   } | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
-  const messageOpacity = useRef(new Animated.Value(1)).current;
-  const prevMessage = useRef("");
+  const activeCardsOpacity = useRef(new Animated.Value(1)).current;
   const humanTurnsRef = useRef(career?.series.metrics?.turns || 0);
   const humanPickupsRef = useRef(career?.series.metrics?.pickups || 0);
   const burnsRef = useRef(career?.series.metrics?.burns || 0);
@@ -190,19 +189,16 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
   }, []);
 
   useEffect(() => {
-    if (gameState.message !== prevMessage.current) {
-      prevMessage.current = gameState.message;
-      if (reducedMotion) { messageOpacity.setValue(1); return; }
-      messageOpacity.setValue(0);
-      const animation = Animated.timing(messageOpacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: Platform.OS !== "web",
-      });
-      animation.start();
-      return () => animation.stop();
-    }
-  }, [gameState.message, reducedMotion, messageOpacity]);
+    if (reducedMotion) { activeCardsOpacity.setValue(1); return; }
+    activeCardsOpacity.setValue(0.35);
+    const animation = Animated.timing(activeCardsOpacity, {
+      toValue: 1,
+      duration: 180,
+      useNativeDriver: Platform.OS !== "web",
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [humanPhase, reducedMotion, activeCardsOpacity]);
 
   useEffect(() => {
     if (gameState.burnPile.length > prevBurnPileLen.current) {
@@ -527,19 +523,9 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
         </View>
 
         <View style={[styles.centerArea, { paddingVertical: compact ? 6 : 12 }]}>
-          <View accessibilityLiveRegion="polite" style={{ gap: 3, alignItems: "center", paddingHorizontal: 8 }}>
-            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 17, color: "#FFF6E5" }}>{turn.heading}</Text>
-            <Text style={{ fontSize: 13, lineHeight: 18, textAlign: "center", color: "#C5D7CB" }}>{turn.hint}</Text>
+          <View accessibilityLiveRegion="polite" style={{ alignItems: "center", paddingHorizontal: 8 }}>
+            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 17, color: "#FFF6E5" }}>{gameState.lastBurned ? `${turn.heading} · Pile burned` : turn.heading}</Text>
           </View>
-          {(!compact || gameState.phase !== "playing" || !gameState.message.startsWith("Your turn")) && <Animated.View style={[styles.messageContainer, { opacity: messageOpacity }]}>
-            <Text style={[styles.messageText, { fontSize: 12 }]}>
-              {gameState.phase === "choose_palace"
-                ? gameState.currentPlayerIndex === 0
-                  ? `Select 3 cards for your palace (${setupSelected.length}/3)`
-                  : "Opponent setting up..."
-                : gameState.message}
-            </Text>
-          </Animated.View>}
 
           {gameState.phase !== "choose_palace" && <>
           <View style={styles.pilesRow}>
@@ -588,28 +574,22 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
             <View style={{ flex: 1, gap: 2 }}><Text style={styles.playerName}>You</Text>{!!playerTitle && <Text style={{ color: "#C5D7CB", fontSize: 12 }}>{playerTitle}</Text>}</View>
             <Text style={styles.handCount}>{human.hand.length} in hand</Text>
           </View>
-          {gameState.phase !== "choose_palace" && <View style={styles.palaceRowLabeled}>
+          {gameState.phase !== "choose_palace" && humanPhase !== "facedown" && <View testID="reserve-palace" style={styles.palaceRowLabeled}>
             <View style={styles.palaceGroup}>
               <View style={styles.palaceGroupCards}>
                 {human.faceDownPalace.map((card, i) => card ? (
-                  <PlayingCard key={`human-fd-${i}`} faceDown small accessibilityLabel={`Face-down card ${i + 1}`}
-                    onPress={humanPhase === "facedown" && isHumanTurn ? () => handleFaceDownPlay(i) : undefined}
-                    disabled={humanPhase !== "facedown" || !isHumanTurn} />
+                  <PlayingCard key={`human-fd-${i}`} faceDown small accessibilityLabel={`Face-down card ${i + 1}`} />
                 ) : <EmptyCardSlot key={`human-fd-empty-${i}`} small />)}
               </View>
               <Text style={styles.palaceGroupLabel}>FACE DOWN</Text>
             </View>
-            <View style={styles.palaceSpacer} />
+            {humanPhase === "hand" && <><View style={styles.palaceSpacer} />
             <View style={styles.palaceGroup}>
               <View style={styles.palaceGroupCards}>
-                {human.faceUpPalace.map(card => <PlayingCard key={card.id} card={card} small
-                  selected={humanPhase === "faceup" && selectedPlayCards.includes(card.id)}
-                  playable={turn.playableIds.includes(card.id)}
-                  onPress={humanPhase === "faceup" && isHumanTurn ? () => handleCardSelect(card.id) : undefined}
-                  disabled={humanPhase !== "faceup" || !isHumanTurn} />)}
+                {human.faceUpPalace.map(card => <PlayingCard key={card.id} card={card} small />)}
               </View>
               <Text style={styles.palaceGroupLabel}>FACE UP</Text>
-            </View>
+            </View></>}
           </View>}
         </View>
 
@@ -637,11 +617,11 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
 
           </View>
         ) : (
-          humanPhase !== "facedown" && (
-            <View style={styles.handArea}>
+            <Animated.View testID="active-cards" style={[styles.handArea, { opacity: activeCardsOpacity }]}>
               <Text style={styles.handLabel}>
-                {humanPhase === "hand" ? "YOUR HAND" : "FACE-UP PALACE"}
+                {humanPhase === "hand" ? "YOUR HAND" : humanPhase === "faceup" ? "FACE-UP PALACE" : "FACE-DOWN PALACE"}
               </Text>
+              {humanPhase !== "facedown" && <Text accessibilityLiveRegion="polite" style={styles.activeHint}>{turn.hint}</Text>}
               {humanPhase === "hand" ? (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.handScrollContent}>
                   {human.hand.map((card) => (
@@ -656,12 +636,23 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
                   ))}
                 </ScrollView>
               ) : (
-                <View style={styles.handScrollContent}>
-                  <Text style={styles.faceupHint}>Tap cards above to play</Text>
+                <View style={styles.activePalaceCards}>
+                  {humanPhase === "faceup" ? human.faceUpPalace.map(card => (
+                    <PlayingCard key={card.id} card={card} large
+                      selected={selectedPlayCards.includes(card.id)}
+                      playable={turn.playableIds.includes(card.id)}
+                      onPress={isHumanTurn ? () => handleCardSelect(card.id) : undefined}
+                      disabled={!isHumanTurn} />
+                  )) : human.faceDownPalace.map((card, i) => (
+                    <View key={`active-fd-${i}`} style={styles.blindCardPosition}>
+                      {card ? <PlayingCard faceDown large accessibilityLabel={`Face-down card ${i + 1}`}
+                        onPress={isHumanTurn ? () => handleFaceDownPlay(i) : undefined}
+                        disabled={!isHumanTurn} /> : <EmptyCardSlot style={{ width: 84, height: 118 }} />}
+                    </View>
+                  ))}
                 </View>
               )}
-            </View>
-          )
+            </Animated.View>
         )}
       </ScrollView>
       <View style={{ paddingHorizontal: 12, paddingTop: 6, paddingBottom: 4, backgroundColor: theme.table }}>
@@ -1065,16 +1056,6 @@ const styles = StyleSheet.create({
     gap: 8,
     justifyContent: "center",
   },
-  messageContainer: {
-    alignItems: "center",
-    paddingHorizontal: 16,
-  },
-  messageText: {
-    fontSize: 13,
-    fontFamily: "Inter_500Medium",
-    color: "rgba(254,253,248,0.75)",
-    textAlign: "center",
-  },
   pilesRow: {
     flexDirection: "row",
     justifyContent: "center",
@@ -1206,11 +1187,21 @@ const styles = StyleSheet.create({
     paddingBottom: 2,
     paddingTop: 12,
   },
-  faceupHint: {
+  activePalaceCards: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 12,
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  blindCardPosition: {
+    width: 84,
+  },
+  activeHint: {
     fontSize: 13,
     fontFamily: "Inter_500Medium",
     color: "#B9CEC1",
-    fontStyle: "italic",
+    lineHeight: 18,
     paddingHorizontal: 4,
   },
   confirmSetupBtn: {
