@@ -39,7 +39,7 @@ const server = http.createServer((req, res) => {
       await stats.scrollIntoViewIfNeeded();
       await stats.click();
       await p.getByRole('heading',{name:'Statistics',exact:true}).waitFor();
-      await p.goBack(); await quick.waitFor();
+      await p.getByRole('button',{name:'Back',exact:true}).click(); await quick.waitFor();
       await quick.click(); await p.getByRole('button',{name:'Confirm Palace (0/3)',exact:true}).waitFor();
       const confirm = await p.getByRole('button',{name:'Confirm Palace (0/3)',exact:true}).boundingBox(); assert.ok(confirm.y + confirm.height <= viewport.height && confirm.height >= 44, 'Setup action stays reachable');
       await p.screenshot({path:path.join(out,`19-polish-guide-${viewport.width}.png`)});
@@ -103,7 +103,7 @@ const server = http.createServer((req, res) => {
     await p.waitForFunction(() => document.querySelector('[aria-label="Back to the tour"]')?.getAttribute('aria-disabled') !== 'true');
     await p.screenshot({path:path.join(out,'22-polish-result-fixture.png')});
     await p.getByRole('button',{name:'Back to the tour',exact:true}).click();
-    await p.getByRole('button',{name:'Back to home',exact:true}).click();
+    await p.getByRole('button',{name:'Back',exact:true}).click();
     await p.getByRole('button',{name:'Quick Play',exact:true}).waitFor();
     assert.equal(new URL(p.url()).pathname,'/','Single Back from Tour reaches Home');
     const saved = await p.evaluate(() => ({career:JSON.parse(localStorage.getItem('palace_tour_v1')),mastery:JSON.parse(localStorage.getItem('palace_mastery_v1'))}));

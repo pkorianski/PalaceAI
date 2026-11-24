@@ -1,4 +1,5 @@
 import React from "react";
+import { MenuHeader } from "@/components/navigation/MenuHeader";
 import {
   View,
   Text,
@@ -76,24 +77,12 @@ export default function RulesScreen() {
       style={[
         styles.container,
         {
-          paddingTop: insets.top + (Platform.OS === "web" ? 67 : 0),
+          paddingTop: insets.top,
           paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 0),
         },
       ]}
     >
-      <View style={styles.topBar}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          onPress={() => router.canGoBack() ? router.back() : router.replace("/")}
-          style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
-          hitSlop={8}
-        >
-          <Ionicons name="chevron-back" size={24} color="#D4AF37" />
-        </Pressable>
-        <Text style={styles.topBarTitle}>How to Play</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <MenuHeader title="How to Play" />
 
       <ScrollView
         style={styles.scroll}
@@ -152,25 +141,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0d2b1a",
-  },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  topBarTitle: {
-    fontSize: 17,
-    fontFamily: "Inter_600SemiBold",
-    color: "#D4AF37",
-    letterSpacing: 1,
   },
   scroll: {
     flex: 1,
