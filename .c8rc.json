@@ -1,0 +1,9 @@
+{
+  "all": true,
+  "extension": [".ts", ".tsx"],
+  "include": ["app/**/*.tsx", "components/**/*.tsx", "lib/**/*.ts"],
+  "exclude": ["**/*.d.ts"],
+  "exclude-after-remap": true,
+  "reporter": ["text", "html", "lcov", "json", "json-summary"],
+  "reports-dir": "coverage"
+}
