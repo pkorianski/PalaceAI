@@ -49,7 +49,7 @@ const server = http.createServer((req, res) => {
       return page.screenshot({ path: path.join(out, name + ".png") });
     };
     const checkMenuBack = async () => {
-      const button = page.getByTestId("menu-back");
+      const button = page.getByRole("button", { name: "Back", exact: true });
       await button.waitFor();
       const box = await button.boundingBox();
       assert.ok(box.width >= 44 && box.height >= 44 && box.x >= 0 && box.y >= 0, "Menu Back has a visible 44-point target");
@@ -86,16 +86,16 @@ const server = http.createServer((req, res) => {
     await page.getByRole("button", { name: "Statistics", exact: true }).click();
     await page.getByRole("heading", { name: "Statistics", exact: true }).waitFor();
     await checkMenuBack(); await capture("27-back-statistics");
-    await page.getByTestId("menu-back").click();
+    await page.getByRole("button", { name: "Back", exact: true }).click();
     await page.getByRole("button", { name: "Quick Play", exact: true }).waitFor();
     await page.getByRole("button", { name: "Achievements and mastery", exact: true }).click();
     await page.getByRole("tab", { name: "Mastery", exact: true }).waitFor();
     await checkMenuBack(); await capture("28-back-progress");
-    await page.getByTestId("menu-back").click();
+    await page.getByRole("button", { name: "Back", exact: true }).click();
     await page.getByRole("button", { name: "How to Play", exact: true }).click();
     await page.getByRole("heading", { name: "How to Play", exact: true }).waitFor();
     await checkMenuBack(); await capture("29-back-rules");
-    await page.getByTestId("menu-back").click();
+    await page.getByRole("button", { name: "Back", exact: true }).click();
     // A direct route has no app screen to return to, so Back falls back to Home.
     const direct = await browser.newContext({ viewport: {width:390,height:844}, reducedMotion:"reduce" });
     const entry = await direct.newPage();
