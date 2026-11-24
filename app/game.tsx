@@ -611,6 +611,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
                   card={card}
                   selected={setupSelected.includes(card.id)}
                   onPress={() => handleSetupToggle(card.id)}
+                  accessibilityHint="Select three cards for your palace, then use Confirm Palace."
                 />
               ))}
             </ScrollView>
