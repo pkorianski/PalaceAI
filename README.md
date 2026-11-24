@@ -93,3 +93,7 @@ npx expo export --platform ios
 References:
 - [SDK 58 release notes](https://expo.dev/changelog/sdk-58)
 - [Expo Go login requirements](https://expo.dev/changelog/expo-go-57-login)
+
+### Unit coverage
+
+Run `npm run test:coverage` for line/branch coverage and a before/after HTML report in `coverage/`. Run `npm run test:stability -- 10` to repeat tests across time zones and worker counts. See [coverage scope, results and remaining gaps](docs/testing/UNIT_TEST_COVERAGE.md). CI publishes annotated coverage and enforces a minimum for the explicitly scoped critical logic modules.

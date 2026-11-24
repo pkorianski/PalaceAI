@@ -1,5 +1,11 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test, beforeEach } from "node:test";
+import { seededRandom, NOW } from "./helpers/fixtures";
+beforeEach((t) => {
+  if (!("mock" in t)) throw new Error("Expected a test context");
+  t.mock.method(Math, "random", seededRandom(18537));
+  t.mock.timers.enable({ apis: ["Date"], now: NOW.valueOf() });
+});
 import { VENUES, RIVALS } from "../lib/tour/content";
 import {
   emptyCareer,
@@ -204,56 +210,49 @@ test("keeper saves a ten while aggressive spends it; hidden cards do not affect 
   );
 });
 test("complete rival-vs-rival games conserve 52 cards and can finish", () => {
-  const originalRandom = Math.random;
-  let seed = 18537;
-  Math.random = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
-  try {
-    let finished = 0;
-    for (let n = 0; n < 12; n++) {
-      let s = createInitialGameState();
-      s = confirmPalaceSetup(
-        s,
-        0,
-        s.players[0].hand.slice(0, 3).map((c) => c.id),
-      );
-      s = autoAISetupPalace(s, 1);
-      for (let turn = 0; turn < 1200 && s.phase !== "game_over"; turn++) {
-        const index = s.currentPlayerIndex;
-        // Exchange isHuman flags to exercise the same policy for each seat.
-        const aiState = {
-          ...s,
-          players: s.players.map((p, i) => ({ ...p, isHuman: i !== index })),
-        };
-        const move = getRivalMove(aiState, index ? "keeper" : "tactician", 2);
-        if (move.type === "play") {
-          if (getPlayerPhase(s.players[index]) !== "facedown") {
-            const owned = [
-              ...s.players[index].hand,
-              ...s.players[index].faceUpPalace,
-            ].filter((c) => move.cardIds!.includes(c.id));
-            assert.equal(canPlayCards(owned, s.pile), true);
-          }
-          s = playCards(s, index, move.cardIds!);
-        } else s = pickUpPile(s, index);
-        const cards = [
-          ...s.deck,
-          ...s.pile,
-          ...s.burnPile,
-          ...s.players.flatMap((p) => [
-            ...p.hand,
-            ...p.faceUpPalace,
-            ...p.faceDownPalace.filter((c) => c !== null),
-          ]),
-        ];
-        assert.equal(cards.length, 52);
-        assert.equal(new Set(cards.map((c) => c.id)).size, 52);
-      }
-      if (s.phase === "game_over") finished++;
+  let finished = 0;
+  for (let n = 0; n < 12; n++) {
+    let s = createInitialGameState();
+    s = confirmPalaceSetup(
+      s,
+      0,
+      s.players[0].hand.slice(0, 3).map((c) => c.id),
+    );
+    s = autoAISetupPalace(s, 1);
+    for (let turn = 0; turn < 1200 && s.phase !== "game_over"; turn++) {
+      const index = s.currentPlayerIndex;
+      // Exchange isHuman flags to exercise the same policy for each seat.
+      const aiState = {
+        ...s,
+        players: s.players.map((p, i) => ({ ...p, isHuman: i !== index })),
+      };
+      const move = getRivalMove(aiState, index ? "keeper" : "tactician", 2);
+      if (move.type === "play") {
+        if (getPlayerPhase(s.players[index]) !== "facedown") {
+          const owned = [
+            ...s.players[index].hand,
+            ...s.players[index].faceUpPalace,
+          ].filter((c) => move.cardIds!.includes(c.id));
+          assert.equal(canPlayCards(owned, s.pile), true);
+        }
+        s = playCards(s, index, move.cardIds!);
+      } else s = pickUpPile(s, index);
+      const cards = [
+        ...s.deck,
+        ...s.pile,
+        ...s.burnPile,
+        ...s.players.flatMap((p) => [
+          ...p.hand,
+          ...p.faceUpPalace,
+          ...p.faceDownPalace.filter((c) => c !== null),
+        ]),
+      ];
+      assert.equal(cards.length, 52);
+      assert.equal(new Set(cards.map((c) => c.id)).size, 52);
     }
-    assert.ok(finished >= 8, `Only ${finished}/12 games finished`);
-  } finally {
-    Math.random = originalRandom;
+    if (s.phase === "game_over") finished++;
   }
+  assert.ok(finished >= 8, `Only ${finished}/12 games finished`);
 });
 
 test("saved current deal survives hydration and invalid series is preserved with an error", () => {

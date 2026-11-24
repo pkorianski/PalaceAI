@@ -1,0 +1,724 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "b6bfe4406a0ae1607afec329a1f8ed8e95d09a82",
+  "testCount": 58,
+  "node": "v24.22.3",
+  "c8": "12.0.0",
+  "scope": "app/**/*.tsx, components/**/*.tsx, lib/**/*.ts; unimported files included",
+  "files": {
+    "app/+native-intent.tsx": {
+      "lines": {
+        "total": 6,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "app/+not-found.tsx": {
+      "lines": {
+        "total": 39,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "app/_layout.tsx": {
+      "lines": {
+        "total": 85,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "app/achievements.tsx": {
+      "lines": {
+        "total": 629,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "app/game.tsx": {
+      "lines": {
+        "total": 1753,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "app/index.tsx": {
+      "lines": {
+        "total": 189,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "app/learn.tsx": {
+      "lines": {
+        "total": 26,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "app/privacy.tsx": {
+      "lines": {
+        "total": 16,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "app/rules.tsx": {
+      "lines": {
+        "total": 263,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "app/settings.tsx": {
+      "lines": {
+        "total": 67,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "app/stats.tsx": {
+      "lines": {
+        "total": 366,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "app/support.tsx": {
+      "lines": {
+        "total": 19,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "app/tour-match.tsx": {
+      "lines": {
+        "total": 130,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "app/tour.tsx": {
+      "lines": {
+        "total": 895,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/ErrorBoundary.tsx": {
+      "lines": {
+        "total": 54,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/ErrorFallback.tsx": {
+      "lines": {
+        "total": 286,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/KeyboardAwareScrollViewCompat.tsx": {
+      "lines": {
+        "total": 13,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/PlayingCard.tsx": {
+      "lines": {
+        "total": 306,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/brand/StudioIntro.tsx": {
+      "lines": {
+        "total": 166,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/mastery/HomeBanner.tsx": {
+      "lines": {
+        "total": 53,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/mastery/RewardPreview.tsx": {
+      "lines": {
+        "total": 15,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/mastery/ui.tsx": {
+      "lines": {
+        "total": 157,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/navigation/MenuHeader.tsx": {
+      "lines": {
+        "total": 32,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/settings/Page.tsx": {
+      "lines": {
+        "total": 28,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/settings/PreferencesProvider.tsx": {
+      "lines": {
+        "total": 35,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/tour/Art.tsx": {
+      "lines": {
+        "total": 314,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/tour/CareerResult.tsx": {
+      "lines": {
+        "total": 127,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/tour/HomeBanner.tsx": {
+      "lines": {
+        "total": 89,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/tour/ThemeProvider.tsx": {
+      "lines": {
+        "total": 49,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/tour/TrophyReveal.tsx": {
+      "lines": {
+        "total": 18,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "components/tour/ui.tsx": {
+      "lines": {
+        "total": 214,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "lib/achievements.ts": {
+      "lines": {
+        "total": 168,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "lib/daily-challenge.ts": {
+      "lines": {
+        "total": 87,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "lib/daily-progress.ts": {
+      "lines": {
+        "total": 55,
+        "covered": 37,
+        "skipped": 0,
+        "pct": 67.27
+      },
+      "branches": {
+        "total": 19,
+        "covered": 14,
+        "skipped": 0,
+        "pct": 73.68
+      }
+    },
+    "lib/external-links.ts": {
+      "lines": {
+        "total": 4,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "lib/game-presentation.ts": {
+      "lines": {
+        "total": 33,
+        "covered": 31,
+        "skipped": 0,
+        "pct": 93.93
+      },
+      "branches": {
+        "total": 35,
+        "covered": 32,
+        "skipped": 0,
+        "pct": 91.42
+      }
+    },
+    "lib/haptics.ts": {
+      "lines": {
+        "total": 14,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "lib/palace-engine.ts": {
+      "lines": {
+        "total": 449,
+        "covered": 395,
+        "skipped": 0,
+        "pct": 87.97
+      },
+      "branches": {
+        "total": 111,
+        "covered": 102,
+        "skipped": 0,
+        "pct": 91.89
+      }
+    },
+    "lib/player-storage-queue.ts": {
+      "lines": {
+        "total": 10,
+        "covered": 7,
+        "skipped": 0,
+        "pct": 70
+      },
+      "branches": {
+        "total": 12,
+        "covered": 10,
+        "skipped": 0,
+        "pct": 83.33
+      }
+    },
+    "lib/preferences-model.ts": {
+      "lines": {
+        "total": 12,
+        "covered": 12,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 21,
+        "covered": 19,
+        "skipped": 0,
+        "pct": 90.47
+      }
+    },
+    "lib/query-client.ts": {
+      "lines": {
+        "total": 80,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "lib/release-content.ts": {
+      "lines": {
+        "total": 11,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "lib/stats.ts": {
+      "lines": {
+        "total": 51,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "lib/tutorial.ts": {
+      "lines": {
+        "total": 18,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "lib/mastery/model.ts": {
+      "lines": {
+        "total": 477,
+        "covered": 457,
+        "skipped": 0,
+        "pct": 95.8
+      },
+      "branches": {
+        "total": 132,
+        "covered": 127,
+        "skipped": 0,
+        "pct": 96.21
+      }
+    },
+    "lib/mastery/repository.ts": {
+      "lines": {
+        "total": 65,
+        "covered": 56,
+        "skipped": 0,
+        "pct": 86.15
+      },
+      "branches": {
+        "total": 25,
+        "covered": 22,
+        "skipped": 0,
+        "pct": 88
+      }
+    },
+    "lib/mastery/storage.ts": {
+      "lines": {
+        "total": 6,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "lib/tour/ai.ts": {
+      "lines": {
+        "total": 56,
+        "covered": 56,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 52,
+        "covered": 48,
+        "skipped": 0,
+        "pct": 92.3
+      }
+    },
+    "lib/tour/content.ts": {
+      "lines": {
+        "total": 187,
+        "covered": 184,
+        "skipped": 0,
+        "pct": 98.39
+      },
+      "branches": {
+        "total": 16,
+        "covered": 14,
+        "skipped": 0,
+        "pct": 87.5
+      }
+    },
+    "lib/tour/model.ts": {
+      "lines": {
+        "total": 257,
+        "covered": 249,
+        "skipped": 0,
+        "pct": 96.88
+      },
+      "branches": {
+        "total": 111,
+        "covered": 99,
+        "skipped": 0,
+        "pct": 89.18
+      }
+    },
+    "lib/tour/storage.ts": {
+      "lines": {
+        "total": 29,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    }
+  }
+}
