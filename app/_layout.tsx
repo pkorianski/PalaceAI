@@ -40,28 +40,8 @@ function RootLayoutNav() {
       <Stack.Screen name="tour" options={{ animation: reduced ? "none" : "slide_from_right" }} />
       <Stack.Screen name="tour-match" options={{ gestureEnabled: false, animation: reduced ? "none" : "fade" }} />
       <Stack.Screen name="rules" options={{ animation: reduced ? "none" : "slide_from_bottom" }} />
-      <Stack.Screen
-        name="achievements"
-        options={{
-          headerShown: true,
-          headerTitle: "Achievements",
-          headerStyle: { backgroundColor: "#0d2b1a" },
-          headerTintColor: "#D4AF37",
-          headerTitleStyle: { fontFamily: "Inter_700Bold", fontSize: 18 },
-          animation: reduced ? "none" : "slide_from_bottom",
-        }}
-      />
-      <Stack.Screen
-        name="stats"
-        options={{
-          headerShown: true,
-          headerTitle: "Statistics",
-          headerStyle: { backgroundColor: "#0d2b1a" },
-          headerTintColor: "#D4AF37",
-          headerTitleStyle: { fontFamily: "Inter_700Bold", fontSize: 18 },
-          animation: reduced ? "none" : "slide_from_bottom",
-        }}
-      />
+      <Stack.Screen name="achievements" options={{ title: "Achievements", animation: reduced ? "none" : "slide_from_bottom" }} />
+      <Stack.Screen name="stats" options={{ title: "Statistics", animation: reduced ? "none" : "slide_from_bottom" }} />
     </Stack>
   );
 }

@@ -48,6 +48,13 @@ const server = http.createServer((req, res) => {
       await page.waitForTimeout(450);
       return page.screenshot({ path: path.join(out, name + ".png") });
     };
+    const checkMenuBack = async () => {
+      const button = page.getByTestId("menu-back");
+      await button.waitFor();
+      const box = await button.boundingBox();
+      assert.ok(box.width >= 44 && box.height >= 44 && box.x >= 0 && box.y >= 0, "Menu Back has a visible 44-point target");
+      assert.equal(await page.getByRole("button", { name: "Back", exact: true }).count(), 1, "One shared Back control, without a duplicate native header");
+    };
     // Verify the real root overlay in both accessibility modes before gameplay.
     const normal = await browser.newContext({
       viewport: { width: 320, height: 693 },
@@ -76,9 +83,32 @@ const server = http.createServer((req, res) => {
       .getByRole("button", { name: "Continue Palace Tour" })
       .waitFor({ timeout: 30000 });
     await capture("01-home");
+    await page.getByRole("button", { name: "Statistics", exact: true }).click();
+    await page.getByRole("heading", { name: "Statistics", exact: true }).waitFor();
+    await checkMenuBack(); await capture("27-back-statistics");
+    await page.getByTestId("menu-back").click();
+    await page.getByRole("button", { name: "Quick Play", exact: true }).waitFor();
+    await page.getByRole("button", { name: "Achievements and mastery", exact: true }).click();
+    await page.getByRole("tab", { name: "Mastery", exact: true }).waitFor();
+    await checkMenuBack(); await capture("28-back-progress");
+    await page.getByTestId("menu-back").click();
+    await page.getByRole("button", { name: "How to Play", exact: true }).click();
+    await page.getByRole("heading", { name: "How to Play", exact: true }).waitFor();
+    await checkMenuBack(); await capture("29-back-rules");
+    await page.getByTestId("menu-back").click();
+    // A direct route has no app screen to return to, so Back falls back to Home.
+    const direct = await browser.newContext({ viewport: {width:390,height:844}, reducedMotion:"reduce" });
+    const entry = await direct.newPage();
+    await entry.goto("http://127.0.0.1:18081/stats");
+    await entry.getByTestId("studio-intro").waitFor({state:"hidden"});
+    await entry.getByTestId("menu-back").click();
+    await entry.getByRole("button", {name:"Quick Play",exact:true}).waitFor();
+    assert.equal(new URL(entry.url()).pathname,"/", "Direct-entry Back falls back to Home");
+    await direct.close();
     await page.getByRole("button", { name: "Settings", exact: true }).click();
     const haptics = page.getByRole("switch", { name: "Haptics", exact: true });
     await haptics.waitFor();
+    await checkMenuBack();
     await capture("09-settings");
     await haptics.click();
     await page.waitForFunction(() => JSON.parse(localStorage.getItem("palace_preferences_v1"))?.haptics === false);
@@ -103,6 +133,7 @@ const server = http.createServer((req, res) => {
     await page.getByRole("button", { name: "Retry settings", exact: true }).click();
     await page.getByRole("button", { name: "Learn Palace", exact: true }).click();
     await page.getByText("Build your palace.", { exact: true }).waitFor();
+    await checkMenuBack();
     await capture("10-guide");
     for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "Next", exact: true }).click();
     await page.getByRole("button", { name: "Back to settings", exact: true }).click();
@@ -111,19 +142,24 @@ const server = http.createServer((req, res) => {
     await page.getByRole("button", { name: "Privacy policy", exact: true }).click();
     await page.getByText("Your game. Your device.", { exact: true }).waitFor();
     await context.setOffline(true);
+    await checkMenuBack();
     await capture("11-privacy");
     await page.getByRole("button", { name: "Back", exact: true }).click();
+    await page.getByRole("switch", { name: "Haptics", exact: true }).waitFor();
+    assert.equal(new URL(page.url()).pathname, "/settings", "Privacy returns to Settings, not Home");
     await context.setOffline(false);
     await page.getByRole("button", { name: "Help & support", exact: true }).click();
     await page.getByText("Need a hand?", { exact: true }).waitFor();
     await context.setOffline(true);
     await page.getByRole("button", { name: "Email support", exact: true }).waitFor();
+    await checkMenuBack();
     await capture("12-support");
     await context.setOffline(false);
     await page.getByRole("button", { name: "Back", exact: true }).click();
     await page.getByRole("button", { name: "Back", exact: true }).click();
     await page.getByRole("button", { name: "Continue Palace Tour" }).click();
     await page.getByRole("button", { name: /^Joey, Two Times\./ }).waitFor();
+    await checkMenuBack();
     await capture("02-map");
     await page.getByRole("button", { name: /^Joey, Two Times\./ }).click();
     await page

@@ -1,3 +1,4 @@
+import { MenuHeader } from "@/components/navigation/MenuHeader";
 import { equipMasteryReward } from "@/lib/mastery/storage";
 import React, { useCallback, useState } from "react";
 import {
@@ -129,19 +130,7 @@ export default function TourScreen() {
     career.trophies[r.id] ? TIERS[career.trophies[r.id] - 1].name : "Unclaimed";
   return (
     <View style={[s.screen, { paddingTop: insets.top }]}>
-      <View style={s.header}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Back to home"
-          onPress={() => router.canGoBack() ? router.back() : router.replace("/")}
-          style={s.back}
-        >
-          <Ionicons name="arrow-back" size={22} color={palette.white} />
-        </Pressable>
-        <View>
-          <Eyebrow>PALACE • SOLO CAREER</Eyebrow>
-          <Text style={s.wordmark}>The Tour</Text>
-        </View>
+      <MenuHeader title="The Tour" eyebrow="PALACE • SOLO CAREER" trailing={
         <View style={s.score}>
           <Ionicons name="trophy" size={15} color={palette.gold} />
           <Text style={s.scoreText}>
@@ -149,7 +138,7 @@ export default function TourScreen() {
             <Text style={{ color: palette.muted }}> / 48</Text>
           </Text>
         </View>
-      </View>
+      } />
       <View style={s.tabs}>
         {(["journey", "cabinet", "circuit"] as const).map((t) => (
           <Pressable
@@ -728,13 +717,6 @@ export default function TourScreen() {
 }
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: palette.bg },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    gap: 12,
-  },
   back: {
     width: 44,
     height: 44,
@@ -742,12 +724,6 @@ const s = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 15,
     backgroundColor: "#FFFFFF08",
-  },
-  wordmark: {
-    color: palette.white,
-    fontFamily: "Inter_700Bold",
-    fontSize: 25,
-    letterSpacing: -0.8,
   },
   score: {
     flexDirection: "row",

@@ -1,3 +1,4 @@
+import { MenuHeader } from "@/components/navigation/MenuHeader";
 import React, { useCallback, useRef, useState } from "react";
 import {
   View,
@@ -105,7 +106,8 @@ export default function AchievementsScreen() {
   const level = state ? levelFor(state.xp) : 1,
     next = state ? nextMilestone(state) : null;
   return (
-    <View style={{ flex: 1, backgroundColor: palette.bg }}>
+    <View style={{ flex: 1, backgroundColor: palette.bg, paddingTop: insets.top }}>
+      <MenuHeader title="Achievements" />
       <View style={styles.tabs}>
         {TABS.map((name) => (
           <Pressable

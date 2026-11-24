@@ -10,6 +10,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { MenuHeader } from "@/components/navigation/MenuHeader";
 import { getStats, type GameStats } from "@/lib/stats";
 
 const DEFAULT_STATS: GameStats = {
@@ -106,10 +107,11 @@ export default function StatsScreen() {
     <View
       style={[
         styles.container,
-        { paddingTop: Platform.OS === "web" ? insets.top + 67 : 0 },
+        { paddingTop: insets.top },
       ]}
     >
       <StatusBar barStyle="light-content" />
+      <MenuHeader title="Statistics" />
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
