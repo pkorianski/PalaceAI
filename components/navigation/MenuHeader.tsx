@@ -28,5 +28,5 @@ const s = StyleSheet.create({
   back: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center", borderRadius: 15, backgroundColor: "#FFFFFF08" },
   words: { flex: 1, gap: 2 },
   title: { color: palette.white, fontFamily: "Inter_700Bold", fontSize: 25, letterSpacing: -0.8 },
-  eyebrow: { color: palette.gold, fontFamily: "Inter_700Bold", fontSize: 10, letterSpacing: 2 },
+  eyebrow: { color: palette.gold, fontFamily: "Inter_700Bold", fontSize: 11, letterSpacing: 2 },
 });

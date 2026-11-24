@@ -116,7 +116,7 @@ export default function TourScreen() {
       setCareer(
         await updateCareer((c) => {
           if (!themeUnlocked(c, id))
-            throw new Error("Win this venue championship to unlock its theme.");
+            throw new Error("Beat this chapter’s champion at Bronze to unlock its theme.");
           return { ...c, equipped: id };
         }),
       );
@@ -254,8 +254,8 @@ export default function TourScreen() {
               />
               {!available && (
                 <Text style={[ui.subtitle, s.gate]}>
-                  Win the previous chapter’s championship and earn 6 trophies
-                  there to enter. Silver rematches count toward the gate.
+                  Beat the previous chapter’s champion at Bronze and earn 6 trophies
+                  there to enter. Silver upgrades count toward the total.
                 </Text>
               )}
               <View style={s.pathArea}>
@@ -361,7 +361,7 @@ export default function TourScreen() {
                     </Eyebrow>
                     <Text style={s.rewardName}>{venue.reward}</Text>
                     <Text style={ui.subtitle}>
-                      Win the championship. Make this table and card back yours.
+                      Beat this chapter’s champion at Bronze to unlock this table and card back.
                     </Text>
                   </View>
                   <View style={[s.miniCard, { backgroundColor: venue.card }]}>
@@ -445,7 +445,7 @@ export default function TourScreen() {
                 return (
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={`${v.reward}. ${career.equipped === v.id ? "Equipped" : unlocked ? "Equip theme" : "Win venue championship to unlock"}`}
+                    accessibilityLabel={`${v.reward}. ${career.equipped === v.id ? "Equipped" : unlocked ? "Equip theme" : "Beat this chapter’s champion at Bronze to unlock"}`}
                     key={v.id}
                     onPress={() => {
                       if (unlocked) equip(v.id);
@@ -476,7 +476,7 @@ export default function TourScreen() {
                           ? "Equipped ✓"
                           : unlocked
                             ? "Tap to equip"
-                            : "Win the venue championship"}
+                            : "Beat the chapter champion at Bronze"}
                       </Text>
                     </View>
                     <Ionicons
@@ -651,7 +651,7 @@ export default function TourScreen() {
                   !tierUnlocked(career, selected.id, tier) ? (
                     <Text style={ui.error}>
                       {!venueUnlocked(career, selected.venueId)
-                        ? "Unlock this chapter through the previous championship and 6 local trophies."
+                        ? "Beat the previous chapter’s champion at Bronze and earn 6 trophies there to unlock this chapter."
                         : !rivalUnlocked(career, selected.id)
                           ? "Beat this chapter’s three rivals at Bronze to challenge the champion."
                           : "Earn the previous trophy tier against this rival first."}
@@ -848,7 +848,7 @@ const s = StyleSheet.create({
   },
   trophySlot: { flex: 1, alignItems: "center", minHeight: 100 },
   trophyName: { color: palette.white, fontSize: 11, marginTop: 3 },
-  trophyTier: { color: palette.muted, fontSize: 10, marginTop: 4 },
+  trophyTier: { color: palette.muted, fontSize: 12, lineHeight: 17, textAlign: "center", marginTop: 4 },
   theme: {
     borderWidth: 1.5,
     padding: 18,
@@ -891,5 +891,5 @@ const s = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontSize: 12,
   },
-  tierDetail: { color: palette.muted, fontSize: 9 },
+  tierDetail: { color: palette.muted, fontSize: 12, lineHeight: 17, textAlign: "center", paddingHorizontal: 4 },
 });

@@ -14,6 +14,7 @@ interface PlayingCardProps {
   style?: object;
   playable?: boolean;
   accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 function getSuitSymbol(suit: Suit): string {
   switch (suit) {
@@ -41,7 +42,8 @@ export function PlayingCard({
   disabled = false,
   style,
   playable = false,
-  accessibilityLabel
+  accessibilityLabel,
+  accessibilityHint
 }: PlayingCardProps) {
   const theme = useTableTheme();
   const cardW = micro ? 28 : small ? 44 : large ? 84 : 66;
@@ -50,7 +52,7 @@ export function PlayingCard({
     return <Pressable accessible={!micro} importantForAccessibility={micro ? "no-hide-descendants" : "auto"} accessibilityRole={onPress ? "button" : "image"} accessibilityLabel={accessibilityLabel ?? "Face-down card"} accessibilityState={{
       disabled: !!onPress && disabled,
       selected
-    }} accessibilityHint={onPress ? "Double tap to play this unknown card." : undefined} onPress={onPress} disabled={disabled || !onPress} style={({
+    }} accessibilityHint={onPress ? accessibilityHint ?? "Double tap to play this unknown card." : undefined} onPress={onPress} disabled={disabled || !onPress} style={({
       pressed
     }) => [styles.card, {
       width: cardW,
@@ -85,7 +87,7 @@ export function PlayingCard({
   } as Record<string, string>)[card.rank] || card.rank} of ${card.suit}`} accessibilityState={{
     disabled: !!onPress && disabled,
     selected
-  }} accessibilityHint={onPress ? `${playable ? "Playable. " : ""}Double tap to select this card, then use Play.` : undefined} onPress={onPress} disabled={disabled || !onPress} style={({
+  }} accessibilityHint={onPress ? accessibilityHint ?? `${playable ? "Playable. " : ""}Double tap to select this card, then use Play.` : undefined} onPress={onPress} disabled={disabled || !onPress} style={({
     pressed
   }) => [styles.card, {
     width: cardW,

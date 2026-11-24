@@ -160,7 +160,7 @@ export const ui = StyleSheet.create({
   },
   eyebrow: {
     fontFamily: "Inter_700Bold",
-    fontSize: 10,
+    fontSize: 11,
     letterSpacing: 2,
     textTransform: "uppercase",
   },
