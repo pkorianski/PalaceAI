@@ -24,7 +24,7 @@ export function MenuHeader({ title, eyebrow, trailing }: {
   </View>;
 }
 const s = StyleSheet.create({
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 18, paddingVertical: 16, gap: 12 },
+  header: { backgroundColor: palette.bg, flexDirection: "row", alignItems: "center", paddingHorizontal: 18, paddingVertical: 16, gap: 12 },
   back: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center", borderRadius: 15, backgroundColor: "#FFFFFF08" },
   words: { flex: 1, gap: 2 },
   title: { color: palette.white, fontFamily: "Inter_700Bold", fontSize: 25, letterSpacing: -0.8 },
