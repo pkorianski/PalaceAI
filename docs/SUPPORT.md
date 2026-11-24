@@ -1,6 +1,6 @@
 # Palace support
 
-Need a hand? Contact **Kori Games** at [pkorianski.engr@gmail.com](mailto:pkorianski.engr@gmail.com?subject=Palace%20support).
+Need a hand? Contact **Kori Games** at [the.korianski.games@gmail.com](mailto:the.korianski.games@gmail.com?subject=Palace%20support).
 
 Questions, feedback and bug reports are welcome. Include your app version (in Settings), device model, what happened and steps to reproduce it. Screenshots help. Never send passwords or sensitive information.
 

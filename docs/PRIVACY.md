@@ -24,6 +24,6 @@ Palace does not knowingly collect personal information from children through gam
 
 ## Contact
 
-[pkorianski.engr@gmail.com](mailto:pkorianski.engr@gmail.com)
+[the.korianski.games@gmail.com](mailto:the.korianski.games@gmail.com)
 
 [GitHub privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement) · [Palace support](SUPPORT.md)
