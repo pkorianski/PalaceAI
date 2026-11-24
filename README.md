@@ -97,3 +97,7 @@ References:
 ### Unit coverage
 
 Run `npm run test:coverage` for line/branch coverage and a before/after HTML report in `coverage/`. Run `npm run test:stability -- 10` to repeat tests across time zones and worker counts. See [coverage scope, results and remaining gaps](docs/testing/UNIT_TEST_COVERAGE.md). CI publishes annotated coverage and enforces a minimum for the explicitly scoped critical logic modules.
+
+### Dependency security
+
+Run `npm run audit:dependencies` and `npm run check:dependency-tooling`. CI checks the full dependency graph and exercises the consumers of scoped security overrides. See [dependency hardening and the remaining ESLint warning](docs/DEPENDENCY_HARDENING.md).

@@ -1,0 +1,30 @@
+// Exercise the real consumers of scoped security overrides after every clean install.
+const assert = require('node:assert/strict');
+const { createRequire } = require('node:module');
+const path = require('node:path');
+const root = path.resolve(__dirname, '..');
+const ngrokRequire = createRequire(require.resolve('@expo/ngrok'));
+const uuid = ngrokRequire('uuid');
+assert.equal(typeof require('@expo/ngrok').connect, 'function');
+assert.equal(uuid.version(uuid.v4()), 4);
+console.log('Tunnel client CommonJS uuid.v4 interface passed (no live tunnel opened).');
+const c8Require = createRequire(require.resolve('c8'));
+const coverageRequire = createRequire(c8Require.resolve('test-exclude'));
+const { minimatch } = coverageRequire('minimatch');
+assert.equal(minimatch('lib/tour/model.ts', 'lib/**/*.ts'), true);
+assert.equal(minimatch('tests/tour.test.ts', 'lib/**/*.ts'), false);
+const TestExclude = c8Require('test-exclude');
+const exclude = new TestExclude({ cwd: root, include: ['app/**/*.tsx', 'components/**/*.tsx', 'lib/**/*.ts'], exclude: ['**/*.d.ts'] });
+assert.equal(exclude.shouldInstrument(path.join(root, 'lib/palace-engine.ts')), true);
+assert.equal(exclude.shouldInstrument(path.join(root, 'tests/tour.test.ts')), false);
+(async () => {
+  const files = await exclude.glob(root);
+  assert.ok(files.includes('lib/palace-engine.ts'));
+  assert.ok(!files.some(file => file.startsWith('tests/')));
+  console.log('Coverage file matching and glob enumeration passed.');
+  const { createFingerprintAsync } = require('expo/fingerprint');
+  const fingerprint = await createFingerprintAsync(root, { platforms: ['ios'] });
+  assert.ok(fingerprint.hash);
+  assert.ok(fingerprint.sources.length > 0);
+  console.log(`Expo iOS fingerprint generated from ${fingerprint.sources.length} sources.`);
+})().catch(error => { console.error(error); process.exitCode = 1; });
