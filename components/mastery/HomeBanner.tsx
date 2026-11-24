@@ -4,9 +4,8 @@ import { router, useFocusEffect } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { loadMastery } from "@/lib/mastery/storage";
-import { equippedTitle, levelFor, levelStart, rewardPreview, type Mastery } from "@/lib/mastery/model";
+import { levelFor, levelStart, rewardPreview, type Mastery } from "@/lib/mastery/model";
 import { Meter } from "@/components/tour/ui";
-import { RewardPreview } from "./RewardPreview";
 import { LevelBadge, m } from "./ui";
 export function MasteryHomeBanner() {
   const [state, setState] = useState<Mastery | null>(null),
@@ -34,38 +33,21 @@ export function MasteryHomeBanner() {
       sub.remove();
     };
   }, []));
-  return <Pressable accessibilityRole="button" accessibilityLabel="Achievements and mastery" onPress={() => router.push("/achievements")} style={({
-    pressed
-  }) => ({
-    width: "100%",
-    marginBottom: 0,
-    opacity: pressed ? 0.85 : 1
-  })}>
-      <LinearGradient colors={["#254A3B", "#142F29"]} style={[m.card, {
-      borderColor: "#887341",
-      gap: 10, padding: 16
-    }]}>
-        <View style={m.row}>
-          <LevelBadge level={state ? levelFor(state.xp) : 1} size={46} />
-          <View style={{
-          flex: 1,
-          gap: 5
-        }}>
-            <Text style={m.eyebrow}>PROGRESS</Text>
-            <Text style={m.text}>
-              {state ? equippedTitle(state) : "Achievements & rewards"}
-            </Text>
-            <Text style={m.caption}>
-              Your collection · Weekly quests
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" color="#EFC778" size={18} />
-        </View>
-        {state && <View style={{ gap: 5 }}><Meter value={state.xp - levelStart(levelFor(state.xp))} total={levelStart(levelFor(state.xp) + 1) - levelStart(levelFor(state.xp))} /><Text style={m.caption}>{(levelStart(levelFor(state.xp) + 1) - state.xp).toLocaleString()} XP to level {levelFor(state.xp) + 1}</Text></View>}
-        {state && <RewardPreview reward={rewardPreview(state)} />}
-        {error ? <Text style={m.body}>
-            Progress couldn’t load. Open to retry; your save is kept.
-          </Text> : state && <Text style={m.caption}>Weekly quests · {state.weekly.rewarded.length}/4 complete</Text>}
-      </LinearGradient>
-    </Pressable>;
+  const level = state ? levelFor(state.xp) : 1;
+  const reward = state ? rewardPreview(state) : null;
+  return <Pressable accessibilityRole="button" accessibilityLabel="Achievements and mastery"
+    accessibilityHint={error ? "Progress could not load. Open to retry; your save is kept." : state ? `Level ${level}. ${(levelStart(level + 1) - state.xp).toLocaleString()} XP to the next level. Collection and weekly quests.` : "Open your collection and weekly quests."}
+    onPress={() => router.push("/achievements")}
+    style={({ pressed }) => ({ width: "100%", opacity: pressed ? 0.85 : 1 })}>
+    <LinearGradient colors={["#1D3E32", "#142F29"]} style={{ borderWidth: 1, borderColor: "#52704C", borderRadius: 18, padding: 14, flexDirection: "row", alignItems: "center", gap: 12 }}>
+      <LevelBadge level={level} size={44} />
+      <View style={{ flex: 1, gap: 7 }}>
+        <Text style={m.text}>Your progress</Text>
+        {state && <Meter value={state.xp - levelStart(level)} total={levelStart(level + 1) - levelStart(level)} />}
+        <Text style={[m.caption, { fontSize: 13 }]}>{error ? "Couldn’t load · Tap to retry" : !state ? "Loading your collection…" : reward ? `Next: ${reward.name}${reward.kind === "theme" ? " table" : " title"}` : "Next: a weekly keepsake"}</Text>
+      </View>
+      {reward?.kind === "theme" && <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 30, height: 36, borderRadius: 6, backgroundColor: reward.table, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: reward.accent }}><View style={{ width: 15, height: 23, borderRadius: 3, backgroundColor: reward.card, borderWidth: 1, borderColor: reward.accent, alignItems: "center", justifyContent: "center" }}><Text style={{ color: reward.accent, fontSize: 10 }}>◆</Text></View></View>}
+      <Ionicons name="chevron-forward" color="#EFC778" size={18} />
+    </LinearGradient>
+  </Pressable>;
 }
