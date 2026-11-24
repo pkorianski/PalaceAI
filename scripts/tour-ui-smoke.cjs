@@ -69,7 +69,7 @@ const server = http.createServer((req, res) => {
 
     await page.goto("http://127.0.0.1:18081", { waitUntil: "domcontentloaded" });
     await page.getByRole("button", { name: "Skip studio intro" }).waitFor();
-    await page.getByText("KORIANSKI", { exact: true }).waitFor();
+    await page.getByText("KORI", { exact: true }).waitFor();
     await page.screenshot({ path: path.join(out, "00-studio-intro.png") });
     await page.getByTestId("studio-intro").waitFor({ state: "hidden", timeout: 3000 });
     await page

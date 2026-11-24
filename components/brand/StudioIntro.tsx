@@ -102,7 +102,7 @@ export function StudioIntro({ onComplete }: { onComplete: () => void }) {
         colors={["#172C35", "#0C111B", "#090D16"]}
         style={StyleSheet.absoluteFill}
       />
-      <View style={styles.identity} accessible accessibilityRole="header" accessibilityLabel="Korianski Games">
+      <View style={styles.identity} accessible accessibilityRole="header" accessibilityLabel="Kori Games">
         <View style={styles.emblem} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <Animated.View style={[styles.glow, {
             opacity: tween([0, 0.35, 0.7, 1], [0, 0.3, 0.12, 0.12]),
@@ -136,7 +136,7 @@ export function StudioIntro({ onComplete }: { onComplete: () => void }) {
           opacity: tween([0, 0.43, 0.8, 1], [0, 0, 1, 1]),
           transform: [{ translateY: tween([0, 0.43, 0.8, 1], [12, 12, 0, 0]) }],
         }]}>
-          <Text style={styles.name} maxFontSizeMultiplier={1.3}>KORIANSKI</Text>
+          <Text style={styles.name} maxFontSizeMultiplier={1.3}>KORI</Text>
           <Text style={styles.games} maxFontSizeMultiplier={1.5}>GAMES</Text>
         </Animated.View>
       </View>
