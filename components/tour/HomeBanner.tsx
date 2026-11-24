@@ -5,9 +5,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { loadCareer } from "@/lib/tour/storage";
 import { emptyCareer, nextRival, trophyCount } from "@/lib/tour/model";
-import { venueFor, rivalById, TIERS, STYLE_LABELS } from "@/lib/tour/content";
+import { venueFor, rivalById, TIERS } from "@/lib/tour/content";
 import { RivalPortrait, VenueScene } from "./Art";
-import { Eyebrow, palette, ui } from "./ui";
+import { palette } from "./ui";
 export function TourHomeBanner() {
   const [career, set] = useState(emptyCareer());
   useFocusEffect(useCallback(() => {
@@ -27,88 +27,63 @@ export function TourHomeBanner() {
   }) => [s.card, {
     opacity: pressed ? 0.9 : 1
   }]}>
-      <View style={s.art}>
-        <VenueScene venue={venue} height={100} />
-        <LinearGradient colors={["transparent", "#112D26"]} style={StyleSheet.absoluteFill} />
-        <View style={s.badge}>
-          <Eyebrow color="#FCEDC3">A SEAT AMONG LEGENDS</Eyebrow>
+      <View style={s.destination}>
+        <View style={s.art} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <VenueScene venue={venue} height={144} />
+          <LinearGradient colors={["transparent", "#112D26"]} style={StyleSheet.absoluteFill} />
+          <View style={s.portrait}><RivalPortrait rival={rival} size={54} /></View>
         </View>
-        <View style={s.portrait}>
-          <RivalPortrait rival={rival} size={58} />
+        <View style={s.body}>
+          <Text style={s.eyebrow}>PALACE TOUR</Text>
+          <Text style={s.title}>{rival.name}’s table</Text>
+          <Text style={s.subtitle}>{career.active ? `${TIERS[career.active.tier].name} · ${career.active.wins}–${career.active.losses}` : venue.name}</Text>
+          <View style={s.action}>
+            <Text style={s.actionText}>{career.active ? "Resume Tour" : count ? "Continue Tour" : "Start Tour"}</Text>
+            <Ionicons name="chevron-forward" size={18} color={palette.white} />
+          </View>
         </View>
       </View>
-      <View style={s.body}>
-        <View style={ui.row}>
-          <Eyebrow>THE PALACE TOUR</Eyebrow>
-          <Text style={ui.pill}>◆ {count} / 48</Text>
-        </View>
-        <Text style={s.title}>
-          {career.active ? `Back to ${rival.name}’s table.` : `Meet ${rival.name}.`}
-        </Text>
-        <Text style={[ui.subtitle, {
-        fontSize: 14,
-        lineHeight: 21
-      }]}>
-          {career.active ? `${TIERS[career.active.tier].name} · ${career.active.wins}–${career.active.losses} · ${venue.name}` : `${STYLE_LABELS[rival.style]} · ${venue.name}`}
-        </Text>
-        <Text style={{ color: palette.gold, fontSize: 12 }}>{count === 48 && !career.active ? "Tour mastered · Revisit any table" : career.active?.mode === "circuit" ? "Next goal: another weekly circuit win" : `Next prize: ${TIERS[career.active?.tier ?? Math.min(career.trophies[rival.id] || 0, 2)].name} trophy`}</Text>
-        <View style={s.button}>
-          <Text style={ui.actionText}>
-            {career.active ? "Resume your tour" : count ? "Continue the adventure" : "Start your adventure"}
-          </Text>
-          <Ionicons name="arrow-forward" size={19} color={palette.bg} />
-        </View>
+      <View style={s.prize}>
+        <Ionicons name="trophy-outline" size={18} color={palette.gold} />
+        <Text style={s.prizeText}>{count === 48 && !career.active ? "Tour mastered · Revisit any table" : career.active?.mode === "circuit" ? "Next goal: a weekly circuit win" : `Next prize: ${TIERS[career.active?.tier ?? Math.min(career.trophies[rival.id] || 0, 2)].name} trophy`}</Text>
       </View>
     </Pressable>;
 }
 const s = StyleSheet.create({
   card: {
     width: "100%",
-    borderRadius: 24,
+    borderRadius: 18,
     overflow: "hidden",
     backgroundColor: "#112D26",
     borderWidth: 1,
     borderColor: "#52704C",
     marginBottom: 0
   },
-  art: {
-    height: 92,
-    overflow: "hidden"
-  },
-  badge: {
-    position: "absolute",
-    top: 17,
-    left: 18
-  },
+  destination: { flexDirection: "row" },
+  art: { width: "30%", maxWidth: 112, minHeight: 132, overflow: "hidden" },
   portrait: {
     position: "absolute",
-    bottom: -7,
-    right: 22,
-    transform: [{
-      rotate: "6deg"
-    }],
+    bottom: 10,
+    left: 12,
     borderWidth: 2,
     borderColor: "#DDBA76",
-    borderRadius: 23
+    borderRadius: 20
   },
   body: {
-    padding: 16,
-    gap: 8
+    flex: 1,
+    padding: 14,
+    gap: 5
   },
   title: {
     color: palette.white,
     fontFamily: "Inter_700Bold",
-    fontSize: 23,
-    lineHeight: 29,
-    letterSpacing: -0.8
+    fontSize: 21,
+    lineHeight: 26
   },
-  button: {
-    backgroundColor: palette.gold,
-    borderRadius: 13,
-    padding: 15,
-    marginTop: 6,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center"
-  }
+  eyebrow: { color: palette.gold, fontFamily: "Inter_600SemiBold", fontSize: 12, letterSpacing: 1.6 },
+  subtitle: { color: "#B9CEC1", fontSize: 13, lineHeight: 18 },
+  action: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8, paddingTop: 7, minHeight: 32 },
+  actionText: { color: palette.white, fontFamily: "Inter_600SemiBold", fontSize: 15, flexShrink: 1 },
+  prize: { flexDirection: "row", alignItems: "center", gap: 9, paddingHorizontal: 14, paddingVertical: 11, borderTopWidth: 1, borderColor: "#365346" },
+  prizeText: { color: "#C5D7CB", fontSize: 13, lineHeight: 18, flex: 1 }
 });

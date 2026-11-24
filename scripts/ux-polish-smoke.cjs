@@ -24,6 +24,16 @@ const server = http.createServer((req, res) => {
       const q = await quick.boundingBox(); assert.ok(q.y >= 0 && q.y + q.height <= viewport.height, 'Quick Play visible without scrolling');
       const tour = p.getByRole('button',{name:'Continue Palace Tour',exact:true});
       const t = await tour.boundingBox(); assert.ok(t.y + t.height <= viewport.height, 'Tour action visible on compact Home');
+      const progress = p.getByRole('button',{name:'Achievements and mastery',exact:true});
+      await progress.getByText('Your progress',{exact:true}).waitFor();
+      const daily = p.getByTestId('home-daily'); await daily.waitFor();
+      const help = p.getByRole('button',{name:'How to Play',exact:true});
+      const d = await daily.boundingBox(), h = await help.boundingBox();
+      assert.ok(d.y < h.y, 'Daily challenge appears before utility navigation');
+      if (viewport.width === 390) {
+        const stats = await p.getByRole('button',{name:'Statistics',exact:true}).boundingBox();
+        assert.ok(stats.y + stats.height <= viewport.height, 'Play, Tour, progress, daily goal and utility links fit on a standard phone');
+      }
       await p.screenshot({path:path.join(out,`18-polish-home-${viewport.width}.png`)});
       await quick.click(); await p.getByRole('button',{name:'Confirm Palace (0/3)',exact:true}).waitFor();
       const confirm = await p.getByRole('button',{name:'Confirm Palace (0/3)',exact:true}).boundingBox(); assert.ok(confirm.y + confirm.height <= viewport.height && confirm.height >= 44, 'Setup action stays reachable');
