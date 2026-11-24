@@ -36,7 +36,7 @@ Tour progress is saved locally on your device. Quick Play starts a fresh deal wh
 
 ## Version 1.0 release notes
 
-Welcome to Palace by Korianski Games. Play Quick Play, explore the Palace Tour, collect trophies and unlock new table styles.
+Welcome to Palace by Kori Games. Play Quick Play, explore the Palace Tour, collect trophies and unlock new table styles.
 
 ## URLs
 
@@ -50,7 +50,7 @@ Palace is a single-player offline card game. It requires no login or development
 
 For the rules or visual guide: home → Settings → How to Play / Learn Palace. Privacy, Support and version/build information are in Settings. Reset game progress requires confirmation and permanently clears local game data while preserving preferences.
 
-The game has a short, skippable Korianski Games ident after launch. Device Reduce Motion is respected. No special permissions or demo credentials are required.
+The game has a short, skippable Kori Games ident after launch. Device Reduce Motion is respected. No special permissions or demo credentials are required.
 
 ## Screenshots to capture from a native release build
 

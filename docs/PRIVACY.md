@@ -4,7 +4,7 @@ Updated November 18, 2026
 
 ## Your game stays on your device
 
-Palace is an offline, single-player card game by Korianski Games. Your Tour progress, trophies, statistics, starter badges, mastery XP, dated activity, weekly quest progress and seals, equipped titles/table styles, daily challenge progress, tutorial status and preferences are stored locally on your device. We do not operate a gameplay server or send your gameplay or usage analytics to us.
+Palace is an offline, single-player card game by Kori Games. Your Tour progress, trophies, statistics, starter badges, mastery XP, dated activity, weekly quest progress and seals, equipped titles/table styles, daily challenge progress, tutorial status and preferences are stored locally on your device. We do not operate a gameplay server or send your gameplay or usage analytics to us.
 
 ## No accounts, ads or tracking
 
