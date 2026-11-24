@@ -50,7 +50,7 @@ Public URLs:
 
 - Privacy: https://github.com/pkorianski/PalaceAI/blob/main/docs/PRIVACY.md
 - Support: https://github.com/pkorianski/PalaceAI/blob/main/docs/SUPPORT.md
-- Contact: pkorianski.engr@gmail.com (existing public portfolio contact).
+- Contact: the.korianski.games@gmail.com (game support contact).
 
 Policy source is `lib/release-content.ts`. Run `npm run website:build` after policy edits to regenerate the public Markdown and optional standalone HTML. The HTML under `website/palace` is source for future hosting; the working release URLs above are the rendered public GitHub pages. The portfolio repository is not writable through the current integration.
 

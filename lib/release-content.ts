@@ -1,4 +1,4 @@
-export const SUPPORT_EMAIL = "pkorianski.engr@gmail.com";
+export const SUPPORT_EMAIL = "the.korianski.games@gmail.com";
 export const PRIVACY_URL = "https://github.com/pkorianski/PalaceAI/blob/main/docs/PRIVACY.md";
 export const SUPPORT_URL = "https://github.com/pkorianski/PalaceAI/blob/main/docs/SUPPORT.md";
 export const PRIVACY_UPDATED = "November 18, 2026";
