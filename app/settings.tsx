@@ -46,7 +46,7 @@ export default function SettingsScreen() {
       <Row title="Privacy policy" detail="Your game, your device." icon="shield-checkmark-outline" onPress={() => router.push("/privacy")} />
     </View>
     <View style={s.section}><Text style={s.eyebrow}>LOCAL PROGRESS</Text><Text style={s.caption}>Tour progress is saved on this device. Cloud sync and cross-device restore are not available. Quick Play starts a fresh deal when reopened.</Text><View style={s.group}><Row title="Reset game progress" detail="Erase mastery, trophies, statistics and saved Tour progress." icon="trash-outline" destructive onPress={() => { setResetError(""); setConfirm(true); }} /></View></View>
-    <View style={{ alignItems: "center", gap: 5, paddingVertical: 12 }}><Text style={s.rowTitle}>Korianski Games</Text><Text style={s.caption}>Palace · Version {version}{build ? ` (${build})` : ""}</Text><Text style={s.caption}>Made for the next great hand.</Text></View>
+    <View style={{ alignItems: "center", gap: 5, paddingVertical: 12 }}><Text style={s.rowTitle}>Kori Games</Text><Text style={s.caption}>Palace · Version {version}{build ? ` (${build})` : ""}</Text><Text style={s.caption}>Made for the next great hand.</Text></View>
     <Modal visible={confirm} transparent animationType={reduced ? "none" : "fade"} onRequestClose={() => { if (!resetting) setConfirm(false); }}>
       <View style={styles.scrim}><View accessibilityViewIsModal style={styles.confirm}><ScrollView contentContainerStyle={{ gap: 18 }}>
         <Ionicons name="trash-outline" size={30} color="#FFAAA0" />
