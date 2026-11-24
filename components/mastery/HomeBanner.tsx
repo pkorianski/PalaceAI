@@ -39,7 +39,7 @@ export function MasteryHomeBanner() {
     accessibilityHint={error ? "Progress could not load. Open to retry; your save is kept." : state ? `Level ${level}. ${(levelStart(level + 1) - state.xp).toLocaleString()} XP to the next level. Collection and weekly quests.` : "Open your collection and weekly quests."}
     onPress={() => router.push("/achievements")}
     style={({ pressed }) => ({ width: "100%", opacity: pressed ? 0.85 : 1 })}>
-    <LinearGradient colors={["#1D3E32", "#142F29"]} style={{ borderWidth: 1, borderColor: "#52704C", borderRadius: 18, padding: 14, flexDirection: "row", alignItems: "center", gap: 12 }}>
+    <LinearGradient colors={["#17372D", "#112A23"]} style={{ borderRadius: 18, padding: 18, flexDirection: "row", alignItems: "center", gap: 12 }}>
       <LevelBadge level={level} size={44} />
       <View style={{ flex: 1, gap: 7 }}>
         <Text style={m.text}>Your progress</Text>

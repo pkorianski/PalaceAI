@@ -39,7 +39,7 @@ export default function HomeScreen() {
       <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push("/settings")} style={s.icon}><Ionicons name="settings-outline" size={24} color={palette.gold} /></Pressable>
     </View>
     <ScrollView contentContainerStyle={[s.content, {
-      paddingBottom: insets.bottom + 24
+      paddingBottom: insets.bottom + 40
     }]}>
       <Pressable accessibilityRole="button" accessibilityLabel="Quick Play" accessibilityHint="Start a fresh single game." onPress={play} style={({
         pressed
@@ -51,16 +51,18 @@ export default function HomeScreen() {
         }}><Text style={s.playTitle}>Quick Play</Text><Text style={s.playCaption}>Start a single game</Text></View><Ionicons name="play" size={25} color={palette.bg} />
       </Pressable>
       <TourHomeBanner />
-      <MasteryHomeBanner />
-      {error && <Text accessibilityRole="alert" style={s.caption}>Today’s challenge couldn’t load. Reopen Home to try again.</Text>}
-      {daily && <Pressable testID="home-daily" accessibilityRole="button" accessibilityLabel={`Daily challenge: ${daily.desc}. ${daily.progress} of ${daily.target}${daily.completed ? ', complete' : ''}. Quick Play.`} accessibilityHint={`Start a single game. ${daily.title}.`} onPress={play} style={({ pressed }) => [s.daily, { opacity: pressed ? 0.85 : 1 }]}>
-        <Ionicons name={daily.completed ? "checkmark-circle" : "sunny-outline"} size={27} color={palette.gold} />
-        <View style={{ flex: 1, gap: 6 }}>
-          <Text style={s.dailyLabel}>{daily.completed ? "CHALLENGE COMPLETE" : "TODAY’S CHALLENGE"}</Text>
-          <View style={s.row}><Text style={s.dailyTitle}>{daily.desc}</Text><Text style={s.caption}>{daily.progress} / {daily.target}</Text></View>
-          <Meter value={daily.progress} total={daily.target} />
-        </View>
-      </Pressable>}
+      <View testID="home-progress-section" style={s.progressSection}>
+        <MasteryHomeBanner />
+        {error && <Text accessibilityRole="alert" style={s.caption}>Today’s challenge couldn’t load. Reopen Home to try again.</Text>}
+        {daily && <Pressable testID="home-daily" accessibilityRole="button" accessibilityLabel={`Daily challenge: ${daily.desc}. ${daily.progress} of ${daily.target}${daily.completed ? ', complete' : ''}. Quick Play.`} accessibilityHint={`Start a single game. ${daily.title}.`} onPress={play} style={({ pressed }) => [s.daily, { opacity: pressed ? 0.85 : 1 }]}>
+          <Ionicons name={daily.completed ? "checkmark-circle" : "sunny-outline"} size={27} color={palette.gold} />
+          <View style={{ flex: 1, gap: 6 }}>
+            <Text style={s.dailyLabel}>{daily.completed ? "CHALLENGE COMPLETE" : "TODAY’S CHALLENGE"}</Text>
+            <View style={s.row}><Text style={s.dailyTitle}>{daily.desc}</Text><Text style={s.caption}>{daily.progress} / {daily.target}</Text></View>
+            <Meter value={daily.progress} total={daily.target} />
+          </View>
+        </Pressable>}
+      </View>
       <View style={s.links}>
         <Pressable accessibilityRole="button" accessibilityLabel="How to Play" onPress={() => router.push("/rules")} style={s.link}><Ionicons name="book-outline" size={20} color={palette.gold} /><Text style={s.linkText}>How to Play</Text></Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="Statistics" onPress={() => router.push("/stats")} style={s.link}><Ionicons name="stats-chart-outline" size={20} color={palette.gold} /><Text style={s.linkText}>Statistics</Text></Pressable>
@@ -76,7 +78,7 @@ const s = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 22,
-    paddingVertical: 14,
+    paddingVertical: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -102,16 +104,17 @@ const s = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    gap: 14,
+    paddingTop: 6,
     width: "100%",
     maxWidth: 620,
     alignSelf: "center"
   },
   play: {
-    minHeight: 76,
+    minHeight: 90,
+    marginBottom: 24,
     borderRadius: 18,
     backgroundColor: palette.gold,
-    padding: 18,
+    padding: 22,
     flexDirection: "row",
     alignItems: "center",
     gap: 12
@@ -126,7 +129,15 @@ const s = StyleSheet.create({
     fontSize: 13,
     marginTop: 3
   },
+  progressSection: {
+    marginTop: 30,
+    gap: 20
+  },
   links: {
+    marginTop: 30,
+    paddingTop: 18,
+    borderTopWidth: 1,
+    borderTopColor: palette.border,
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10
@@ -137,9 +148,6 @@ const s = StyleSheet.create({
     minHeight: 52,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: palette.panel,
-    borderWidth: 1,
-    borderColor: "#52704C",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -159,9 +167,8 @@ const s = StyleSheet.create({
   daily: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "#52704C",
+    padding: 18,
+    backgroundColor: "#102922",
     borderRadius: 18,
     gap: 12
   },
@@ -173,7 +180,7 @@ const s = StyleSheet.create({
     flex: 1
   },
   dailyLabel: { color: "#B9CEC1", fontFamily: "Inter_600SemiBold", fontSize: 11, letterSpacing: 1.2 },
-  footer: { color: palette.muted, fontSize: 11, letterSpacing: 3, textAlign: "center", paddingVertical: 6 },
+  footer: { color: palette.muted, fontSize: 11, letterSpacing: 3, textAlign: "center", paddingVertical: 6, marginTop: 22 },
   row: {
     flexDirection: "row",
     alignItems: "center",

@@ -30,11 +30,16 @@ const server = http.createServer((req, res) => {
       const help = p.getByRole('button',{name:'How to Play',exact:true});
       const d = await daily.boundingBox(), h = await help.boundingBox();
       assert.ok(d.y < h.y, 'Daily challenge appears before utility navigation');
-      if (viewport.width === 390) {
-        const stats = await p.getByRole('button',{name:'Statistics',exact:true}).boundingBox();
-        assert.ok(stats.y + stats.height <= viewport.height, 'Play, Tour, progress, daily goal and utility links fit on a standard phone');
-      }
       await p.screenshot({path:path.join(out,`18-polish-home-${viewport.width}.png`)});
+      // Utilities may sit below the fold; scrolling must reveal an operable control.
+      await help.scrollIntoViewIfNeeded();
+      const helpBox = await help.boundingBox();
+      assert.ok(helpBox.y >= 0 && helpBox.y + helpBox.height <= viewport.height && helpBox.height >= 44, 'Help stays reachable by scrolling');
+      const stats = p.getByRole('button',{name:'Statistics',exact:true});
+      await stats.scrollIntoViewIfNeeded();
+      await stats.click();
+      await p.getByRole('heading',{name:'Statistics',exact:true}).waitFor();
+      await p.goBack(); await quick.waitFor();
       await quick.click(); await p.getByRole('button',{name:'Confirm Palace (0/3)',exact:true}).waitFor();
       const confirm = await p.getByRole('button',{name:'Confirm Palace (0/3)',exact:true}).boundingBox(); assert.ok(confirm.y + confirm.height <= viewport.height && confirm.height >= 44, 'Setup action stays reachable');
       await p.screenshot({path:path.join(out,`19-polish-guide-${viewport.width}.png`)});
