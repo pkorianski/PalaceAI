@@ -48,7 +48,8 @@ import { updateDailyChallenge } from "@/lib/daily-challenge";
 
 import { RivalPortrait } from "@/components/tour/Art";
 import { CareerResult, type CareerGame } from "@/components/tour/CareerResult";
-import { useReducedMotion } from "@/components/tour/ui";
+import { palette, useReducedMotion } from "@/components/tour/ui";
+import { RulesContent } from "@/components/rules/RulesContent";
 import { getRivalMove } from "@/lib/tour/ai";
 import { useTableTheme } from "@/components/tour/ThemeProvider";
 
@@ -73,44 +74,13 @@ const TUTORIAL_STEPS = [
   },
 ];
 
-const RULES = [
-  {
-    title: "Objective",
-    icon: "trophy-outline",
-    content: "Be the first player to get rid of all your cards — hand, face-up palace, and face-down palace.",
-  },
-  {
-    title: "Playing the Game",
-    icon: "card-outline",
-    content: "Play cards equal to or higher than the top pile card. You can play multiple cards of the same rank at once.\n\nAfter playing, draw to keep at least 3 cards in hand while the deck lasts.",
-  },
-  {
-    title: "Can't Play?",
-    icon: "arrow-down-circle-outline",
-    content: "If you cannot (or choose not to) play, pick up the entire pile. The next player starts fresh.",
-  },
-  {
-    title: "Special Cards",
-    icon: "flash-outline",
-    content: "2 — Reset: Play on anything, then play again with any card.\n\n10 — Burn: Play on anything, pile is removed. Play again!",
-  },
-  {
-    title: "4 of a Kind = Burn",
-    icon: "bonfire-outline",
-    content: "If four cards of the same rank appear consecutively on top of the pile, it burns and you play again!",
-  },
-  {
-    title: "Palace Phase",
-    icon: "home-outline",
-    content: "Once your hand is empty and the deck is gone, play face-up palace cards, then flip face-down cards one at a time — you can't look before playing!",
-  },
-];
-
 export function GameScreen({ career }: { career?: CareerGame } = {}) {
   const theme = useTableTheme();
   const { height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const compact = height - insets.top - insets.bottom < 740 && fontScale < 1.3;
+  const [boardHeight, setBoardHeight] = useState<number | null>(null);
+  // Compact the table according to its actual space after safe areas, hand and actions.
+  const compact = (boardHeight ?? height - insets.top - insets.bottom - 300) < 480 && fontScale < 1.3;
   const menuButton = useRef<React.ComponentRef<typeof View>>(null);
   const menuHeading = useRef<React.ComponentRef<typeof Text>>(null);
   const rulesHeading = useRef<React.ComponentRef<typeof Text>>(null);
@@ -463,7 +433,10 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
       </View>
 
       {!showGameOver && !!(resultError || career?.error) && <View style={{ padding: 12 }}><Text style={{ color: "#FFBFAC" }}>{resultError || career?.error}</Text>{!!resultError && <Pressable accessibilityRole="button" onPress={() => setResultAttempt(n => n + 1)} style={{ padding: 14 }}><Text style={{ color: "#EFC778" }}>Retry saving result</Text></Pressable>}</View>}
-      <ScrollView testID="board-scroll" bounces={false} contentContainerStyle={[styles.gameArea, { flexGrow: 1 }]} style={{ flex: 1 }}>
+      <ScrollView testID="board-scroll" bounces={false}
+        onLayout={event => setBoardHeight(event.nativeEvent.layout.height)}
+        contentContainerStyle={[styles.gameArea, { flexGrow: 1 }]}
+        style={{ flex: 1, minHeight: 0 }}>
         <View style={[styles.opponentPanel, compact && { paddingVertical: 6, gap: 4 }]}>
           <View style={styles.playerHeader}>
             {career && <RivalPortrait rival={career.rival} size={30} />}
@@ -601,10 +574,12 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
           <Text style={{ fontSize: 13, lineHeight: 19, color: "#CBD8CE" }}>{TUTORIAL_STEPS[tutorialStep].body}</Text>
 
         </View>}
+      </ScrollView>
+      {/* Keep the complete active card row above the actions, independent of table scrolling. */}
         {gameState.phase === "choose_palace" && gameState.currentPlayerIndex === 0 ? (
-          <View style={styles.handArea}>
+          <View testID="setup-cards" style={styles.handArea}>
             <Text style={styles.handLabel}>YOUR HAND — choose 3 for your palace</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.handScrollContent}>
+            <ScrollView testID="hand-strip" horizontal style={styles.handStrip} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.handScrollContent}>
               {human.hand.map((card) => (
                 <PlayingCard
                   key={card.id}
@@ -624,7 +599,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
               </Text>
               {humanPhase !== "facedown" && <Text accessibilityLiveRegion="polite" style={styles.activeHint}>{turn.hint}</Text>}
               {humanPhase === "hand" ? (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.handScrollContent}>
+                <ScrollView testID="hand-strip" horizontal style={styles.handStrip} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.handScrollContent}>
                   {human.hand.map((card) => (
                     <PlayingCard
                       key={card.id}
@@ -655,8 +630,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
               )}
             </Animated.View>
         )}
-      </ScrollView>
-      <View style={{ paddingHorizontal: 12, paddingTop: 6, paddingBottom: 4, backgroundColor: theme.table }}>
+      <View testID="game-actions" style={{ flexShrink: 0, paddingHorizontal: 12, paddingTop: 6, paddingBottom: 4, backgroundColor: theme.table }}>
         {gameState.phase === "choose_palace" && gameState.currentPlayerIndex === 0 ? (
             <Pressable
               style={({ pressed }) => [
@@ -816,17 +790,17 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
       {/* ── Menu action sheet ── */}
       <Modal visible={showMenuSheet} transparent animationType={reducedMotion ? "none" : "slide"} onRequestClose={() => setShowMenuSheet(false)} onShow={() => focus(menuHeading.current)} onDismiss={() => { if (!showRulesOverlay && !showLeaveModal) focus(menuButton.current); }}>
         <Pressable accessible={false} style={styles.sheetOverlay} onPress={() => setShowMenuSheet(false)}>
-          <Pressable accessible={false} style={styles.sheetCard} accessibilityViewIsModal onPress={event => event.stopPropagation()}>
-            <View style={styles.sheetHandle} /><Text ref={menuHeading} accessible accessibilityRole="header" style={{ color: "#FFF6E5", fontSize: 18, fontWeight: "600", padding: 16 }}>Game menu</Text>
+          <Pressable testID="game-menu-sheet" accessible={false} style={[styles.sheetCard, { paddingBottom: Math.max(insets.bottom, 8) }]} accessibilityViewIsModal onPress={event => event.stopPropagation()}>
+            <View style={styles.sheetHandle} /><Text ref={menuHeading} accessible accessibilityRole="header" style={{ color: palette.white, fontSize: 20, fontFamily: "Inter_600SemiBold", padding: 16 }}>Game menu</Text>
             <Pressable
               style={({ pressed }) => [styles.sheetRow, pressed && styles.sheetRowPressed]}
               accessibilityRole="button" accessibilityLabel="How to Play" onPress={handleRulesFromMenu}
             >
               <View style={styles.sheetRowIcon}>
-                <Ionicons name="book-outline" size={20} color="#D4AF37" />
+                <Ionicons name="book-outline" size={20} color={palette.gold} />
               </View>
               <Text style={styles.sheetRowText}>How to Play</Text>
-              <Ionicons name="chevron-forward" size={16} color="rgba(254,253,248,0.3)" />
+              <Ionicons name="chevron-forward" size={16} color={palette.muted} />
             </Pressable>
             <View style={styles.sheetDivider} />
             <Pressable
@@ -834,7 +808,7 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
               accessibilityRole="button" accessibilityLabel="Quit Game" onPress={handleQuitFromMenu}
             >
               <View style={[styles.sheetRowIcon, styles.sheetRowIconRed]}>
-                <Ionicons name="exit-outline" size={20} color="#E74C3C" />
+                <Ionicons name="exit-outline" size={20} color="#FFBFAC" />
               </View>
               <Text style={[styles.sheetRowText, styles.sheetRowTextRed]}>Quit Game</Text>
             </Pressable>
@@ -863,35 +837,14 @@ export function GameScreen({ career }: { career?: CareerGame } = {}) {
               style={({ pressed }) => [styles.rulesCloseBtn, pressed && { opacity: 0.6 }]}
               hitSlop={8}
             >
-              <Ionicons name="close" size={24} color="#D4AF37" />
+              <Ionicons name="close" size={24} color={palette.gold} />
             </Pressable>
           </View>
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.rulesScrollContent}
           >
-            {RULES.map((rule, idx) => (
-              <View key={idx} style={styles.rulesCard}>
-                <View style={styles.rulesCardHeader}>
-                  <View style={styles.rulesCardIcon}>
-                    <Ionicons name={rule.icon as any} size={18} color="#D4AF37" />
-                  </View>
-                  <Text style={styles.rulesCardTitle}>{rule.title}</Text>
-                </View>
-                <Text style={styles.rulesCardBody}>{rule.content}</Text>
-              </View>
-            ))}
-            <View style={styles.rulesChipSection}>
-              <Text style={styles.rulesChipLabel}>Card Values (low → high)</Text>
-              <View style={styles.rulesChipRow}>
-                {["2★", "3", "4", "5", "6", "7", "8", "9", "10🔥", "J", "Q", "K", "A"].map((r) => (
-                  <View key={r} style={styles.rulesChip}>
-                    <Text style={styles.rulesChipText}>{r}</Text>
-                  </View>
-                ))}
-              </View>
-              <Text style={styles.rulesChipNote}>★ = Reset • 🔥 = Burn pile</Text>
-            </View>
+            <RulesContent />
           </ScrollView>
         </View>
       </Modal>
@@ -1170,8 +1123,16 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
   },
   handArea: {
+    flexShrink: 0,
     gap: 8,
+    paddingHorizontal: 12,
+    paddingTop: 8,
     paddingBottom: 4,
+  },
+  handStrip: {
+    flexGrow: 0,
+    flexShrink: 0,
+    height: 108,
   },
   handLabel: {
     fontSize: 11,
@@ -1494,14 +1455,14 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   sheetCard: {
-    backgroundColor: "#0f3320",
+    backgroundColor: palette.bg,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 12,
     paddingHorizontal: 16,
     paddingBottom: 8,
     borderTopWidth: 1,
-    borderColor: "rgba(212,175,55,0.15)",
+    borderColor: palette.border,
     gap: 4,
   },
   sheetHandle: {
@@ -1527,25 +1488,25 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "rgba(212,175,55,0.1)",
+    backgroundColor: `${palette.gold}14`,
     alignItems: "center",
     justifyContent: "center",
   },
   sheetRowIconRed: {
-    backgroundColor: "rgba(231,76,60,0.1)",
+    backgroundColor: "#FFBFAC14",
   },
   sheetRowText: {
     flex: 1,
     fontSize: 17,
     fontFamily: "Inter_500Medium",
-    color: "#FEFDF8",
+    color: palette.white,
   },
   sheetRowTextRed: {
-    color: "#E74C3C",
+    color: "#FFBFAC",
   },
   sheetDivider: {
     height: 1,
-    backgroundColor: "rgba(255,255,255,0.07)",
+    backgroundColor: palette.border,
     marginLeft: 58,
   },
   sheetCancelBtn: {
@@ -1557,11 +1518,11 @@ const styles = StyleSheet.create({
   sheetCancelText: {
     fontSize: 17,
     fontFamily: "Inter_600SemiBold",
-    color: "#B9CEC1",
+    color: palette.muted,
   },
   rulesContainer: {
     flex: 1,
-    backgroundColor: "#0d2b1a",
+    backgroundColor: palette.bg,
   },
   rulesTopBar: {
     flexDirection: "row",
@@ -1570,96 +1531,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(212,175,55,0.1)",
+    borderBottomColor: palette.border,
   },
   rulesTopBarTitle: {
-    fontSize: 18,
+    flex: 1,
+    fontSize: 25,
     fontFamily: "Inter_700Bold",
-    color: "#D4AF37",
+    color: palette.white,
     letterSpacing: 0.5,
   },
   rulesCloseBtn: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 10,
     backgroundColor: "rgba(255,255,255,0.06)",
   },
   rulesScrollContent: {
-    padding: 16,
-    gap: 10,
+    padding: 20,
+    gap: 20,
     paddingBottom: 40,
-  },
-  rulesCard: {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "rgba(212,175,55,0.1)",
-    gap: 10,
-  },
-  rulesCardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  rulesCardIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: "rgba(212,175,55,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rulesCardTitle: {
-    fontSize: 16,
-    fontFamily: "Inter_600SemiBold",
-    color: "#FEFDF8",
-  },
-  rulesCardBody: {
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.7)",
-    lineHeight: 22,
-  },
-  rulesChipSection: {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "rgba(212,175,55,0.1)",
-    gap: 10,
-  },
-  rulesChipLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-    color: "#B9CEC1",
-    textTransform: "uppercase",
-    letterSpacing: 1.5,
-  },
-  rulesChipRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-  },
-  rulesChip: {
-    backgroundColor: "#FEFDF8",
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    minWidth: 36,
-    alignItems: "center",
-  },
-  rulesChipText: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
-    color: "#1A1A1A",
-  },
-  rulesChipNote: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    color: "#B9CEC1",
   },
   tutorialOverlay: {
     position: "absolute",

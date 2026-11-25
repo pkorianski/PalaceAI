@@ -135,7 +135,7 @@ export async function getUnlockedIds(): Promise<string[]> {
   const raw = await AsyncStorage.getItem(ACHIEVEMENTS_KEY);
   if (!raw) return [];
   const ids = JSON.parse(raw);
-  if (!Array.isArray(ids) || !ids.every(id => typeof id === "string")) throw new Error("Saved starter badges could not be read. The original save has been kept.");
+  if (!Array.isArray(ids) || !ids.every(id => typeof id === "string")) throw new Error("Saved badges could not be read. The original save has been kept.");
   return ids;
 }
 

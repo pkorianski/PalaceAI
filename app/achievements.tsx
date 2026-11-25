@@ -32,7 +32,7 @@ import { Action, Arrival, Meter, palette, ui } from "@/components/tour/ui";
 import { TrophyArt } from "@/components/tour/Art";
 import { LevelBadge, XpMeter, m } from "@/components/mastery/ui";
 import * as Haptics from "@/lib/haptics";
-const TABS = ["Mastery", "Weekly quests", "Rewards", "Starter badges"] as const;
+const TABS = ["Mastery", "Weekly quests", "Rewards", "Badges"] as const;
 type Tab = (typeof TABS)[number];
 const RANKS = ["I", "II", "III", "IV", "V"];
 export default function AchievementsScreen() {
@@ -525,14 +525,14 @@ export default function AchievementsScreen() {
                 </Text>
               </>
             )}
-            {tab === "Starter badges" && (
+            {tab === "Badges" && (
               <>
                 <View style={{ gap: 10 }}>
-                  <Text style={m.eyebrow}>WHERE YOUR STORY BEGAN</Text>
-                  <Text style={m.title}>The original collection.</Text>
+                  <Text style={m.eyebrow}>YOUR ACHIEVEMENTS</Text>
+                  <Text style={m.title}>Small wins. Big moments.</Text>
                   <Text style={m.body}>
-                    Your 24 original badges keep their names, goals and earned
-                    status. They’re the beginning of your legacy.
+                    Earn 24 badges for victories, streaks and memorable plays.
+                    Every badge you unlock stays in your collection.
                   </Text>
                 </View>
                 {ACHIEVEMENT_GROUPS.map((group) => (
