@@ -31,17 +31,9 @@ const server = http.createServer((req, res) => {
       const c = await browser.newContext({viewport, deviceScaleFactor:2, isMobile:true, hasTouch:true, reducedMotion:'reduce'}), p = await c.newPage();
       p.on('pageerror', e => errors.push(e.message));
       if (viewport.width >= 393) {
-        // Browser env() is zero. Model native iPhone safe areas in the provider's probe only.
-        await c.addInitScript(() => {
-          const original = window.getComputedStyle;
-          window.getComputedStyle = function(element, ...args) {
-            const value = original.call(this, element, ...args);
-            if (element.style?.position === 'fixed' && element.style?.visibility === 'hidden' && element.style?.transitionProperty === 'padding') {
-              return new Proxy(value, {get(target,key) {if(key==='paddingTop')return '62px';if(key==='paddingBottom')return '34px';return Reflect.get(target,key);}});
-            }
-            return value;
-          };
-        });
+        // Override browser env() values so the real SafeAreaProvider receives phone insets.
+        const device = await c.newCDPSession(p);
+        await device.send('Emulation.setSafeAreaInsetsOverride', {insets:{top:62,bottom:34,left:0,right:0}});
       }
       await p.goto('http://127.0.0.1:18082');
       await p.getByTestId('studio-intro').waitFor({state:'hidden',timeout:5000});
