@@ -1,16 +1,9 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Platform,
-  ScrollView,
-  StatusBar,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { View, Text, StyleSheet } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { MenuHeader } from "@/components/navigation/MenuHeader";
+import { Page } from "@/components/settings/Page";
+import { palette } from "@/components/tour/ui";
 import { getStats, type GameStats } from "@/lib/stats";
 
 const DEFAULT_STATS: GameStats = {
@@ -28,17 +21,16 @@ const DEFAULT_STATS: GameStats = {
 
 interface StatRowProps {
   icon: string;
-  iconColor: string;
   label: string;
   value: string;
   sub?: string;
 }
 
-function StatRow({ icon, iconColor, label, value, sub }: StatRowProps) {
+function StatRow({ icon, label, value, sub }: StatRowProps) {
   return (
     <View style={rowStyles.container}>
-      <View style={[rowStyles.iconWrap, { backgroundColor: `${iconColor}18` }]}>
-        <Ionicons name={icon as any} size={18} color={iconColor} />
+      <View style={rowStyles.iconWrap}>
+        <Ionicons name={icon as any} size={18} color={palette.gold} />
       </View>
       <Text style={rowStyles.label}>{label}</Text>
       <View style={rowStyles.valueWrap}>
@@ -53,46 +45,46 @@ const rowStyles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 13,
+    paddingVertical: 16,
     gap: 14,
   },
   iconWrap: {
     width: 38,
     height: 38,
-    borderRadius: 10,
+    borderRadius: 12,
+    backgroundColor: `${palette.gold}14`,
     alignItems: "center",
     justifyContent: "center",
   },
   label: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: "Inter_500Medium",
-    color: "rgba(254,253,248,0.75)",
+    color: palette.white,
   },
-  valueWrap: {
-    alignItems: "flex-end",
-    gap: 1,
-  },
+  valueWrap: { alignItems: "flex-end", gap: 3, maxWidth: "50%", flexShrink: 1 },
   value: {
-    fontSize: 17,
+    fontSize: 20,
     fontFamily: "Inter_700Bold",
-    color: "#FEFDF8",
+    color: palette.white,
+    textAlign: "right",
   },
   sub: {
-    fontSize: 11,
+    fontSize: 13,
     fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.35)",
+    color: palette.muted,
+    lineHeight: 19,
+    textAlign: "right",
   },
 });
 
 export default function StatsScreen() {
-  const insets = useSafeAreaInsets();
   const [stats, setStats] = useState<GameStats>(DEFAULT_STATS);
 
   useFocusEffect(
     React.useCallback(() => {
       getStats().then(setStats);
-    }, [])
+    }, []),
   );
 
   const winRate =
@@ -104,178 +96,138 @@ export default function StatsScreen() {
   const hasPlayed = stats.gamesPlayed > 0;
 
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: insets.top },
-      ]}
-    >
-      <StatusBar barStyle="light-content" />
-      <MenuHeader title="Statistics" />
-      <ScrollView
-        contentContainerStyle={[
-          styles.scroll,
-          { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 24) },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Win rate ring card */}
-        <View style={styles.heroCard}>
-          <View style={styles.ringWrap}>
-            <View style={styles.ring}>
-              <Text style={styles.ringValue}>{winRate}%</Text>
-              <Text style={styles.ringLabel}>Win Rate</Text>
-            </View>
-          </View>
-          <View style={styles.heroStats}>
-            <View style={styles.heroStat}>
-              <Text style={[styles.heroStatValue, styles.goldText]}>
-                {stats.gamesPlayed}
-              </Text>
-              <Text style={styles.heroStatLabel}>Games</Text>
-            </View>
-            <View style={styles.heroStatDivider} />
-            <View style={styles.heroStat}>
-              <Text style={[styles.heroStatValue, styles.greenText]}>
-                {stats.wins}
-              </Text>
-              <Text style={styles.heroStatLabel}>Wins</Text>
-            </View>
-            <View style={styles.heroStatDivider} />
-            <View style={styles.heroStat}>
-              <Text style={[styles.heroStatValue, styles.redText]}>
-                {stats.losses}
-              </Text>
-              <Text style={styles.heroStatLabel}>Losses</Text>
-            </View>
-          </View>
-
-          {/* Win/loss bar */}
-          {hasPlayed && (
-            <View style={styles.barWrap}>
-              <View
-                style={[
-                  styles.barWin,
-                  { flex: winRate > 0 ? winRate : 0.5 },
-                ]}
-              />
-              <View
-                style={[
-                  styles.barLoss,
-                  { flex: lossRate > 0 ? lossRate : 0.5 },
-                ]}
-              />
-            </View>
-          )}
-        </View>
-
-        {/* Detail rows */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Streaks</Text>
-          <View style={styles.card}>
-            <StatRow
-              icon="flame"
-              iconColor="#E67E22"
-              label="Current streak"
-              value={stats.winStreak > 0 ? `${stats.winStreak}` : "—"}
-              sub={stats.winStreak > 0 ? "wins in a row" : undefined}
-            />
-            <View style={styles.divider} />
-            <StatRow
-              icon="trophy-outline"
-              iconColor="#D4AF37"
-              label="Best streak"
-              value={stats.bestStreak > 0 ? `${stats.bestStreak}` : "—"}
-              sub={stats.bestStreak > 0 ? "wins in a row" : undefined}
-            />
+    <Page title="Statistics">
+      {/* Win rate ring card */}
+      <View style={styles.heroCard}>
+        <View style={styles.ringWrap}>
+          <View style={styles.ring}>
+            <Text style={styles.ringValue}>{winRate}%</Text>
+            <Text style={styles.ringLabel}>Win Rate</Text>
           </View>
         </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Records</Text>
-          <View style={styles.card}>
-            <StatRow
-              icon="flash-outline"
-              iconColor="#3498DB"
-              label="Fastest win"
-              value={stats.bestWinTurns > 0 ? `${stats.bestWinTurns}` : "—"}
-              sub={stats.bestWinTurns > 0 ? "turns" : undefined}
-            />
-            <View style={styles.divider} />
-            <StatRow
-              icon="bonfire-outline"
-              iconColor="#E74C3C"
-              label="Total burns"
-              value={stats.totalBurns > 0 ? `${stats.totalBurns}` : "—"}
-              sub={
-                stats.totalBurns > 0
-                  ? `${(stats.totalBurns / Math.max(stats.gamesPlayed, 1)).toFixed(1)} per game`
-                  : undefined
-              }
-            />
-          </View>
-        </View>
-
-        {!hasPlayed && (
-          <View style={styles.emptyState}>
-            <Ionicons
-              name="stats-chart-outline"
-              size={40}
-              color="rgba(254,253,248,0.15)"
-            />
-            <Text style={styles.emptyText}>
-              Play your first game to start tracking stats
+        <View style={styles.heroStats}>
+          <View style={styles.heroStat}>
+            <Text style={[styles.heroStatValue, styles.goldText]}>
+              {stats.gamesPlayed}
             </Text>
+            <Text style={styles.heroStatLabel}>Games</Text>
+          </View>
+          <View style={styles.heroStatDivider} />
+          <View style={styles.heroStat}>
+            <Text style={[styles.heroStatValue, styles.greenText]}>
+              {stats.wins}
+            </Text>
+            <Text style={styles.heroStatLabel}>Wins</Text>
+          </View>
+          <View style={styles.heroStatDivider} />
+          <View style={styles.heroStat}>
+            <Text style={[styles.heroStatValue, styles.redText]}>
+              {stats.losses}
+            </Text>
+            <Text style={styles.heroStatLabel}>Losses</Text>
+          </View>
+        </View>
+
+        {/* Win/loss bar */}
+        {hasPlayed && (
+          <View style={styles.barWrap}>
+            <View
+              style={[styles.barWin, { flex: winRate > 0 ? winRate : 0.5 }]}
+            />
+            <View
+              style={[styles.barLoss, { flex: lossRate > 0 ? lossRate : 0.5 }]}
+            />
           </View>
         )}
-      </ScrollView>
-    </View>
+      </View>
+
+      {/* Detail rows */}
+      <View style={styles.section}>
+        <Text accessibilityRole="header" style={styles.sectionTitle}>
+          Streaks
+        </Text>
+        <View style={styles.card}>
+          <StatRow
+            icon="flame"
+            label="Current streak"
+            value={stats.winStreak > 0 ? `${stats.winStreak}` : "—"}
+            sub={stats.winStreak > 0 ? "wins in a row" : undefined}
+          />
+          <View style={styles.divider} />
+          <StatRow
+            icon="trophy-outline"
+            label="Best streak"
+            value={stats.bestStreak > 0 ? `${stats.bestStreak}` : "—"}
+            sub={stats.bestStreak > 0 ? "wins in a row" : undefined}
+          />
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text accessibilityRole="header" style={styles.sectionTitle}>
+          Records
+        </Text>
+        <View style={styles.card}>
+          <StatRow
+            icon="flash-outline"
+            label="Fastest win"
+            value={stats.bestWinTurns > 0 ? `${stats.bestWinTurns}` : "—"}
+            sub={stats.bestWinTurns > 0 ? "turns" : undefined}
+          />
+          <View style={styles.divider} />
+          <StatRow
+            icon="bonfire-outline"
+            label="Total burns"
+            value={stats.totalBurns > 0 ? `${stats.totalBurns}` : "—"}
+            sub={
+              stats.totalBurns > 0
+                ? `${(stats.totalBurns / Math.max(stats.gamesPlayed, 1)).toFixed(1)} per game`
+                : undefined
+            }
+          />
+        </View>
+      </View>
+
+      {!hasPlayed && (
+        <View style={styles.emptyState}>
+          <Ionicons name="stats-chart-outline" size={40} color={palette.gold} />
+          <Text style={styles.emptyText}>
+            Play your first game to start tracking stats
+          </Text>
+        </View>
+      )}
+    </Page>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0d2b1a",
-  },
-  scroll: {
-    padding: 16,
-    gap: 8,
-  },
   heroCard: {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 18,
+    backgroundColor: palette.panel,
+    borderRadius: 22,
     padding: 20,
     borderWidth: 1,
-    borderColor: "rgba(212,175,55,0.15)",
+    borderColor: palette.border,
     alignItems: "center",
-    gap: 16,
-    marginBottom: 8,
+    gap: 20,
   },
-  ringWrap: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  ringWrap: { alignItems: "center", justifyContent: "center" },
   ring: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 5,
-    borderColor: "#D4AF37",
+    minWidth: 120,
+    minHeight: 120,
+    padding: 16,
+    borderRadius: 80,
+    borderWidth: 4,
+    borderColor: palette.gold,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(212,175,55,0.07)",
+    gap: 4,
+    backgroundColor: `${palette.gold}0D`,
   },
-  ringValue: {
-    fontSize: 26,
-    fontFamily: "Inter_700Bold",
-    color: "#D4AF37",
-    lineHeight: 30,
-  },
+  ringValue: { fontSize: 30, fontFamily: "Inter_700Bold", color: palette.gold },
   ringLabel: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
-    color: "rgba(254,253,248,0.4)",
+    color: palette.muted,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
@@ -285,30 +237,19 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     width: "100%",
   },
-  heroStat: {
-    alignItems: "center",
-    gap: 3,
-    flex: 1,
-  },
-  heroStatValue: {
-    fontSize: 26,
-    fontFamily: "Inter_700Bold",
-  },
+  heroStat: { alignItems: "center", gap: 6, flex: 1 },
+  heroStatValue: { fontSize: 26, fontFamily: "Inter_700Bold" },
   heroStatLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.4)",
+    color: palette.muted,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
-  heroStatDivider: {
-    width: 1,
-    height: 36,
-    backgroundColor: "rgba(255,255,255,0.1)",
-  },
-  goldText: { color: "#D4AF37" },
-  greenText: { color: "#2ECC71" },
-  redText: { color: "#E74C3C" },
+  heroStatDivider: { width: 1, height: 36, backgroundColor: palette.border },
+  goldText: { color: palette.gold },
+  greenText: { color: "#9ED9BB" },
+  redText: { color: "#FFBFAC" },
   barWrap: {
     flexDirection: "row",
     width: "100%",
@@ -317,50 +258,31 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     gap: 2,
   },
-  barWin: {
-    height: "100%",
-    backgroundColor: "#2ECC71",
-    borderRadius: 3,
-  },
-  barLoss: {
-    height: "100%",
-    backgroundColor: "#E74C3C",
-    borderRadius: 3,
-  },
-  section: {
-    gap: 8,
-    marginBottom: 8,
-  },
+  barWin: { height: "100%", backgroundColor: "#9ED9BB", borderRadius: 3 },
+  barLoss: { height: "100%", backgroundColor: "#FFBFAC", borderRadius: 3 },
+  section: { gap: 10 },
   sectionTitle: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: "Inter_600SemiBold",
-    color: "rgba(254,253,248,0.35)",
+    color: palette.gold,
     textTransform: "uppercase",
-    letterSpacing: 1.5,
+    letterSpacing: 2,
     paddingHorizontal: 4,
   },
   card: {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 16,
-    paddingHorizontal: 16,
+    backgroundColor: palette.panel,
+    borderRadius: 20,
+    paddingHorizontal: 18,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
+    borderColor: palette.border,
   },
-  divider: {
-    height: 1,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    marginLeft: 52,
-  },
-  emptyState: {
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 40,
-  },
+  divider: { height: 1, backgroundColor: palette.border, marginLeft: 52 },
+  emptyState: { alignItems: "center", gap: 12, paddingVertical: 24 },
   emptyText: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.3)",
+    color: palette.muted,
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: 23,
   },
 });

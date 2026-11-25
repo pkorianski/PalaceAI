@@ -1,16 +1,9 @@
 import React from "react";
-import { MenuHeader } from "@/components/navigation/MenuHeader";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Platform,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { View, Text, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Page } from "@/components/settings/Page";
+import { Action, palette } from "@/components/tour/ui";
 
 interface RuleSection {
   title: string;
@@ -70,194 +63,139 @@ const RULES: RuleSection[] = [
 ];
 
 export default function RulesScreen() {
-  const insets = useSafeAreaInsets();
-
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 0),
-        },
-      ]}
-    >
-      <MenuHeader title="How to Play" />
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.suitHeader}>
-          <Text style={styles.suitRow}>♠ ♥ ♣ ♦</Text>
-          <Text style={styles.gameTitle}>Palace</Text>
-        </View>
-
-        {RULES.map((rule, idx) => (
-          <View key={idx} style={styles.ruleCard}>
-            <View style={styles.ruleHeader}>
-              <View style={styles.ruleIconContainer}>
-                <Ionicons name={rule.icon as any} size={18} color="#D4AF37" />
-              </View>
-              <Text style={styles.ruleTitle}>{rule.title}</Text>
+    <Page title="How to Play">
+      <View style={styles.suitHeader}>
+        <Text accessible={false} style={styles.suitRow}>
+          ♠ ♥ ♣ ♦
+        </Text>
+        <Text style={styles.gameTitle}>Palace</Text>
+      </View>
+      {RULES.map((rule) => (
+        <View key={rule.title} style={styles.ruleCard}>
+          <View style={styles.ruleHeader}>
+            <View style={styles.ruleIconContainer}>
+              <Ionicons
+                name={rule.icon as any}
+                size={20}
+                color={palette.gold}
+              />
             </View>
-            <Text style={styles.ruleContent}>{rule.content}</Text>
+            <Text accessibilityRole="header" style={styles.ruleTitle}>
+              {rule.title}
+            </Text>
           </View>
-        ))}
-
-        <View style={styles.cardValuesSection}>
-          <Text style={styles.sectionTitle}>Card Values</Text>
-          <View style={styles.cardValuesGrid}>
-            {["2★", "3", "4", "5", "6", "7", "8", "9", "10🔥", "J", "Q", "K", "A"].map((r) => (
-              <View key={r} style={styles.cardValueChip}>
-                <Text style={styles.cardValueText}>{r}</Text>
-              </View>
-            ))}
-          </View>
-          <Text style={styles.cardValuesNote}>
-            ★ = Reset (play anything next) • 🔥 = Burn pile
-          </Text>
+          <Text style={styles.ruleContent}>{rule.content}</Text>
         </View>
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.playNowBtn,
-            pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
-          ]}
-          onPress={() => {
-            router.replace("/game");
-          }}
-        >
-          <Text style={styles.playNowText}>Play Now</Text>
-          <Ionicons name="play" size={18} color="#0d2b1a" />
-        </Pressable>
-      </ScrollView>
-    </View>
+      ))}
+      <View style={styles.cardValuesSection}>
+        <Text accessibilityRole="header" style={styles.sectionTitle}>
+          Card Values
+        </Text>
+        <View style={styles.cardValuesGrid}>
+          {[
+            "2★",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10🔥",
+            "J",
+            "Q",
+            "K",
+            "A",
+          ].map((rank) => (
+            <View key={rank} style={styles.cardValueChip}>
+              <Text style={styles.cardValueText}>{rank}</Text>
+            </View>
+          ))}
+        </View>
+        <Text style={styles.cardValuesNote}>
+          ★ = Reset (play anything next) • 🔥 = Burn pile
+        </Text>
+      </View>
+      <Action
+        label="Play Now"
+        icon="play"
+        onPress={() => router.replace("/game")}
+      />
+    </Page>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0d2b1a",
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    gap: 12,
-    paddingBottom: 40,
-  },
-  suitHeader: {
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  suitRow: {
-    fontSize: 20,
-    color: "rgba(212,175,55,0.5)",
-    letterSpacing: 8,
-    marginBottom: 4,
-  },
+  suitHeader: { alignItems: "center", gap: 8, paddingVertical: 10 },
+  suitRow: { fontSize: 20, color: palette.gold, letterSpacing: 8 },
   gameTitle: {
-    fontSize: 32,
+    fontSize: 30,
     fontFamily: "Inter_700Bold",
-    color: "#D4AF37",
-    letterSpacing: 4,
+    color: palette.white,
   },
   ruleCard: {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 14,
-    padding: 16,
+    backgroundColor: palette.panel,
+    borderRadius: 20,
+    padding: 20,
     borderWidth: 1,
-    borderColor: "rgba(212,175,55,0.1)",
-    gap: 10,
+    borderColor: palette.border,
+    gap: 14,
   },
-  ruleHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
+  ruleHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
   ruleIconContainer: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: "rgba(212,175,55,0.1)",
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: `${palette.gold}14`,
     alignItems: "center",
     justifyContent: "center",
   },
   ruleTitle: {
-    fontSize: 16,
+    flex: 1,
+    fontSize: 18,
     fontFamily: "Inter_600SemiBold",
-    color: "#FEFDF8",
+    color: palette.white,
   },
   ruleContent: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.7)",
-    lineHeight: 22,
+    color: palette.muted,
+    lineHeight: 25,
   },
   cardValuesSection: {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 14,
-    padding: 16,
+    backgroundColor: palette.panel,
+    borderRadius: 20,
+    padding: 20,
     borderWidth: 1,
-    borderColor: "rgba(212,175,55,0.1)",
-    gap: 12,
+    borderColor: palette.border,
+    gap: 14,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_600SemiBold",
-    color: "rgba(254,253,248,0.5)",
+    color: palette.gold,
     textTransform: "uppercase",
     letterSpacing: 2,
   },
-  cardValuesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-  },
+  cardValuesGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   cardValueChip: {
-    backgroundColor: "#FEFDF8",
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: palette.white,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     minWidth: 36,
     alignItems: "center",
   },
   cardValueText: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: "Inter_600SemiBold",
-    color: "#1A1A1A",
+    color: palette.bg,
   },
   cardValuesNote: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: "Inter_400Regular",
-    color: "rgba(254,253,248,0.4)",
-  },
-  playNowBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#D4AF37",
-    borderRadius: 14,
-    paddingVertical: 16,
-    gap: 8,
-    marginTop: 8,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#D4AF37",
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.35,
-        shadowRadius: 8,
-      },
-      android: { elevation: 4 },
-    }),
-  },
-  playNowText: {
-    fontSize: 17,
-    fontFamily: "Inter_700Bold",
-    color: "#0d2b1a",
+    color: palette.muted,
+    lineHeight: 20,
   },
 });
