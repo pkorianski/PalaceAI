@@ -10,6 +10,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useCallback, useState } from "react";
 import { View } from "react-native";
+import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-context";
 import { PreferencesProvider } from "@/components/settings/PreferencesProvider";
 import { useReducedMotion } from "@/components/tour/ui";
 import { StudioIntro } from "@/components/brand/StudioIntro";
@@ -61,6 +62,7 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <QueryClientProvider client={queryClient}>
         <PreferencesProvider>
         <GestureHandlerRootView
@@ -80,6 +82,7 @@ export default function RootLayout() {
         </GestureHandlerRootView>
       </PreferencesProvider>
       </QueryClientProvider>
+      </SafeAreaProvider>
     </ErrorBoundary>
   );
 }
