@@ -237,8 +237,8 @@ const server = http.createServer((req, res) => {
     await page.getByRole("tab", { name: "Weekly quests", exact: true }).click();
     await page.getByText("A fresh week. A lasting mark.", { exact: true }).waitFor();
     await capture("15-weekly-quests-fixture");
-    await page.getByRole("tab", { name: "Starter badges", exact: true }).click();
-    await page.getByText("The original collection.", { exact: true }).waitFor();
+    await page.getByRole("tab", { name: "Badges", exact: true }).click();
+    await page.getByText("Small wins. Big moments.", { exact: true }).waitFor();
     await page.getByText("First Victory", { exact: true }).waitFor();
     assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem("palace_achievements"))), ["wins_bronze", "wins_silver", "wins_gold"]);
     await page.getByRole("tab", { name: "Rewards", exact: true }).click();
