@@ -15,9 +15,34 @@ const server = http.createServer((req, res) => {
   try {
     browser = await chromium.launch({headless:true, executablePath: process.env.PALACE_CHROMIUM_PATH || undefined});
     const errors = [];
-    for (const viewport of [{width:375,height:667},{width:390,height:844},{width:320,height:568}]) {
+    async function checkHand(page) {
+      const strip = page.getByTestId('hand-strip');
+      const before = await strip.boundingBox(), actions = await page.getByTestId('game-actions').boundingBox();
+      assert.ok(before.height >= 106, 'Hand strip reserves full card height and selection lift');
+      assert.ok(before.y >= 0 && before.y + before.height <= actions.y + 1, 'Entire hand stays above action buttons');
+      const boxes = await strip.getByRole('button').evaluateAll(nodes => nodes.map(n => {const r=n.getBoundingClientRect();return {top:r.top,bottom:r.bottom};}));
+      assert.ok(boxes.length > 0, 'Fixture has selectable hand cards');
+      assert.ok(boxes.every(r => r.top >= before.y - 1 && r.bottom <= before.y + before.height + 1), 'No hand card is vertically clipped, including selected cards');
+      await page.getByTestId('board-scroll').evaluate(el => {el.scrollTop=el.scrollHeight;});
+      const after = await strip.boundingBox();
+      assert.ok(Math.abs(after.y - before.y) < 1, 'Scrolling table cannot move the hand under the controls');
+    }
+    for (const viewport of [{width:375,height:667},{width:390,height:844},{width:320,height:568},{width:393,height:852},{width:440,height:956}]) {
       const c = await browser.newContext({viewport, deviceScaleFactor:2, isMobile:true, hasTouch:true, reducedMotion:'reduce'}), p = await c.newPage();
       p.on('pageerror', e => errors.push(e.message));
+      if (viewport.width >= 393) {
+        // Browser env() is zero. Model native iPhone safe areas in the provider's probe only.
+        await c.addInitScript(() => {
+          const original = window.getComputedStyle;
+          window.getComputedStyle = function(element, ...args) {
+            const value = original.call(this, element, ...args);
+            if (element.style?.position === 'fixed' && element.style?.visibility === 'hidden' && element.style?.transitionProperty === 'padding') {
+              return new Proxy(value, {get(target,key) {if(key==='paddingTop')return '62px';if(key==='paddingBottom')return '34px';return Reflect.get(target,key);}});
+            }
+            return value;
+          };
+        });
+      }
       await p.goto('http://127.0.0.1:18082');
       await p.getByTestId('studio-intro').waitFor({state:'hidden',timeout:5000});
       const quick = p.getByRole('button',{name:'Quick Play',exact:true}); await quick.waitFor();
@@ -46,14 +71,28 @@ const server = http.createServer((req, res) => {
       const skip = p.getByRole('button',{name:'Skip guide'}); await skip.scrollIntoViewIfNeeded(); await skip.click();
       const cards = p.getByRole('button',{name:/ of (hearts|clubs|diamonds|spades)$/});
       await cards.nth(0).click(); await cards.nth(1).click(); await cards.nth(2).click();
+      await checkHand(p);
       await p.getByRole('button',{name:'Confirm Palace (3/3)',exact:true}).click();
       await p.getByRole('button',{name:'Pick Up',exact:true}).waitFor();
       const a = await p.getByRole('button',{name:'Pick Up',exact:true}).boundingBox(); assert.ok(a.height >= 44 && a.y + a.height <= viewport.height, 'In-game action stays on screen');
+      await checkHand(p);
+      if (viewport.width >= 393) {
+        const safe = await p.getByTestId('game-table').evaluate(el => ({top:getComputedStyle(el).paddingTop,bottom:getComputedStyle(el).paddingBottom}));
+        assert.deepEqual(safe,{top:'62px',bottom:'34px'},'Native-size safe areas are exercised');
+      }
       await p.screenshot({path:path.join(out,`20-polish-playing-${viewport.width}.png`)});
       // Open help during the game, return without replacing the game route.
       await p.getByRole('button',{name:'Game menu',exact:true}).click();
+      assert.equal(await p.getByTestId('game-menu-sheet').evaluate(el => getComputedStyle(el).backgroundColor),'rgb(11, 32, 28)','Game menu uses shared menu green');
+      if(viewport.width===393)await p.screenshot({path:path.join(out,'30-game-menu-iphone16.png')});
+      const matchUrl = p.url();
       await p.getByRole('button',{name:'How to Play',exact:true}).click();
+      await p.getByRole('heading',{name:'Setup',exact:true}).waitFor();
+      assert.equal(await p.getByRole('heading',{name:'Winning',exact:true}).count(),1,'In-game rules include the complete shared reference');
+      if(viewport.width===393)await p.screenshot({path:path.join(out,'31-game-rules-iphone16.png')});
       await p.getByRole('button',{name:'Close rules',exact:true}).click();
+      assert.equal(p.url(),matchUrl,'Rules do not replace the match route');
+      await checkHand(p);
       await p.getByRole('button',{name:'Game menu',exact:true}).waitFor();
       await c.close();
     }

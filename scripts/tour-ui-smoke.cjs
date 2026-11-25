@@ -90,7 +90,11 @@ const server = http.createServer((req, res) => {
     await page.getByRole("button", { name: "Quick Play", exact: true }).waitFor();
     await page.getByRole("button", { name: "Achievements and mastery", exact: true }).click();
     await page.getByRole("tab", { name: "Mastery", exact: true }).waitFor();
-    await checkMenuBack(); await capture("28-back-progress");
+    await checkMenuBack();
+    await page.getByRole("tab", { name: "Badges", exact: true }).click();
+    await page.getByText("Small wins. Big moments.", { exact: true }).waitFor();
+    assert.equal(await page.getByRole("tab", { name: "Starter badges", exact: true }).count(), 0);
+    await capture("28-back-progress");
     await page.getByRole("button", { name: "Back", exact: true }).click();
     await page.getByRole("button", { name: "How to Play", exact: true }).click();
     await page.getByRole("heading", { name: "How to Play", exact: true }).waitFor();

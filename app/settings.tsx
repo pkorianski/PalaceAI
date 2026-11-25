@@ -51,7 +51,7 @@ export default function SettingsScreen() {
       <View style={styles.scrim}><View accessibilityViewIsModal style={styles.confirm}><ScrollView contentContainerStyle={{ gap: 18 }}>
         <Ionicons name="trash-outline" size={30} color="#FFAAA0" />
         <Text accessibilityRole="header" style={s.heading}>Reset all game progress?</Text>
-        <Text style={s.body}>This permanently erases your Tour, trophies, themes, statistics, starter badges, mastery XP, weekly quests and seals, daily challenges and tutorial history on this device. Your settings stay. This cannot be undone.</Text>
+        <Text style={s.body}>This permanently erases your Tour, trophies, themes, statistics, badges, mastery XP, weekly quests and seals, daily challenges and tutorial history on this device. Your settings stay. This cannot be undone.</Text>
         {!!resetError && <Text accessibilityRole="alert" style={s.error}>{resetError}</Text>}
         <Pressable accessibilityRole="button" accessibilityLabel="Erase game progress" disabled={resetting} onPress={() => void reset()} style={[styles.erase, { opacity: resetting ? 0.5 : 1 }]}><Text style={styles.eraseText}>{resetting ? "Erasing…" : "Erase game progress"}</Text></Pressable>
         <Action label="Keep my progress" secondary disabled={resetting} onPress={() => setConfirm(false)} />
